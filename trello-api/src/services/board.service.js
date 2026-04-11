@@ -25,6 +25,7 @@ import {
 } from '~/helpers/boardPermission.cache'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
 import BackgroundRepo from '~/repo/adminBackground.repo'
+import { emitBoardUpdated } from '~/realtime/realtimeEmitters/boardRealtime.emitter'
 
 const DEFAULT_BOARD_LABELS = [
   { title: '', color: 'green' },
@@ -151,7 +152,7 @@ class BoardService {
     return boards
   }
 
-  static getBackground = async({userContext}) => {
+  static getBackground = async ({ userContext }) => {
     return await BackgroundRepo.findMany({
       filter: { isDelete: false, status: 'active' },
       options: {}
@@ -368,6 +369,8 @@ class BoardService {
 
         return updatedBoard
       })
+
+      emitBoardUpdated({ boardId: _id.toString(), board: updatedBoard })
 
       return updatedBoard
     } finally {

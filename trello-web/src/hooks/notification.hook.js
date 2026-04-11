@@ -6,8 +6,6 @@ import {
   updateWorkspaceInvitationAPI
 } from '~/redux/notifications/notificationSlice'
 import { selectCurrentUser } from '~/redux/user/userSlice'
-import { addNotification } from '~/redux/notifications/notificationSlice'
-import { socketIoInstance } from '~/socketClient'
 import { useNavigate } from 'react-router-dom'
 import { fetchWorkspacesAPI } from '~/redux/workspace/workspacesSlice'
 
@@ -35,33 +33,19 @@ export const useNotification = () => {
     if (!currentUser?._id) return
 
     dispatch(fetchInvitationsAPI())
-
-    const handleReceiveInvitation = (invitation) => {
-      if (invitation.inviteeId !== currentUser._id) return
-
-      dispatch(addNotification(invitation))
-      setNewNotification(true)
-    }
-
-    socketIoInstance.on('BE_USER_RECEIVED_INVITATION', handleReceiveInvitation)
-
-    return () => {
-      socketIoInstance.off(
-        'BE_USER_RECEIVED_INVITATION',
-        handleReceiveInvitation
-      )
-    }
   }, [dispatch, currentUser?._id])
 
   const handleUpdateNotification = async ({ notification, status }) => {
     const updatedNotification = await dispatch(
-       notification.entity === 'workspace' ? updateWorkspaceInvitationAPI({
-        _id: notification._id,
-        payload: { status }
-      }) : updateBoardInvitationAPI({
-        _id: notification._id,
-        payload: { status }
-      })
+      notification.entity === 'workspace'
+        ? updateWorkspaceInvitationAPI({
+            _id: notification._id,
+            payload: { status }
+          })
+        : updateBoardInvitationAPI({
+            _id: notification._id,
+            payload: { status }
+          })
     ).unwrap()
 
     if (updatedNotification.status === 'accepted') {
@@ -83,6 +67,6 @@ export const useNotification = () => {
     setNewNotification,
     handleClickNotificationIcon,
     handleUpdateNotification,
-    handleClose,
+    handleClose
   }
 }

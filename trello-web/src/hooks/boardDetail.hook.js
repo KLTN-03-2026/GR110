@@ -7,10 +7,11 @@ import {
   fetchBoardDetailsAPI,
   updateCurrentActiveBoard
 } from '~/redux/activeBoard/activeBoardSlice'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { cloneDeep } from 'lodash'
 import { useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
+import { initSocket } from '~/socket/socket'
 
 const useBoardDetail = () => {
   const dispatch = useDispatch()
@@ -28,6 +29,7 @@ const useBoardDetail = () => {
   const [popoverView, setPopoverView] = useState(null)
   const [action, setAction] = useState(null)
   const [selectedLabel, setSelectedLabel] = useState(null)
+  const boardRef = useRef(null)
 
   const handleOpenMoreOption = (event) => {
     setAnchorEl(event.currentTarget)
@@ -84,7 +86,35 @@ const useBoardDetail = () => {
   }
 
   useEffect(() => {
+    boardRef.current = board
+  }, [board])
+
+  useEffect(() => {
+    if (!boardId) return
+
     dispatch(fetchBoardDetailsAPI(boardId))
+
+    const socket = initSocket()
+
+    socket.emit('board:join', { boardId })
+
+    const handleBoardUpdated = ({ board: updatedBoard }) => {
+      const currentBoard = boardRef.current
+
+      console.log('currentBoard:::', currentBoard)
+      console.log('updatedBoard:::', updatedBoard)
+
+      const data = { ...currentBoard, ...updatedBoard }
+
+      console.log('data:::', data)
+      dispatch(updateCurrentActiveBoard(data))
+    }
+
+    socket.on('board:updated', handleBoardUpdated)
+
+    return () => {
+      socket.off('board:updated', handleBoardUpdated)
+    }
   }, [dispatch, boardId])
 
   const moveColumns = (dndOrderedColumns) => {

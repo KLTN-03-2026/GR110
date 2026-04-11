@@ -3,16 +3,15 @@ import { env } from '../config/environment.js'
 
 let redisClientInstance = null
 
-const CONNECT_REDIS = async () => {
+const CONNECT_REDIS_CACHE = async () => {
   if (redisClientInstance) return redisClientInstance
 
   redisClientInstance = createClient({
     socket: {
-      host: env.REDIS_HOST,
-      port: env.REDIS_PORT
+      host: env.REDIS_CACHE_HOST,
+      port: env.REDIS_CACHE_PORT
     },
-    password: env.REDIS_PASSWORD || undefined,
-    database: env.REDIS_DB
+    password: env.REDIS_CACHE_PASSWORD || undefined
   })
 
   redisClientInstance.on('error', (err) => {
@@ -39,17 +38,17 @@ const CONNECT_REDIS = async () => {
   return redisClientInstance
 }
 
-const GET_REDIS = () => {
+const GET_REDIS_CACHE = () => {
   if (!redisClientInstance)
-    throw new Error('Redis is not connected. Call CONNECT_REDIS first.')
+    throw new Error('Redis is not connected. Call CONNECT_REDIS_CACHE first.')
   return redisClientInstance
 }
 
-const CLOSE_REDIS = async () => {
+const CLOSE_REDIS_CACHE = async () => {
   if (redisClientInstance) {
     await redisClientInstance.quit()
     redisClientInstance = null
   }
 }
 
-export { CONNECT_REDIS, GET_REDIS, CLOSE_REDIS }
+export { CONNECT_REDIS_CACHE, GET_REDIS_CACHE, CLOSE_REDIS_CACHE }
