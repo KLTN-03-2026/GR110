@@ -153,7 +153,7 @@ class BoardService {
 
   static getBackground = async({userContext}) => {
     return await BackgroundRepo.findMany({
-      filter: { isDelete: false, status: 'active' },
+      filter: { isDelete: false, status: 'active', entity: 'board' },
       options: {}
     })
   }

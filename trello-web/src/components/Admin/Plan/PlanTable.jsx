@@ -1,5 +1,5 @@
-import React from 'react'
 import {
+  Box,
   Chip,
   IconButton,
   Stack,
@@ -8,10 +8,13 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  Tooltip,
+  Typography
 } from '@mui/material'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
+import ConfirmDeleteModal from '../ModalDelete/ConfirmDeleteModal'
 
 function truncateText(value, maxLength = 50) {
   if (!value) return '-'
@@ -20,11 +23,11 @@ function truncateText(value, maxLength = 50) {
 }
 
 function formatCurrency(value) {
-  if (value === null || value === undefined) return '$0.00'
+  if (value === null || value === undefined) return '0 ₫'
 
-  return Number(value).toLocaleString('en-US', {
+  return Number(value).toLocaleString('vi-VN', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'VND'
   })
 }
 
@@ -44,34 +47,139 @@ function getStatusChipStyle(status) {
       }
 }
 
-function formatFeatureSummary(feature) {
-  if (!feature) return '-'
+function getFeatureDisplayData(feature) {
+  const limits = feature?.limits || {}
+  const capabilities = feature?.capabilities || {}
 
-  return [
-    `Members: ${feature.limits?.maxMembers ?? 0}`,
-    `Boards: ${feature.limits?.maxBoards ?? 0}`,
-    `Columns/Board: ${feature.limits?.maxColumnsPerBoard ?? 0}`,
-    `Storage: ${feature.limits?.maxStorageMb ?? 0}MB`,
-    `Private Board: ${feature.capabilities?.board?.createPrivateBoard ? 'Yes' : 'No'}`,
-    `Custom Role: ${feature.capabilities?.workspace?.customRole ? 'Yes' : 'No'}`
-  ].join(' | ')
+  const limitSummary = [
+    `${limits.maxMembers ?? 0} members`,
+    `${limits.maxBoards ?? 0} boards`,
+    `${limits.maxColumnsPerBoard ?? 0} cols/board`,
+    `${limits.maxStorageMb ?? 0}MB storage`
+  ]
+
+  const enabledCapabilities = [
+    capabilities?.workspace?.customRole && 'Custom role',
+    capabilities?.board?.customRole && 'Board role',
+    capabilities?.board?.createPrivateBoard && 'Private board',
+    capabilities?.column?.customColor && 'Custom color',
+    capabilities?.task?.setDue && 'Set due',
+    capabilities?.task?.assignMembers && 'Assign members'
+  ].filter(Boolean)
+
+  return {
+    limitLine: limitSummary.join(' • '),
+    capabilityLine:
+      enabledCapabilities.length > 0
+        ? enabledCapabilities.join(' • ')
+        : 'No extra features enabled',
+    detailLines: [
+      `Members: ${limits.maxMembers ?? 0}`,
+      `Boards: ${limits.maxBoards ?? 0}`,
+      `Columns/Board: ${limits.maxColumnsPerBoard ?? 0}`,
+      `Cards/Board: ${limits.maxCardsPerBoard ?? 0}`,
+      `Comments/Card: ${limits.maxCommentsPerCard ?? 0}`,
+      `Checklist Items/Card: ${limits.maxChecklistItemsPerCard ?? 0}`,
+      `Storage: ${limits.maxStorageMb ?? 0}MB`,
+      `File Size: ${limits.maxFileSizeMb ?? 0}MB`,
+      `Workspace Custom Role: ${capabilities?.workspace?.customRole ? 'Yes' : 'No'}`,
+      `Board Custom Role: ${capabilities?.board?.customRole ? 'Yes' : 'No'}`,
+      `Private Board: ${capabilities?.board?.createPrivateBoard ? 'Yes' : 'No'}`,
+      `Column Custom Color: ${capabilities?.column?.customColor ? 'Yes' : 'No'}`,
+      `Task Set Due: ${capabilities?.task?.setDue ? 'Yes' : 'No'}`,
+      `Task Assign Members: ${capabilities?.task?.assignMembers ? 'Yes' : 'No'}`
+    ]
+  }
 }
 
-export default function PlanTable({ plans, page, rowsPerPage, onEdit, onDelete }) {
+function FeatureCell({ feature }) {
+  const { limitLine, capabilityLine, detailLines } =
+    getFeatureDisplayData(feature)
+
+  return (
+    <Tooltip
+      arrow
+      placement="top-start"
+      title={
+        <Box sx={{ py: 0.5 }}>
+          {detailLines.map((line, index) => (
+            <Typography key={index} sx={{ fontSize: '12px', lineHeight: 1.6 }}>
+              {line}
+            </Typography>
+          ))}
+        </Box>
+      }
+    >
+      <Box sx={{ minWidth: 260, maxWidth: 340 }}>
+        <Typography
+          sx={{
+            fontSize: '14px',
+            fontWeight: 600,
+            color: '#111827',
+            lineHeight: 1.5
+          }}
+        >
+          {limitLine}
+        </Typography>
+
+        <Typography
+          sx={{
+            mt: 0.5,
+            fontSize: '13px',
+            color: '#6b7280',
+            lineHeight: 1.5
+          }}
+        >
+          {truncateText(capabilityLine, 55)}
+        </Typography>
+      </Box>
+    </Tooltip>
+  )
+}
+
+export default function PlanTable({
+  plans,
+  page,
+  rowsPerPage,
+  onEdit,
+  onDelete,
+  onBlock,
+  deleteModalOpen,
+  selectedPlan,
+  onCloseDeleteModal,
+  onConfirmDelete,
+  deleteLoading
+}) {
   return (
     <TableContainer>
       <Table>
         <TableHead>
           <TableRow sx={{ backgroundColor: '#f3f4f6' }}>
-            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>No.</TableCell>
-            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Title</TableCell>
-            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Feature</TableCell>
-            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Billing Cycle</TableCell>
-            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Description</TableCell>
-            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Original Price</TableCell>
-            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Current Price</TableCell>
-            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Status</TableCell>
-            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Action</TableCell>
+            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>#</TableCell>
+            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
+              Title
+            </TableCell>
+            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
+              Feature
+            </TableCell>
+            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
+              Billing Cycle
+            </TableCell>
+            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
+              Description
+            </TableCell>
+            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
+              Original Price
+            </TableCell>
+            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
+              Current Price
+            </TableCell>
+            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
+              Status
+            </TableCell>
+            <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
+              Action
+            </TableCell>
           </TableRow>
         </TableHead>
 
@@ -85,7 +193,8 @@ export default function PlanTable({ plans, page, rowsPerPage, onEdit, onDelete }
                 hover
                 sx={{
                   '& .MuiTableCell-root': {
-                    borderBottom: '1px solid #e5e7eb'
+                    borderBottom: '1px solid #e5e7eb',
+                    verticalAlign: 'top'
                   }
                 }}
               >
@@ -104,7 +213,7 @@ export default function PlanTable({ plans, page, rowsPerPage, onEdit, onDelete }
                 </TableCell>
 
                 <TableCell sx={{ fontSize: '15px', color: '#1f2937' }}>
-                  {truncateText(formatFeatureSummary(plan.feature), 100)}
+                  <FeatureCell feature={plan.feature} />
                 </TableCell>
 
                 <TableCell
@@ -132,7 +241,8 @@ export default function PlanTable({ plans, page, rowsPerPage, onEdit, onDelete }
                 <TableCell>
                   <Chip
                     label={statusStyle.label}
-                    size='small'
+                    onClick={() => onBlock(plan)}
+                    size="small"
                     sx={{
                       fontWeight: 500,
                       color: statusStyle.color,
@@ -143,27 +253,27 @@ export default function PlanTable({ plans, page, rowsPerPage, onEdit, onDelete }
                 </TableCell>
 
                 <TableCell>
-                  <Stack direction='row' spacing={0.5}>
+                  <Stack direction="row" spacing={0.5}>
                     <IconButton
-                      size='small'
+                      size="small"
                       onClick={() => onEdit(plan)}
                       sx={{
                         color: '#374151',
                         '&:hover': { backgroundColor: '#f3f4f6' }
                       }}
                     >
-                      <EditOutlinedIcon fontSize='small' />
+                      <EditOutlinedIcon fontSize="small" />
                     </IconButton>
 
                     <IconButton
-                      size='small'
+                      size="small"
                       onClick={() => onDelete(plan)}
                       sx={{
                         color: '#ef4444',
                         '&:hover': { backgroundColor: '#fef2f2' }
                       }}
                     >
-                      <DeleteOutlineOutlinedIcon fontSize='small' />
+                      <DeleteOutlineOutlinedIcon fontSize="small" />
                     </IconButton>
                   </Stack>
                 </TableCell>
@@ -172,6 +282,18 @@ export default function PlanTable({ plans, page, rowsPerPage, onEdit, onDelete }
           })}
         </TableBody>
       </Table>
+      <ConfirmDeleteModal
+        open={deleteModalOpen}
+        title="Delete Plan"
+        description={
+          selectedPlan
+            ? `Are you sure you want to delete plan "${selectedPlan.title}"?`
+            : 'Are you sure you want to delete this plan?'
+        }
+        onClose={onCloseDeleteModal}
+        onConfirm={onConfirmDelete}
+        loading={deleteLoading}
+      />
     </TableContainer>
   )
 }

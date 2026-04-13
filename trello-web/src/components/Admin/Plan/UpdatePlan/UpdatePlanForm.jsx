@@ -1,8 +1,9 @@
-import React from 'react'
 import {
   Box,
   Button,
+  Checkbox,
   FormControl,
+  FormControlLabel,
   MenuItem,
   Paper,
   Select,
@@ -12,6 +13,10 @@ import {
 } from '@mui/material'
 import { Controller, useForm } from 'react-hook-form'
 import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
+import { CapabilityCheckbox } from '../CreatePlan/CapabilityCheckbox'
+import { LimitField } from '../CreatePlan/LimitField'
+import { updateAdminPlanApi } from '~/apis/adminPlan.api'
+import { useParams } from 'react-router-dom'
 
 const inputSx = {
   '& .MuiInputLabel-root': {
@@ -55,7 +60,54 @@ const selectSx = {
   }
 }
 
+const sectionTitleSx = {
+  mb: 1,
+  fontSize: '14px',
+  fontWeight: 600,
+  color: '#111827'
+}
+
+const buildDefaultValues = (initialData) => ({
+  title: initialData?.title || '',
+  billingCycle: initialData?.billingCycle || 'monthly',
+  description: initialData?.description || '',
+  originPrice: initialData?.originPrice ?? 0,
+  currentPrice: initialData?.currentPrice ?? 0,
+  status: initialData?.status || 'active',
+  feature: {
+    capabilities: {
+      workspace: {
+        customRole: initialData?.feature?.capabilities?.workspace?.customRole ?? false
+      },
+      board: {
+        customRole: initialData?.feature?.capabilities?.board?.customRole ?? false
+      },
+      column: {
+        customColor: initialData?.feature?.capabilities?.column?.customColor ?? false
+      },
+      task: {
+        setDue: initialData?.feature?.capabilities?.task?.setDue ?? false,
+        assignMembers: initialData?.feature?.capabilities?.task?.assignMembers ?? false
+      }
+    },
+    limits: {
+      maxMembers: initialData?.feature?.limits?.maxMembers ?? 5,
+      maxBoards: initialData?.feature?.limits?.maxBoards ?? 3,
+      maxWorkspaceRoles: initialData?.feature?.limits?.maxWorkspaceRoles ?? 0,
+      maxBoardRoles: initialData?.feature?.limits?.maxBoardRoles ?? 0,
+      maxColumnsPerBoard: initialData?.feature?.limits?.maxColumnsPerBoard ?? 20,
+      maxCardsPerBoard: initialData?.feature?.limits?.maxCardsPerBoard ?? 100,
+      maxCommentsPerCard: initialData?.feature?.limits?.maxCommentsPerCard ?? 50,
+      maxChecklistItemsPerCard: initialData?.feature?.limits?.maxChecklistItemsPerCard ?? 20,
+      maxStorageMb: initialData?.feature?.limits?.maxStorageMb ?? 512,
+      maxFileSizeMb: initialData?.feature?.limits?.maxFileSizeMb ?? 5
+    }
+  }
+})
+
 export default function UpdatePlanForm({ initialData }) {
+  const defaultValues = buildDefaultValues(initialData)
+
   const {
     register,
     handleSubmit,
@@ -63,26 +115,51 @@ export default function UpdatePlanForm({ initialData }) {
     reset,
     formState: { errors }
   } = useForm({
-    defaultValues: {
-      title: initialData?.title || '',
-      feature: initialData?.feature || '',
-      billingCycle: initialData?.billingCycle || 'monthly',
-      description: initialData?.description || '',
-      originPrice: initialData?.originPrice ?? '',
-      currentPrice: initialData?.currentPrice ?? '',
-      status: initialData?.status || 'active'
-    },
+    defaultValues,
     mode: 'onBlur'
   })
 
-  const onSubmit = (data) => {
+  const { _id } = useParams();
+  const onSubmit = async(data) => {
     const payload = {
-      ...data,
+      title: data.title.trim(),
+      billingCycle: data.billingCycle,
+      description: data.description.trim(),
       originPrice: Number(data.originPrice),
-      currentPrice: Number(data.currentPrice)
+      currentPrice: Number(data.currentPrice),
+      status: data.status,
+      feature: {
+        capabilities: {
+          workspace: {
+            customRole: !!data.feature.capabilities.workspace.customRole
+          },
+          board: {
+            customRole: !!data.feature.capabilities.board.customRole
+          },
+          column: {
+            customColor: !!data.feature.capabilities.column.customColor
+          },
+          task: {
+            setDue: !!data.feature.capabilities.task.setDue,
+            assignMembers: !!data.feature.capabilities.task.assignMembers
+          }
+        },
+        limits: {
+          maxMembers: Number(data.feature.limits.maxMembers),
+          maxBoards: Number(data.feature.limits.maxBoards),
+          maxWorkspaceRoles: Number(data.feature.limits.maxWorkspaceRoles),
+          maxBoardRoles: Number(data.feature.limits.maxBoardRoles),
+          maxColumnsPerBoard: Number(data.feature.limits.maxColumnsPerBoard),
+          maxCardsPerBoard: Number(data.feature.limits.maxCardsPerBoard),
+          maxCommentsPerCard: Number(data.feature.limits.maxCommentsPerCard),
+          maxChecklistItemsPerCard: Number(data.feature.limits.maxChecklistItemsPerCard),
+          maxStorageMb: Number(data.feature.limits.maxStorageMb),
+          maxFileSizeMb: Number(data.feature.limits.maxFileSizeMb)
+        }
+      }
     }
 
-    console.log('Update Plan Payload:', payload)
+    await updateAdminPlanApi({planId: _id, planData: payload})
   }
 
   return (
@@ -105,9 +182,7 @@ export default function UpdatePlanForm({ initialData }) {
         }}
       >
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Title
-          </Typography>
+          <Typography sx={sectionTitleSx}>Title</Typography>
 
           <TextField
             fullWidth
@@ -124,9 +199,7 @@ export default function UpdatePlanForm({ initialData }) {
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Billing Cycle
-          </Typography>
+          <Typography sx={sectionTitleSx}>Billing Cycle</Typography>
 
           <Controller
             name='billingCycle'
@@ -144,9 +217,7 @@ export default function UpdatePlanForm({ initialData }) {
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Original Price
-          </Typography>
+          <Typography sx={sectionTitleSx}>Original Price</Typography>
 
           <TextField
             fullWidth
@@ -167,9 +238,7 @@ export default function UpdatePlanForm({ initialData }) {
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Current Price
-          </Typography>
+          <Typography sx={sectionTitleSx}>Current Price</Typography>
 
           <TextField
             fullWidth
@@ -190,9 +259,7 @@ export default function UpdatePlanForm({ initialData }) {
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Status
-          </Typography>
+          <Typography sx={sectionTitleSx}>Status</Typography>
 
           <Controller
             name='status'
@@ -209,24 +276,117 @@ export default function UpdatePlanForm({ initialData }) {
         </Box>
       </Box>
 
-      <Box sx={{ mt: 3 }}>
-        <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-          Feature
+      <Box sx={{ mt: 4 }}>
+        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#111827', mb: 2 }}>
+          Capabilities
         </Typography>
 
-        <TextField
-          fullWidth
-          label='Enter Feature...'
-          multiline
-          minRows={3}
-          variant='outlined'
-          error={!!errors.feature}
-          {...register('feature', {
-            required: 'Feature is required'
-          })}
-          sx={inputSx}
-        />
-        <FieldErrorAlert errors={errors} fieldName='feature' />
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 1
+          }}
+        >
+          <CapabilityCheckbox
+            control={control}
+            name='feature.capabilities.workspace.customRole'
+            label='Workspace Custom Role'
+          />
+          <CapabilityCheckbox
+            control={control}
+            name='feature.capabilities.board.customRole'
+            label='Board Custom Role'
+          />
+          <CapabilityCheckbox
+            control={control}
+            name='feature.capabilities.column.customColor'
+            label='Column Custom Color'
+          />
+          <CapabilityCheckbox
+            control={control}
+            name='feature.capabilities.task.setDue'
+            label='Task Set Due'
+          />
+          <CapabilityCheckbox
+            control={control}
+            name='feature.capabilities.task.assignMembers'
+            label='Task Assign Members'
+          />
+        </Box>
+      </Box>
+
+      <Box sx={{ mt: 4 }}>
+        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#111827', mb: 2 }}>
+          Limits
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 3
+          }}
+        >
+          <LimitField control={control} name='feature.limits.maxMembers' label='Max Members' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='feature.limits.maxBoards' label='Max Boards' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField
+            control={control}
+            name='feature.limits.maxWorkspaceRoles'
+            label='Max Workspace Roles'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+          <LimitField
+            control={control}
+            name='feature.limits.maxBoardRoles'
+            label='Max Board Roles'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+          <LimitField
+            control={control}
+            name='feature.limits.maxColumnsPerBoard'
+            label='Max Columns Per Board'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+          <LimitField
+            control={control}
+            name='feature.limits.maxCardsPerBoard'
+            label='Max Cards Per Board'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+          <LimitField
+            control={control}
+            name='feature.limits.maxCommentsPerCard'
+            label='Max Comments Per Card'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+          <LimitField
+            control={control}
+            name='feature.limits.maxChecklistItemsPerCard'
+            label='Max Checklist Items Per Card'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+          <LimitField
+            control={control}
+            name='feature.limits.maxStorageMb'
+            label='Max Storage (MB)'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+          <LimitField
+            control={control}
+            name='feature.limits.maxFileSizeMb'
+            label='Max File Size (MB)'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+        </Box>
       </Box>
 
       <Box sx={{ mt: 3 }}>
@@ -276,17 +436,7 @@ export default function UpdatePlanForm({ initialData }) {
         <Button
           type='button'
           variant='contained'
-          onClick={() =>
-            reset({
-              title: initialData?.title || '',
-              feature: initialData?.feature || '',
-              billingCycle: initialData?.billingCycle || 'monthly',
-              description: initialData?.description || '',
-              originPrice: initialData?.originPrice ?? '',
-              currentPrice: initialData?.currentPrice ?? '',
-              status: initialData?.status || 'active'
-            })
-          }
+          onClick={() => reset(buildDefaultValues(initialData))}
           sx={{
             minWidth: 100,
             height: 40,

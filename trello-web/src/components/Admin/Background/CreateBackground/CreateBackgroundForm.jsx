@@ -171,6 +171,7 @@ export default function CreateBackgroundForm() {
                   sx={selectSx}
                 >
                   <MenuItem value='board'>Board</MenuItem>
+                  <MenuItem value='column'>Column</MenuItem>
                 </Select>
               </FormControl>
             )}
@@ -229,7 +230,7 @@ export default function CreateBackgroundForm() {
         <Stack direction='row' spacing={2} alignItems='center'>
           <Box
             component='img'
-            src={imageValue || 'https://via.placeholder.com/96x56?text=Image'}
+            src={imageValue || 'https://www.shutterstock.com/image-vector/default-ui-image-placeholder-wireframes-600nw-1037719192.jpg'}
             alt='Background preview'
             sx={previewSx}
           />

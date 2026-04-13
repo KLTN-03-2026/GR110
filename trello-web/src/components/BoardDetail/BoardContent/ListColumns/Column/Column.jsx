@@ -49,7 +49,6 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
     handleArchiveColumn,
     onUpdateColumnTitle,
     onUpdateColumnColor,
-    truncateText
   } = useColumn({ column })
 
   const toggleCollapseColumn = (e) => {
@@ -164,9 +163,10 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
           }}
         >
           <ToggleFocusInput
-            value={truncateText(column?.title, 20)}
+            value={column?.title}
             onChangedValue={onUpdateColumnTitle}
             data-no-dnd="true"
+            truncateOnDisplay
           />
           <Box>
             <Box

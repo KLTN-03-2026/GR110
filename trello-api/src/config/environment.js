@@ -7,6 +7,8 @@ export const env = {
   LOCAL_DEV_APP_HOST: process.env.LOCAL_DEV_APP_HOST,
   LOCAL_DEV_APP_PORT: process.env.LOCAL_DEV_APP_PORT,
 
+  API_KEY_MAIL: process.env.API_KEY_MAIL,
+
   BUILD_MODE: process.env.BUILD_MODE,
 
   AUTHOR: process.env.AUTHOR,
@@ -16,8 +18,6 @@ export const env = {
 
   EMAIL_USERNAME: process.env.EMAIL_USERNAME,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
-
-  API_KEY_MAIL: process.env.API_KEY_MAIL,
 
   ACCESS_TOKEN_SECRET_SIGNATURE: process.env.ACCESS_TOKEN_SECRET_SIGNATURE,
   ACCESS_TOKEN_LIFE: process.env.ACCESS_TOKEN_LIFE,

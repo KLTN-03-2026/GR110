@@ -16,7 +16,7 @@ import Typography from '@mui/material/Typography'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import { backgroundBoardList } from '~/constant/backgroundBoard'
 import PopoverBoardColor from '~/components/Board/PopoverBoardColor'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import CheckIcon from '@mui/icons-material/Check'
 
 function TabInfo() {
@@ -69,7 +69,7 @@ function TabInfo() {
     setSelectedBackground(nextSelectedBackground)
     setValue('cover', {
       type: coverType,
-      value: coverType === 'image' ? item.image : item._id
+      value: coverType === 'image' ? item.image : item.key
     })
     handleCloseBackgroundPopover()
   }
@@ -78,8 +78,40 @@ function TabInfo() {
   const currentCoverValue = selectedBackground?.type
     ? selectedBackground.type === 'image'
       ? selectedBackground.image
-      : selectedBackground._id
+      : selectedBackground.key
     : board?.cover?.value
+
+  const FALLBACK_IMAGE =
+    'https://images.unsplash.com/photo-1742156345582-b857d994c84e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'
+
+  const previewBackgroundSrc = useMemo(() => {
+    if (selectedBackground?.type === 'image' && selectedBackground?.image) {
+      return selectedBackground.image
+    }
+
+    if (selectedBackground?.type === 'color' && selectedBackground?.src) {
+      return selectedBackground.src
+    }
+
+    if (board?.cover?.type === 'image' && board?.cover?.value) {
+      return board.cover.value
+    }
+
+    if (board?.cover?.type === 'color' && board?.cover?.value) {
+      const matchedColor = backgroundBoardList.find(
+        (item) => item.key === board.cover.value || item._id === board.cover.value
+      )
+      return matchedColor?.src || FALLBACK_IMAGE
+    }
+
+    return FALLBACK_IMAGE
+  }, [
+    selectedBackground?.type,
+    selectedBackground?.image,
+    selectedBackground?.src,
+    board?.cover?.type,
+    board?.cover?.value
+  ])
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
@@ -168,11 +200,7 @@ function TabInfo() {
           >
             <Box
               component="img"
-              src={
-                selectedBackground?.image ||
-                board?.cover?.value ||
-                'https://images.unsplash.com/photo-1742156345582-b857d994c84e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'
-              }
+              src={previewBackgroundSrc}
               alt={selectedBackground?.key || 'board-background'}
               sx={{
                 width: '100%',

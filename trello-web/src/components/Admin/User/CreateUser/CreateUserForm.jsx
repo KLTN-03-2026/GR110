@@ -13,6 +13,11 @@ import { Controller, useForm } from 'react-hook-form'
 import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
 import { createAdminAccountAPI } from '~/apis/adminUser.api'
 import { useState } from 'react'
+import {
+  FIELD_REQUIRED_MESSAGE,
+  PASSWORD_RULE,
+  PASSWORD_RULE_MESSAGE
+} from '~/utils/validators'
 
 const roleOptions = [
   { label: 'Client', value: 'client' },
@@ -187,10 +192,10 @@ export default function CreateUserForm() {
             variant="outlined"
             error={!!errors.password}
             {...register('password', {
-              required: 'Password is required',
-              minLength: {
-                value: 6,
-                message: 'Password must be at least 6 characters'
+              required: FIELD_REQUIRED_MESSAGE,
+              pattern: {
+                value: PASSWORD_RULE,
+                message: PASSWORD_RULE_MESSAGE
               }
             })}
             sx={{

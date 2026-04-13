@@ -139,11 +139,7 @@ const useColumn = ({ column }) => {
     dispatch(updateCurrentActiveBoard(newBoard))
   }
 
-  const truncateText = (text, maxLength) => {
-    if (!text) return ''
-    if (text.length <= maxLength) return text
-    return text.slice(0, maxLength) + '...'
-  }
+  
 
   return {
     setNodeRef,
@@ -162,7 +158,7 @@ const useColumn = ({ column }) => {
     addNewCard,
     handleArchiveColumn,
     onUpdateColumnTitle,
-    onUpdateColumnColor, truncateText
+    onUpdateColumnColor
   }
 }
 

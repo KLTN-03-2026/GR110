@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   Button,
   Dialog,
@@ -27,7 +26,7 @@ export default function ConfirmDeleteModal({
         sx={{
           fontSize: '20px',
           fontWeight: 700,
-          color: 'white'
+          color: '#111827'
         }}
       >
         {title}
@@ -37,7 +36,7 @@ export default function ConfirmDeleteModal({
         <DialogContentText
           sx={{
             fontSize: '15px',
-            color: 'white'
+            color: '#111827'
           }}
         >
           {description}
@@ -89,6 +88,7 @@ export default function ConfirmDeleteModal({
         >
           Delete
         </Button>
+        
       </DialogActions>
     </Dialog>
   )

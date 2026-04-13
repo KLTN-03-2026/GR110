@@ -15,9 +15,9 @@ class AdminUserService {
     const filter = keyword
       ? {
           $or: [
-            { userEmail: { $regex: escapedKeyword, $options: 'i' } },
-            { displayName: { $regex: escapedKeyword, $options: 'i' } },
-            { username: { $regex: escapedKeyword, $options: 'i' } }
+            { email: { $regex: escapedKeyword, $options: 'i' } },
+            { username: { $regex: escapedKeyword, $options: 'i' } },
+            { displayName: { $regex: escapedKeyword, $options: 'i' } }
           ]
         }
       : {}

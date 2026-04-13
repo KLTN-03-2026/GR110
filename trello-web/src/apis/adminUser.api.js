@@ -1,9 +1,9 @@
 import { toast } from 'react-toastify'
-import authorizeAxiosInstance from '~/utils/authorizeAxios'
+import authorizeAdminAxiosInstance from '~/utils/authorizeAdminAxios'
 import { API_ROOT } from '~/utils/constants'
 
 export const fetchAdminUsersAPI = async ({ search, page, limit }) => {
-  const response = await authorizeAxiosInstance.get(`${API_ROOT}/v1/admin/users`, {
+  const response = await authorizeAdminAxiosInstance.get(`${API_ROOT}/v1/admin/users`, {
     params: {
       ...(search ? { search } : {}),
       page,
@@ -14,19 +14,19 @@ export const fetchAdminUsersAPI = async ({ search, page, limit }) => {
 }
 
 export const updateBlockUserAPI = async ({ userId }) => {
-  const response = await authorizeAxiosInstance.patch(`${API_ROOT}/v1/admin/users/block/${userId}`)
+  const response = await authorizeAdminAxiosInstance.patch(`${API_ROOT}/v1/admin/users/block/${userId}`)
   toast.success('User change status successfully!')
   return response.data.metadata
 }
 
 export const updateAdminUserApi = async ({ userId, userData }) => {
-  const response = await authorizeAxiosInstance.put(`${API_ROOT}/v1/admin/users/${userId}`, userData)
+  const response = await authorizeAdminAxiosInstance.put(`${API_ROOT}/v1/admin/users/${userId}`, userData)
   toast.success('User updated successfully!')
   return response.data.metadata
 }
 
 export const createAdminAccountAPI = async ({ userData }) => {
-  const response = await authorizeAxiosInstance.post(`${API_ROOT}/v1/admin/users`, userData)
+  const response = await authorizeAdminAxiosInstance.post(`${API_ROOT}/v1/admin/users`, userData)
   toast.success('Admin account created successfully!')
   return response.data.metadata
 }
