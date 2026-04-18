@@ -96,24 +96,303 @@ const useBoardDetail = () => {
 
     const socket = initSocket()
 
-    socket.emit('board:join', { boardId })
+    const joinBoard = () => socket.emit('board:join', { boardId })
 
+    // join ngay nếu đang connected
+    if (socket.connected) joinBoard()
+
+    // reconnect xong sẽ join lại
+    socket.on('connect', joinBoard)
+
+    // ================ BOARD ================
     const handleBoardUpdated = ({ board: updatedBoard }) => {
       const currentBoard = boardRef.current
+      if (!currentBoard || !updatedBoard) return
 
-      console.log('currentBoard:::', currentBoard)
-      console.log('updatedBoard:::', updatedBoard)
+      const nextBoard = {
+        ...currentBoard,
+        ...updatedBoard
+      }
 
-      const data = { ...currentBoard, ...updatedBoard }
+      if (updatedBoard.columnOrderIds?.length) {
+        nextBoard.columns = [...currentBoard.columns].sort((a, b) => {
+          return (
+            updatedBoard.columnOrderIds.indexOf(a._id) -
+            updatedBoard.columnOrderIds.indexOf(b._id)
+          )
+        })
+      }
 
-      console.log('data:::', data)
-      dispatch(updateCurrentActiveBoard(data))
+      boardRef.current = nextBoard
+      dispatch(updateCurrentActiveBoard(nextBoard))
+    }
+
+    // ================ COLUMN ================
+    const handleColumnCreated = ({ column: createdColumn }) => {
+      const currentBoard = boardRef.current
+      if (!currentBoard) return
+
+      const nextBoard = {
+        ...currentBoard,
+        columnOrderIds: [...currentBoard.columnOrderIds, createdColumn._id],
+        columns: [...currentBoard.columns, createdColumn]
+      }
+
+      boardRef.current = nextBoard
+      dispatch(updateCurrentActiveBoard(nextBoard))
+    }
+
+    const handleColumnUpdated = ({ column: updatedColumn }) => {
+      const currentBoard = boardRef.current
+      if (!currentBoard) return
+
+      const nextBoard = {
+        ...currentBoard,
+        columns: currentBoard.columns.map((col) => {
+          if (col._id !== updatedColumn._id) return col
+
+          const mergedColumn = { ...col, ...updatedColumn }
+          const cardOrderIds = mergedColumn.cardOrderIds || []
+
+          const sortedCards = [...(mergedColumn.cards || [])].sort((a, b) => {
+            return (
+              cardOrderIds.indexOf(a._id.toString()) -
+              cardOrderIds.indexOf(b._id.toString())
+            )
+          })
+
+          return {
+            ...mergedColumn,
+            cards: sortedCards
+          }
+        })
+      }
+
+      boardRef.current = nextBoard
+      dispatch(updateCurrentActiveBoard(nextBoard))
+    }
+
+    const handleColumnArchived = ({ column: archivedColumn }) => {
+      const currentBoard = boardRef.current
+      if (!currentBoard) return
+
+      const nextBoard = {
+        ...currentBoard,
+        columns: currentBoard.columns.filter(
+          (col) => col._id !== archivedColumn._id
+        )
+      }
+
+      boardRef.current = nextBoard
+      dispatch(updateCurrentActiveBoard(nextBoard))
+    }
+
+    const handleColumnRestored = ({ column: restoredColumn }) => {
+      const currentBoard = boardRef.current
+      if (!currentBoard) return
+
+      const nextBoard = {
+        ...currentBoard,
+        columns: [...currentBoard.columns, restoredColumn]
+      }
+
+      boardRef.current = nextBoard
+      dispatch(updateCurrentActiveBoard(nextBoard))
+    }
+
+    // ================ CARD ================
+    const handleCardCreated = ({ card: createdCard }) => {
+      const currentBoard = boardRef.current
+      if (!currentBoard) return
+
+      const nextBoard = {
+        ...currentBoard,
+        columns: currentBoard.columns.map((column) => {
+          if (column._id !== createdCard.columnId) return column
+
+          return {
+            ...column,
+            cards: [...column.cards, createdCard]
+          }
+        })
+      }
+
+      boardRef.current = nextBoard
+      dispatch(updateCurrentActiveBoard(nextBoard))
+    }
+
+    const handleCardUpdated = ({ card: updatedCard }) => {
+      const currentBoard = boardRef.current
+      if (!currentBoard) return
+
+      const { description, ...cardWithoutDescription } = updatedCard
+
+      const nextBoard = {
+        ...currentBoard,
+        columns: currentBoard.columns.map((column) => {
+          if (column._id !== updatedCard.columnId) return column
+
+          return {
+            ...column,
+            cards: column.cards.map((card) =>
+              card._id === updatedCard._id
+                ? { ...card, ...cardWithoutDescription }
+                : card
+            )
+          }
+        })
+      }
+
+      boardRef.current = nextBoard
+      dispatch(updateCurrentActiveBoard(nextBoard))
+    }
+
+    const handleCardArchived = ({ card: updatedCard }) => {
+      const currentBoard = boardRef.current
+      if (!currentBoard) return
+
+      if (updatedCard.status === 'archived') {
+        const nextBoard = {
+          ...currentBoard,
+          columns: currentBoard.columns.map((column) => {
+            if (column._id !== updatedCard.columnId) return column
+
+            return {
+              ...column,
+              cards: column.cards.filter((card) => card._id !== updatedCard._id)
+            }
+          })
+        }
+        boardRef.current = nextBoard
+        dispatch(updateCurrentActiveBoard(nextBoard))
+        return
+      }
+    }
+
+    const handleCardRestored = ({ boardId, card: updatedCard }) => {
+      const currentBoard = boardRef.current
+      if (!currentBoard) return
+      if (boardId !== currentBoard._id) return
+
+      const nextBoard = {
+        ...currentBoard,
+        columns: currentBoard.columns.map((c) => {
+          if (c._id === updatedCard.columnId) {
+            const currentCards = c.cards || []
+            const cardIds = new Set(currentCards.map((card) => card._id))
+
+            if (cardIds.has(updatedCard._id)) return c
+
+            return {
+              ...c,
+              cards: [...currentCards, updatedCard]
+            }
+          }
+
+          return c
+        })
+      }
+
+      boardRef.current = nextBoard
+      dispatch(updateCurrentActiveBoard(nextBoard))
+    }
+
+    const handleMoveCard = ({ boardId, card, prevColumn, nextColumn }) => {
+      const currentBoard = boardRef.current
+      if (!currentBoard) return
+      if (boardId !== currentBoard._id) return
+
+      const sortCardsByOrder = (cards = [], cardOrderIds = []) => {
+        const orderMap = new Map(
+          cardOrderIds.map((id, index) => [id.toString(), index])
+        )
+
+        return [...cards].sort((a, b) => {
+          const indexA = orderMap.has(a._id.toString())
+            ? orderMap.get(a._id.toString())
+            : Number.MAX_SAFE_INTEGER
+
+          const indexB = orderMap.has(b._id.toString())
+            ? orderMap.get(b._id.toString())
+            : Number.MAX_SAFE_INTEGER
+
+          return indexA - indexB
+        })
+      }
+
+      const nextBoard = {
+        ...currentBoard,
+        columns: currentBoard.columns.map((col) => {
+          if (col._id.toString() === prevColumn._id.toString()) {
+            const mergedPrevColumn = {
+              ...col,
+              ...prevColumn
+            }
+
+            const filteredCards = (mergedPrevColumn.cards || []).filter(
+              (item) => item._id.toString() !== card._id.toString()
+            )
+
+            return {
+              ...mergedPrevColumn,
+              cards: sortCardsByOrder(
+                filteredCards,
+                mergedPrevColumn.cardOrderIds || []
+              )
+            }
+          }
+
+          if (col._id.toString() === nextColumn._id.toString()) {
+            const mergedNextColumn = {
+              ...col,
+              ...nextColumn
+            }
+
+            const withoutDuplicate = (mergedNextColumn.cards || []).filter(
+              (item) => item._id.toString() !== card._id.toString()
+            )
+
+            const nextCards = [...withoutDuplicate, card]
+
+            return {
+              ...mergedNextColumn,
+              cards: sortCardsByOrder(
+                nextCards,
+                mergedNextColumn.cardOrderIds || []
+              )
+            }
+          }
+
+          return col
+        })
+      }
+
+      boardRef.current = nextBoard
+      dispatch(updateCurrentActiveBoard(nextBoard))
     }
 
     socket.on('board:updated', handleBoardUpdated)
+    socket.on('card:updated', handleCardUpdated)
+    socket.on('card:created', handleCardCreated)
+    socket.on('card:archived', handleCardArchived)
+    socket.on('card:restored', handleCardRestored)
+    socket.on('card:moved', handleMoveCard)
+    socket.on('column:created', handleColumnCreated)
+    socket.on('column:updated', handleColumnUpdated)
+    socket.on('column:archived', handleColumnArchived)
+    socket.on('column:restored', handleColumnRestored)
 
     return () => {
       socket.off('board:updated', handleBoardUpdated)
+      socket.off('card:updated', handleCardUpdated)
+      socket.off('card:created', handleCardCreated)
+      socket.off('card:archived', handleCardArchived)
+      socket.off('card:restored', handleCardRestored)
+      socket.off('card:moved', handleMoveCard)
+      socket.off('column:created', handleColumnCreated)
+      socket.off('column:updated', handleColumnUpdated)
+      socket.off('column:archived', handleColumnArchived)
+      socket.off('column:restored', handleColumnRestored)
     }
   }, [dispatch, boardId])
 

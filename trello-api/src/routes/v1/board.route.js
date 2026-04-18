@@ -11,6 +11,7 @@ import { boardMiddleware } from '~/middlewares/boardPermission.middleware'
 import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
 import { deleteBoardRoleParamSchema } from '~/validations/boardRole.validation'
 import { boardMemberValidation } from '~/validations/boardMember.validation'
+import AIController from '~/controllers/ai.controller'
 
 const Router = express.Router()
 
@@ -152,6 +153,14 @@ Router.route('/roles/:boardId/:roleId').delete(
 Router.route('/status/:_id').put(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(BoardController.updateStatus)
+)
+
+Router.route('/ai-generate').post(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(
+    workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.BOARD_CREATE)
+  ),
+  asyncHandler(AIController.generateBoard)
 )
 
 export const boardRoute = Router

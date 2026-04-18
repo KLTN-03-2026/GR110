@@ -26,6 +26,7 @@ import {
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
 import BackgroundRepo from '~/repo/adminBackground.repo'
 import { emitBoardUpdated } from '~/realtime/realtimeEmitters/boardRealtime.emitter'
+import { emitCardMoved } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
 
 const DEFAULT_BOARD_LABELS = [
   { title: '', color: 'green' },
@@ -378,27 +379,34 @@ class BoardService {
     }
   }
 
-  static moveCardToDifferentColumn = async ({ data }) => {
+  static moveCardToDifferentColumn = async ({ boardAccess, data }) => {
     const session = mongoClientInstance.startSession()
 
     try {
       await session.withTransaction(async () => {
-        await ColumnRepo.updateById({
+        const updatePrevColumn = await ColumnRepo.updateById({
           _id: data.prevColumnId,
           data: { cardOrderIds: data.prevCardOrderIds, updatedAt: Date.now() },
           session
         })
 
-        await ColumnRepo.updateById({
+        const updateNextColumn = await ColumnRepo.updateById({
           _id: data.nextColumnId,
           data: { cardOrderIds: data.nextCardOrderIds, updatedAt: Date.now() },
           session
         })
 
-        await CardRepo.updateOne({
+        const updatedCard = await CardRepo.updateOne({
           filter: { _id: new ObjectId(data.currentCardId) },
           data: { $set: { columnId: data.nextColumnId } },
           session
+        })
+
+        emitCardMoved({
+          boardId: boardAccess.board._id,
+          card: updatedCard,
+          prevColumn: updatePrevColumn,
+          nextColumn: updateNextColumn
         })
       })
     } finally {
