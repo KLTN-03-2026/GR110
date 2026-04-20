@@ -3,7 +3,7 @@ import { createAdapter } from '@socket.io/redis-adapter'
 import { CONNECT_REDIS_REALTIME } from '~/config/redisRealtime'
 import { corsOptions } from '~/config/cors'
 import { registerBoardSocket } from '~/sockets/socketHandlers/board.socket'
-
+import { registerUserSocket } from '~/sockets/socketHandlers/user.socket'
 let ioInstance = null
 
 const INIT_SOCKET = async (httpServer) => {
@@ -22,6 +22,7 @@ const INIT_SOCKET = async (httpServer) => {
     console.log(`Socket connected: ${socket.id}`)
 
     registerBoardSocket(socket)
+    registerUserSocket(socket)
 
     socket.on('disconnect', (reason) => {
       console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`)
