@@ -145,3 +145,13 @@ export const verifyResetPasswordToken = async (data) => {
   )
   return response.data
 }
+
+export const aiGenerateBoardAPI = async (data) => {
+  const response = await authorizeAxiosInstance.post(
+    `${API_ROOT}/v1/boards/ai-generate`,
+    data
+  )
+
+  toast.success('AI board generated successfully!')
+  return response.data.metadata
+}

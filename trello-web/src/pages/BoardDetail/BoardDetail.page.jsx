@@ -1,15 +1,13 @@
 import Container from '@mui/material/Container'
-import Box from '@mui/material/Box'
-import Typography from '@mui/material/Typography'
 import AppBar from '~/components/AppBar/AppBar'
 import BoardBar from '../../components/BoardDetail/BoardBar/BoardBar'
 import BoardContent from '../../components/BoardDetail/BoardContent/BoardContent'
 import PageLoadingSpinner from '~/components/Loading/PageLoadingSpinner'
 import useBoardDetail from '~/hooks/boardDetail.hook'
 import CardDetailModal from '~/components/BoardDetail/BoardContent/CardDetailModal/_CardDetailModal'
-import { backgroundBoardList } from '~/constant/backgroundBoard'
-import { useState } from 'react'
 import AccessDenied from '~/components/Common/AccessDenied'
+import { useState } from 'react'
+import { backgroundBoardList } from '~/constant/backgroundBoard'
 
 function BoardDetail() {
   const {

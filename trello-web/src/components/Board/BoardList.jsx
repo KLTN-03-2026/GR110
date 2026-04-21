@@ -12,18 +12,22 @@ import ArchivedBoardList from './ArchivedBoardModal'
 import { Link } from 'react-router-dom'
 import { backgroundBoardList } from '~/constant/backgroundBoard'
 import { DEFAULT_PAGE, DEFAULT_ITEMS_PER_PAGE } from '~/utils/constants'
+import { useState } from 'react'
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined'
+import AIGenerateBoardModal from './AIGenerateBoardModal'
 
 function BoardList({ ui, data, handler }) {
   const { page } = ui
   const { boards, count } = data
   const { handleOpenCreateBoard } = handler
-  
+  const [isOpenAIModal, setIsOpenAIModal] = useState(false)
+
   const truncateText = (text, maxLength) => {
     if (!text) return ''
     if (text.length <= maxLength) return text
     return text.slice(0, maxLength) + '...'
   }
-  
+
   return (
     <>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
@@ -154,8 +158,87 @@ function BoardList({ ui, data, handler }) {
             </CardContent>
           </Card>
         </Grid>
+
+        <Grid xs={12} sm={6} md={3}>
+          <Card
+            onClick={() => setIsOpenAIModal(true)}
+            sx={(theme) => ({
+              width: '100%',
+              height: 164,
+              borderRadius: 3,
+              overflow: 'hidden',
+              border: '1px solid',
+              borderColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(167, 139, 250, 0.2)'
+                  : 'rgba(124, 58, 237, 0.15)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              bgcolor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(167, 139, 250, 0.04)'
+                  : 'rgba(124, 58, 237, 0.03)',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 10px 24px rgba(124, 58, 237, 0.2)'
+                    : '0 10px 24px rgba(124, 58, 237, 0.12)',
+                bgcolor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(167, 139, 250, 0.08)'
+                    : 'rgba(124, 58, 237, 0.06)'
+              }
+            })}
+          >
+            <CardContent
+              sx={{
+                p: 2,
+                '&:last-child': { p: 2 },
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+                height: '100%',
+                gap: 1
+              }}
+            >
+              <AutoAwesomeOutlinedIcon
+                sx={{
+                  fontSize: 28,
+                  color: (theme) =>
+                    theme.palette.mode === 'dark' ? '#a78bfa' : '#7c3aed'
+                }}
+              />
+              <Typography
+                variant="span"
+                sx={{
+                  fontSize: 18,
+                  fontWeight: 700,
+                  lineHeight: 1.4,
+                  color: (theme) =>
+                    theme.palette.mode === 'dark' ? '#a78bfa' : '#7c3aed'
+                }}
+              >
+                AI Generate Board
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
       <CreateBoardModal ui={ui.createModal} handler={handler.createModal} />
+
+      <AIGenerateBoardModal
+        isOpen={isOpenAIModal}
+        handleClose={() => setIsOpenAIModal(false)}
+        handleGenerate={handler.createModal.handleAIGenerateBoard}
+        isSubmitting={handler.createModal.isSubmitting}
+      />
 
       {count > 0 && (
         <Box

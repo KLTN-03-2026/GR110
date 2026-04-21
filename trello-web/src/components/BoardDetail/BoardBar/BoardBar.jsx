@@ -1,6 +1,5 @@
 import Chip from '@mui/material/Chip'
 import BoardMemberGroup from './BoardMemberGroup'
-import InviteBoardUser from './InviteBoardUser'
 import Box from '@mui/material/Box'
 import { IconButton } from '@mui/material'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
@@ -79,7 +78,6 @@ function BoardBar({
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
         <BoardMemberGroup members={members} />
-        <InviteBoardUser boardId={board?._id} />
 
         <IconButton
           onClick={handleOpenMoreOption}
