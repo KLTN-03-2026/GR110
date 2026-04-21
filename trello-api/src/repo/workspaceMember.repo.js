@@ -134,5 +134,7 @@ class WorkspaceMemberRepo {
       .collection(workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME)
       .deleteMany(filter, { session })
   }
+
+  
 }
 export default WorkspaceMemberRepo

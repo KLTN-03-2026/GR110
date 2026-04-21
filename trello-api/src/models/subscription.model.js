@@ -11,7 +11,7 @@ const SUBSCRIPTION_COLLECTION_SCHEMA = Joi.object({
     .message(OBJECT_ID_RULE_MESSAGE),
 
   planId: Joi.string()
-    .required()
+  .required()
     .pattern(OBJECT_ID_RULE)
     .message(OBJECT_ID_RULE_MESSAGE),
 

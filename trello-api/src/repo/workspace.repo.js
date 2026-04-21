@@ -1,6 +1,7 @@
 import { workspaceModel } from '~/models/workspace.model'
 import { GET_DB } from '~/config/mongodb'
 import { workspaceMemberModel } from '~/models/workspaceMember.model'
+import { planModel } from '~/models/plan.model'
 
 class WorkspaceRepo {
   static findOne = async ({ filter, options = {} }) => {
@@ -66,6 +67,25 @@ class WorkspaceRepo {
         }
       ])
       .toArray()
+  }
+
+  static fetchByPlan = async () => {
+    try {
+      const result = await GET_DB()
+        .collection(planModel.PLAN_COLLECTION_NAME)
+        .find({ isDeleted: false, status: 'active' })
+        .toArray()
+
+      return result
+    } catch (error) {
+      throw error
+    }
+  }
+
+  static findByPlanId = async ({ filter, options = {} }) => {
+    return await GET_DB()
+      .collection(planModel.PLAN_COLLECTION_NAME)
+      .findOne(filter, options)
   }
 }
 

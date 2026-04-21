@@ -1,4 +1,3 @@
-import React, { useMemo, useState } from 'react'
 import {
   Box,
   Button,
@@ -10,7 +9,6 @@ import {
 import SearchIcon from '@mui/icons-material/Search'
 import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
-import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
 import { useNavigate } from 'react-router-dom'
 import ConfirmDeleteModal from '~/components/Admin/ModalDelete/ConfirmDeleteModal'
 import UserTable from '~/components/Admin/User/UserTable'
@@ -34,7 +32,6 @@ export default function UserPage() {
     handleChangePage,
     handleChangeRowsPerPage,
     handleEditUser,
-    handleCreateUser,
     handleUpdateBlockUsers
   } = useAdminUser()
   return (

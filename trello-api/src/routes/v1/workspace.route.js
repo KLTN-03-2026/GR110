@@ -97,6 +97,11 @@ Router.route('/roles/:workspaceId/:roleId').delete(
   asyncHandler(WorkspaceController.deleteRole)
 )
 
+Router.route('/plans')
+  .get(
+    asyncHandler(authMiddleware.isAuthorized),
+    asyncHandler(WorkspaceController.fetchPlans)
+  )
 Router.route('/:workspaceId')
   .get(
     asyncHandler(authMiddleware.isAuthorized),
@@ -122,5 +127,6 @@ Router.route('/:workspaceId')
     ),
     asyncHandler(WorkspaceController.delete)
   )
+
 
 export const workspaceRoute = Router

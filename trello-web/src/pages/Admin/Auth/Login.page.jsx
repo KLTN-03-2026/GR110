@@ -1,27 +1,22 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
   Alert,
   Box,
   Button,
-  Checkbox,
-  FormControlLabel,
   IconButton,
   InputAdornment,
-  Link,
   Paper,
-  Stack,
   TextField,
   Typography
 } from '@mui/material'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-import DashboardCustomizeOutlinedIcon from '@mui/icons-material/DashboardCustomizeOutlined'
-import WallpaperOutlinedIcon from '@mui/icons-material/WallpaperOutlined'
-import WorkspacesOutlinedIcon from '@mui/icons-material/WorkspacesOutlined'
 import { useForm } from 'react-hook-form'
 import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
+import { loginAdminApi } from '~/redux/adminUser/adminSlice'
+import { toast } from 'react-toastify'
+import { useDispatch } from 'react-redux'
 
 const inputSx = {
   '& .MuiInputLabel-root': {
@@ -51,13 +46,13 @@ const inputSx = {
 const defaultValues = {
   email: '',
   password: '',
-  rememberMe: false
 }
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const dispatch = useDispatch();
 
   const {
     register,
@@ -71,11 +66,13 @@ export default function LoginPage() {
   const onSubmit = async (data) => {
     try {
       setSubmitError('')
-
-      console.log('Login Payload:', data)
-
-      // giả lập login thành công
-      navigate('/user')
+      toast
+        .promise(dispatch(loginAdminApi(data)), {
+          pending: 'Logging in ...'
+        })
+        .then((res) => {
+          if (!res.error) navigate('/admin/user')
+        })
     } catch (error) {
       setSubmitError('Invalid email or password')
     }
@@ -113,15 +110,15 @@ export default function LoginPage() {
         >
 
           <Box sx={{ mb: 3, justifyItems: 'center' }}>
-           <Typography
-                sx={{
-                    fontSize: { xs: '32px', md: '25px !important' },
-                    fontWeight: 800,
-                    color: '#111827',
-                    lineHeight: 1.2
-                }}
-                >
-                Sign In
+            <Typography
+              sx={{
+                fontSize: { xs: '32px', md: '25px !important' },
+                fontWeight: 800,
+                color: '#111827',
+                lineHeight: 1.2
+              }}
+            >
+              Sign In
             </Typography>
             <Typography sx={{ mt: 0.75, color: '#6b7280', fontSize: '14px' }}>
               Enter your account credentials to access the system

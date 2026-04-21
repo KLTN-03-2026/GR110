@@ -18,9 +18,11 @@ import MenuIcon from '@mui/icons-material/Menu'
 import NotificationsNoneOutlinedIcon from '@mui/icons-material/NotificationsNoneOutlined'
 import KeyboardDoubleArrowLeftRoundedIcon from '@mui/icons-material/KeyboardDoubleArrowLeftRounded'
 import KeyboardDoubleArrowRightRoundedIcon from '@mui/icons-material/KeyboardDoubleArrowRightRounded'
-import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
 import { useNavigate } from 'react-router-dom'
+import { logoutAdminApi, selectCurrentAdmin } from '~/redux/adminUser/adminSlice'
+import { useDispatch, useSelector } from 'react-redux'
+import PersonOutlineOutlinedIcon from '@mui/icons-material/PersonOutlineOutlined'
 
 export default function Header({
   drawerWidth,
@@ -28,6 +30,7 @@ export default function Header({
   onToggleMobileSidebar,
   onToggleCollapseSidebar
 }) {
+  const navigate = useNavigate()
   const [anchorEl, setAnchorEl] = useState(null)
   const closeTimeoutRef = useRef(null)
 
@@ -48,8 +51,13 @@ export default function Header({
   }
 
   const open = Boolean(anchorEl)
+  const dispatch = useDispatch();
 
-  const navigate = useNavigate();
+  const handleLogout = () => {
+    dispatch(logoutAdminApi())
+  }
+
+  const currentAdmin = useSelector(selectCurrentAdmin);
 
   return (
     <AppBar
@@ -106,8 +114,8 @@ export default function Header({
 
           <Box onMouseEnter={handleOpenPopover} onMouseLeave={handleClosePopover}>
             <Avatar
-              alt='User Avatar'
-              src='https://i.pravatar.cc/100?img=12'
+              alt='Admin Avatar'
+              src={currentAdmin.avatar ?? 'https://i.pravatar.cc/100?img=12'} 
               sx={{
                 width: 40,
                 height: 40,
@@ -165,7 +173,7 @@ export default function Header({
                     color: '#0f172a'
                   }}
                 >
-                  Settings
+                  Profile
                 </Typography>
               </Box>
 
@@ -173,7 +181,7 @@ export default function Header({
 
               <Box sx={{ p: 1, bgcolor: '#ffffff' }}>
                 <MenuItem
-                  onClick={() => console.log('Account Setting')}
+                  onClick={() => navigate('/admin/profile')}
                   sx={{
                     borderRadius: 2,
                     py: 1.2,
@@ -202,12 +210,12 @@ export default function Header({
                       transition: 'all 0.2s ease'
                     }}
                   >
-                    <SettingsOutlinedIcon fontSize='small' />
+                    <PersonOutlineOutlinedIcon fontSize='small' />
                   </ListItemIcon>
 
                   <ListItemText
-                    primary='Account Setting'
-                    secondary='Profile, password, preferences'
+                    primary='Profile'
+                    secondary='View profile'
                     primaryTypographyProps={{
                       className: 'menu-primary',
                       fontSize: 14,
@@ -225,7 +233,7 @@ export default function Header({
                 </MenuItem>
 
                 <MenuItem
-                  onClick={() => navigate('/admin/auth/login')}
+                  onClick={() => handleLogout()}
                   sx={{
                     borderRadius: 2,
                     py: 1.2,
@@ -272,7 +280,7 @@ export default function Header({
                       color: '#64748b',
                       transition: 'all 0.2s ease'
                     }}
-                    
+
                   />
                 </MenuItem>
               </Box>

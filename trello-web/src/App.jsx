@@ -26,15 +26,14 @@ import CreateBackgroundPage from './pages/Admin/Background/Create.page'
 import UpdateBackgroundPage from './pages/Admin/Background/Update.page'
 import LoginPage from './pages/Admin/Auth/Login.page'
 import WorkspacePage from './pages/Admin/Workspace/Workspace.page'
-import CreateWorkspacePage from './pages/Admin/Workspace/CreateWorkspace.page'
-import UpdateWorkspacePage from './pages/Admin/Workspace/UpdateWorkspace.page'
 import PermissionPage from './pages/Admin/Permission/Permission.page'
 import BoardPages from './pages/Admin/Board/Board.page'
-import CreateBoardPage from './pages/Admin/Board/CreateBoard.page'
-import UpdateBoardPage from './pages/Admin/Board/UpdateBoard.page'
 import SubscriptionPage from './pages/Admin/Subcription/Subcription.page'
 import UpdateSubscriptionPage from './pages/Admin/Subcription/UpdateSubcription.page'
-import CreateSubscriptionPage from './pages/Admin/Subcription/CrerateSubcription.page'
+import { selectCurrentAdmin } from './redux/adminUser/adminSlice'
+import ProfilePage from './pages/Admin/Profile/Profile.page'
+import WorkspacePaymentPage from './pages/Home/WorkspacePayment.page'
+import PaymentPage from './pages/Admin/Payment/Payment.page'
 /**
  * Giải pháp Clean Code trong việc xác định các route nào cần đăng nhập tài khoản xong thì mới cho truy cập
  * Sử dụng <Outlet /> của react-router-dom để hiển thị các Child Route (xem cách sử dụng trong App() bên dưới)
@@ -47,14 +46,21 @@ const ProtectedRoute = ({ user }) => {
   return <Outlet />
 }
 
+const ProtectedRouteAdmin = ({ admin }) => {
+  if (!admin) return <Navigate to="/admin/auth/login" replace={true} />
+  return <Outlet />
+}
+
+
 const UnauthorizedRoute = ({ user }) => {
-  // if (user) return <Navigate to="/" replace={true} />
+  if (user) return <Navigate to="/h" replace={true} />
   return <Outlet />
 }
 
 function App() {
   const currentUser = useSelector(selectCurrentUser)
-  
+  const currentAdmin = useSelector(selectCurrentAdmin)
+
   return (
     <Routes>
       <Route
@@ -63,6 +69,13 @@ function App() {
           // replace = true : ví dụ truy cập route '/' thì sẽ nhảy qua trang
           // boards/6643599343c42cd4fa6c7210 và không lưu lại lịch sử trang '/'
           <Navigate to="/auth/login" replace={true} />
+        }
+      />
+
+      <Route
+        path="/admin"
+        element={
+          <Navigate to="/admin/auth/login" replace={true} />
         }
       />
 
@@ -97,6 +110,11 @@ function App() {
               path=":workspaceId/billing"
               element={<WorkspaceBillingPage />}
             />
+
+            <Route
+              path=":workspaceId/payment/:subscriptionId"
+              element={<WorkspacePaymentPage />}
+            />
           </Route>
 
           {/* <Route index element={<Navigate to="boards" replace />} />
@@ -123,33 +141,26 @@ function App() {
         <Route path="/account/verification" element={<AccountVerification />} />
       </Route>
 
-      <Route path='/admin' element={< AdminLayout/>}>
-          {/* <Route index element={<Navigate to='/user' replace />} */}
-          <Route path='user' element={<UserPage />} /> 
+      <Route element={<ProtectedRouteAdmin admin={currentAdmin} />}>
+        <Route path='/admin' element={<AdminLayout />}>
+          <Route path='profile' element={<ProfilePage />} />
+
+          <Route path='user' element={<UserPage />} />
           <Route path='user/create' element={<CreateUserPage />} />
           <Route path='user/update/:_id' element={<UpdateUserPage />} />
-          
           <Route path='board' element={<BoardPages />} />
-          <Route path='board/create' element={<CreateBoardPage />} />
-          <Route path='board/update/:_id' element={<UpdateBoardPage />} />
-
           <Route path='permission' element={<PermissionPage />} />
-
+          <Route path='payment' element={<PaymentPage />} />
           <Route path='background' element={<BackgroundPage />} />
           <Route path='background/create' element={<CreateBackgroundPage />} />
           <Route path='background/update/:_id' element={<UpdateBackgroundPage />} />
-
           <Route path='workspace' element={<WorkspacePage />} />
-          <Route path='workspace/create' element={<CreateWorkspacePage />} />
-          <Route path='workspace/update/:_id' element={<UpdateWorkspacePage />} />
-          
           <Route path='subscription' element={<SubscriptionPage />} />
-          <Route path='subscription/create' element={<CreateSubscriptionPage />} />
           <Route path='subscription/update/:_id' element={<UpdateSubscriptionPage />} />
-
-          <Route path='plan' element={<PlanPage />} /> 
-          <Route path='plan/create' element={<CreatePlanPage />} /> 
-          <Route path='plan/update/:_id' element={<UpdatePlanPage />} /> 
+          <Route path='plan' element={<PlanPage />} />
+          <Route path='plan/create' element={<CreatePlanPage />} />
+          <Route path='plan/update/:_id' element={<UpdatePlanPage />} />
+        </Route>
       </Route>
 
       <Route path="/admin/auth/login" element={<LoginPage />} />

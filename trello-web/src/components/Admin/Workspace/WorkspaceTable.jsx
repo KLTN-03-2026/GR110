@@ -1,7 +1,5 @@
-import React from 'react'
 import {
   Chip,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -13,8 +11,6 @@ import {
   TableRow,
   Typography
 } from '@mui/material'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 
 function getStatusChipStyle(status) {
   return status === 'active'
@@ -43,11 +39,9 @@ export default function WorkspaceTable({
   page,
   rowsPerPage,
   totalCount,
-  getOwnerName,
+  loading,
   onPageChange,
   onRowsPerPageChange,
-  onEdit,
-  onDelete
 }) {
   return (
     <Paper
@@ -63,12 +57,11 @@ export default function WorkspaceTable({
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f3f4f6' }}>
-              <TableCell sx={{ fontSize: '16px', color: '#111827' }}>No.</TableCell>
+              <TableCell sx={{ fontSize: '16px', color: '#111827' }}>#</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Title</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Description</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Owner</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Status</TableCell>
-              <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Action</TableCell>
             </TableRow>
           </TableHead>
 
@@ -112,7 +105,7 @@ export default function WorkspaceTable({
                   </TableCell>
 
                   <TableCell sx={{ fontSize: '15px', color: '#1f2937' }}>
-                    {getOwnerName(workspace.ownerId)}
+                    {workspace.ownerName}
                   </TableCell>
 
                   <TableCell>
@@ -128,31 +121,6 @@ export default function WorkspaceTable({
                     />
                   </TableCell>
 
-                  <TableCell>
-                    <Stack direction='row' spacing={0.5}>
-                      <IconButton
-                        size='small'
-                        onClick={() => onEdit(workspace)}
-                        sx={{
-                          color: '#374151',
-                          '&:hover': { backgroundColor: '#f3f4f6' }
-                        }}
-                      >
-                        <EditOutlinedIcon fontSize='small' />
-                      </IconButton>
-
-                      <IconButton
-                        size='small'
-                        onClick={() => onDelete(workspace)}
-                        sx={{
-                          color: '#ef4444',
-                          '&:hover': { backgroundColor: '#fef2f2' }
-                        }}
-                      >
-                        <DeleteOutlineOutlinedIcon fontSize='small' />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
                 </TableRow>
               )
             })}

@@ -1,64 +1,42 @@
-import * as React from 'react'
 import { Box, Button, Container, Stack, Typography } from '@mui/material'
 import { PlanCard } from '~/components/Workspace/workspaceBilling/PlanCard'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
-
-const plans = [
-  {
-    id: 'free',
-    title: 'Free',
-    price: 0,
-    currency: 'VND',
-    interval: 'month',
-    features: [
-      { iconKey: 'board', text: 'Unlimited cards' },
-      { iconKey: 'inbox', text: 'Inbox' },
-      { iconKey: 'bookmark', text: 'Quick capture' },
-      { iconKey: 'layout', text: 'Up to 10 boards per Workspace' }
-    ]
-  },
-  {
-    id: 'standard',
-    title: 'Standard',
-    price: 522500,
-    currency: 'VND',
-    interval: 'month',
-    features: [
-      { iconKey: 'layout', text: 'Unlimited boards' },
-      { iconKey: 'calendar', text: 'Planner (full access)' },
-      { iconKey: 'list', text: 'Collapsible lists and list colors' },
-      { iconKey: 'checklist', text: 'Advanced checklists' },
-      { iconKey: 'field', text: 'Custom fields' },
-      { iconKey: 'copy', text: 'Card mirroring' },
-      { iconKey: 'ai', text: 'Quick capture with AI summaries' },
-      { iconKey: 'automation', text: 'Limited automation (1K runs per month)' },
-      { iconKey: 'file', text: 'Storage 250MB/file' }
-    ]
-  },
-  {
-    id: 'premium',
-    title: 'Premium',
-    price: 649000,
-    currency: 'VND',
-    interval: 'month',
-    features: [
-      { iconKey: 'automation', text: 'Unlimited automations' },
-      { iconKey: 'ai', text: 'Unlimited cards with AI' },
-      { iconKey: 'download', text: 'Data Export' },
-      { iconKey: 'copy', text: 'Workspace-level templates' },
-      { iconKey: 'table', text: 'Views: Timeline, Table, Dashboard, and Map' },
-      { iconKey: 'collection', text: 'Board collections' },
-      { iconKey: 'observer', text: 'Observers' },
-      { iconKey: 'security', text: 'Admin and security features' },
-      { iconKey: 'support', text: 'Priority support' }
-    ]
-  }
-]
+import useBillingPage from '~/hooks/workspaceBilling.hook'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { createWorkspacePayment } from '~/apis/subscriptions.api'
 
 export default function WorkspaceBillingPage() {
-  const [selectedPlan, setSelectedPlan] = React.useState('premium')
+  const { plans } = useBillingPage()
+
+  const [selectedPlan, setSelectedPlan] = useState('')
+
+  useEffect(() => {
+    if (!plans.length || selectedPlan) return
+
+    const freePlan = plans.find(
+      (plan) => plan.title?.trim().toLowerCase() === 'free'
+    )
+
+    if (freePlan) {
+      setSelectedPlan(freePlan.id)
+      return
+    }
+
+    setSelectedPlan(plans[0].id)
+  }, [plans, selectedPlan])
 
   const activePlan = plans.find((plan) => plan.id === selectedPlan)
+  const navigate = useNavigate();
+  const {workspaceId} = useParams();
+
+  const handleSelectPlan = async () => {
+    const res = await createWorkspacePayment({ workspaceId, planId: activePlan.id })
+
+    navigate(`/h/workspaces/${workspaceId}/payment/${res.subscription.id}`, {
+      state: res
+    })
+  }
 
   return (
     <>
@@ -147,6 +125,8 @@ export default function WorkspaceBillingPage() {
             <Stack alignItems="center" sx={{ mt: 4 }}>
               <Button
                 variant="contained"
+                onClick={() => handleSelectPlan()}
+                disabled={activePlan?.title === 'Free'}
                 sx={{
                   minWidth: 320,
                   maxWidth: '100%',
@@ -174,7 +154,7 @@ export default function WorkspaceBillingPage() {
                 })}
               >
                 For more control, security, and support, check out Trello
-                Enterprise.{' '}
+                Enterprise{' '}
                 <Box
                   component="span"
                   sx={(theme) => ({

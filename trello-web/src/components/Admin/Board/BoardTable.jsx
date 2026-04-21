@@ -1,8 +1,6 @@
-import React from 'react'
 import {
   Box,
   Chip,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -14,8 +12,6 @@ import {
   TableRow,
   Typography
 } from '@mui/material'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 
 function getStatusChipStyle(status) {
   return status === 'active'
@@ -54,13 +50,8 @@ export default function BoardTable({
   page,
   rowsPerPage,
   totalCount,
-  getWorkspaceTitle,
-  getOwnerName,
-  getBackgroundTitle,
   onPageChange,
   onRowsPerPageChange,
-  onEdit,
-  onDelete
 }) {
   return (
     <Paper
@@ -77,16 +68,14 @@ export default function BoardTable({
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f3f4f6' }}>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>#</TableCell>
-              <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Cover</TableCell>
+              <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Background</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Workspace</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Title</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Description</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Owner</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Visibility</TableCell>
-              <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Background</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Type</TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Status</TableCell>
-              <TableCell sx={{ fontSize: '16px', color: '#111827' }}>Action</TableCell>
             </TableRow>
           </TableHead>
 
@@ -105,15 +94,15 @@ export default function BoardTable({
                   }}
                 >
                   <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {page * rowsPerPage + index + 1}
+                    {index + 1}
                   </TableCell>
 
                   <TableCell>
-                    <Box component='img' src={board.cover} alt={board.title} sx={imageSx} />
+                    <Box component='img' src={board.cover.value} alt={board.title} sx={imageSx} />
                   </TableCell>
 
                   <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {getWorkspaceTitle(board.workspaceId)}
+                    {board.workspaceName}
                   </TableCell>
 
                   <TableCell sx={{ fontWeight: 500, fontSize: '16px', color: '#111827' }}>
@@ -125,7 +114,7 @@ export default function BoardTable({
                   </TableCell>
 
                   <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {getOwnerName(board.ownerId)}
+                    {board.ownerName}
                   </TableCell>
 
                   <TableCell
@@ -136,10 +125,6 @@ export default function BoardTable({
                     }}
                   >
                     {board.visibility}
-                  </TableCell>
-
-                  <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {getBackgroundTitle(board.backgroundId)}
                   </TableCell>
 
                   <TableCell
@@ -165,31 +150,6 @@ export default function BoardTable({
                     />
                   </TableCell>
 
-                  <TableCell>
-                    <Stack direction='row' spacing={0.5}>
-                      <IconButton
-                        size='small'
-                        onClick={() => onEdit(board)}
-                        sx={{
-                          color: '#374151',
-                          '&:hover': { backgroundColor: '#f3f4f6' }
-                        }}
-                      >
-                        <EditOutlinedIcon fontSize='small' />
-                      </IconButton>
-
-                      <IconButton
-                        size='small'
-                        onClick={() => onDelete(board)}
-                        sx={{
-                          color: '#ef4444',
-                          '&:hover': { backgroundColor: '#fef2f2' }
-                        }}
-                      >
-                        <DeleteOutlineOutlinedIcon fontSize='small' />
-                      </IconButton>
-                    </Stack>
-                  </TableCell>
                 </TableRow>
               )
             })}

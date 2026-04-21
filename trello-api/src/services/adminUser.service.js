@@ -1,7 +1,7 @@
 import bcryptjs from 'bcryptjs'
 import { ObjectId } from 'mongodb'
 import { NotFoundErrorResponse } from '~/core/error.response'
-import UserRepo from '~/repo/user.repo'
+import UserRepo from '~/repo/adminUser.repo'
 
 class AdminUserService {
   static fetchByUser = async ({ data }) => {
@@ -15,9 +15,9 @@ class AdminUserService {
     const filter = keyword
       ? {
           $or: [
-            { userEmail: { $regex: escapedKeyword, $options: 'i' } },
-            { displayName: { $regex: escapedKeyword, $options: 'i' } },
-            { username: { $regex: escapedKeyword, $options: 'i' } }
+            { email: { $regex: escapedKeyword, $options: 'i' } },
+            { username: { $regex: escapedKeyword, $options: 'i' } },
+            { displayName: { $regex: escapedKeyword, $options: 'i' } }
           ]
         }
       : {}

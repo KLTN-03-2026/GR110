@@ -12,18 +12,10 @@ import {
 } from '@mui/material'
 import { Controller, useForm } from 'react-hook-form'
 import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
-
-const workspaceOptions = [
-  { id: 'WKS001', title: 'Main Workspace' },
-  { id: 'WKS002', title: 'Marketing Workspace' },
-  { id: 'WKS003', title: 'Design Workspace' }
-]
-
-const planOptions = [
-  { id: 'PLAN001', title: 'Basic Plan' },
-  { id: 'PLAN002', title: 'Standard Plan' },
-  { id: 'PLAN003', title: 'Premium Plan' }
-]
+import { CapabilityCheckbox } from '../../Plan/CreatePlan/CapabilityCheckbox'
+import { LimitField } from '../../Plan/CreatePlan/LimitField'
+import { updateAdminSubscriptionApi } from '~/apis/adminSubscription.api'
+import { useParams } from 'react-router-dom'
 
 const inputSx = {
   '& .MuiInputLabel-root': {
@@ -67,7 +59,84 @@ const selectSx = {
   }
 }
 
-export default function UpdateSubscriptionForm({ initialData }) {
+const sectionTitleSx = {
+  mb: 1,
+  fontSize: '14px',
+  fontWeight: 600,
+  color: '#111827'
+}
+
+const buildDefaultValues = (initialData) => ({
+  workspaceId: initialData?.workspaceId || '',
+  workspaceTitle: initialData?.workspaceTitle || '',
+  planId: initialData?.planId || '',
+  planTitle: initialData?.planTitle || '',
+  status: initialData?.status || 'pending',
+  startedAt: initialData?.startedAt
+    ? new Date(initialData.startedAt).toISOString().split('T')[0]
+    : '',
+  endedAt: initialData?.endedAt
+    ? new Date(initialData.endedAt).toISOString().split('T')[0]
+    : '',
+  cancelAt: initialData?.cancelAt
+    ? new Date(initialData.cancelAt).toISOString().split('T')[0]
+    : '',
+  planFeatureSnapshot: {
+    capabilities: {
+      workspace: {
+        customRole:
+          initialData?.planFeatureSnapshot?.capabilities?.workspace?.customRole ??
+          false
+      },
+      board: {
+        customRole:
+          initialData?.planFeatureSnapshot?.capabilities?.board?.customRole ??
+          false
+      },
+      column: {
+        customColor:
+          initialData?.planFeatureSnapshot?.capabilities?.column?.customColor ??
+          false
+      },
+      task: {
+        setDue:
+          initialData?.planFeatureSnapshot?.capabilities?.task?.setDue ?? false,
+        assignMembers:
+          initialData?.planFeatureSnapshot?.capabilities?.task?.assignMembers ??
+          false
+      }
+    },
+    limits: {
+      maxMembers:
+        initialData?.planFeatureSnapshot?.limits?.maxMembers ?? 5,
+      maxBoards:
+        initialData?.planFeatureSnapshot?.limits?.maxBoards ?? 3,
+      maxWorkspaceRoles:
+        initialData?.planFeatureSnapshot?.limits?.maxWorkspaceRoles ?? 0,
+      maxBoardRoles:
+        initialData?.planFeatureSnapshot?.limits?.maxBoardRoles ?? 0,
+      maxColumnsPerBoard:
+        initialData?.planFeatureSnapshot?.limits?.maxColumnsPerBoard ?? 20,
+      maxCardsPerBoard:
+        initialData?.planFeatureSnapshot?.limits?.maxCardsPerBoard ?? 100,
+      maxCommentsPerCard:
+        initialData?.planFeatureSnapshot?.limits?.maxCommentsPerCard ?? 50,
+      maxChecklistItemsPerCard:
+        initialData?.planFeatureSnapshot?.limits?.maxChecklistItemsPerCard ?? 20,
+      maxStorageMb:
+        initialData?.planFeatureSnapshot?.limits?.maxStorageMb ?? 512,
+      maxFileSizeMb:
+        initialData?.planFeatureSnapshot?.limits?.maxFileSizeMb ?? 5,
+      maxFilesPerUpload:
+        initialData?.planFeatureSnapshot?.limits?.maxFilesPerUpload ?? 5
+    }
+  }
+
+})
+
+export default function UpdateSubscriptionForm({ initialData, onSubmitForm }) {
+  const defaultValues = buildDefaultValues(initialData)
+
   const {
     register,
     handleSubmit,
@@ -75,20 +144,59 @@ export default function UpdateSubscriptionForm({ initialData }) {
     reset,
     formState: { errors }
   } = useForm({
-    defaultValues: {
-      workspaceId: initialData?.workspaceId || '',
-      planId: initialData?.planId || '',
-      planFeatureSnapshot: initialData?.planFeatureSnapshot || '',
-      status: initialData?.status || 'active',
-      startAt: initialData?.startAt || '',
-      endAt: initialData?.endAt || '',
-      cancelAt: initialData?.cancelAt || ''
-    },
+    defaultValues,
     mode: 'onBlur'
   })
 
-  const onSubmit = (data) => {
-    console.log('Update Subscription Payload:', data)
+  const {_id} = useParams()
+  const onSubmit = async (data) => {
+    const payload = {
+      workspaceId: data.workspaceId,
+      planId: data.planId,
+      status: data.status,
+      startedAt: data.startedAt,
+      endedAt: data.endedAt || null,
+      cancelAt: data.cancelAt || null,
+      planFeatureSnapshot: {
+        capabilities: {
+          workspace: {
+            customRole:
+              !!data.planFeatureSnapshot.capabilities.workspace.customRole
+          },
+          board: {
+            customRole:
+              !!data.planFeatureSnapshot.capabilities.board.customRole
+          },
+          column: {
+            customColor:
+              !!data.planFeatureSnapshot.capabilities.column.customColor
+          },
+          task: {
+            setDue:
+              !!data.planFeatureSnapshot.capabilities.task.setDue,
+            assignMembers:
+              !!data.planFeatureSnapshot.capabilities.task.assignMembers
+          }
+        },
+        limits: {
+          maxMembers: Number(data.planFeatureSnapshot.limits.maxMembers),
+          maxBoards: Number(data.planFeatureSnapshot.limits.maxBoards),
+          maxWorkspaceRoles: Number(data.planFeatureSnapshot.limits.maxWorkspaceRoles),
+          maxBoardRoles: Number(data.planFeatureSnapshot.limits.maxBoardRoles),
+          maxColumnsPerBoard: Number(data.planFeatureSnapshot.limits.maxColumnsPerBoard),
+          maxCardsPerBoard: Number(data.planFeatureSnapshot.limits.maxCardsPerBoard),
+          maxCommentsPerCard: Number(data.planFeatureSnapshot.limits.maxCommentsPerCard),
+          maxChecklistItemsPerCard: Number(
+            data.planFeatureSnapshot.limits.maxChecklistItemsPerCard
+          ),
+          maxStorageMb: Number(data.planFeatureSnapshot.limits.maxStorageMb),
+          maxFileSizeMb: Number(data.planFeatureSnapshot.limits.maxFileSizeMb),
+          maxFilesPerUpload: Number(data.planFeatureSnapshot.limits.maxFilesPerUpload)
+        }
+      }
+    }
+
+    await updateAdminSubscriptionApi({subscriptionId: _id, subscriptionData: payload })
   }
 
   return (
@@ -111,63 +219,33 @@ export default function UpdateSubscriptionForm({ initialData }) {
         }}
       >
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Workspace
-          </Typography>
+          <Typography sx={sectionTitleSx}>Workspace</Typography>
 
-          <Controller
-            name='workspaceId'
-            control={control}
-            rules={{ required: 'Workspace is required' }}
-            render={({ field }) => (
-              <>
-                <FormControl fullWidth error={!!errors.workspaceId}>
-                  <Select {...field} displayEmpty sx={selectSx}>
-                    <MenuItem value=''>Select Workspace</MenuItem>
-                    {workspaceOptions.map((workspace) => (
-                      <MenuItem key={workspace.id} value={workspace.id}>
-                        {workspace.title}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FieldErrorAlert errors={errors} fieldName='workspaceId' />
-              </>
-            )}
+          <TextField
+            fullWidth
+            value={defaultValues.workspaceTitle}
+            disabled
+            sx={inputSx}
           />
+
+          <input type='hidden' {...register('workspaceId')} />
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Plan
-          </Typography>
+          <Typography sx={sectionTitleSx}>Plan</Typography>
 
-          <Controller
-            name='planId'
-            control={control}
-            rules={{ required: 'Plan is required' }}
-            render={({ field }) => (
-              <>
-                <FormControl fullWidth error={!!errors.planId}>
-                  <Select {...field} displayEmpty sx={selectSx}>
-                    <MenuItem value=''>Select Plan</MenuItem>
-                    {planOptions.map((plan) => (
-                      <MenuItem key={plan.id} value={plan.id}>
-                        {plan.title}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FieldErrorAlert errors={errors} fieldName='planId' />
-              </>
-            )}
+          <TextField
+            fullWidth
+            value={defaultValues.planTitle}
+            disabled
+            sx={inputSx}
           />
+
+          <input type='hidden' {...register('planId')} />
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Status
-          </Typography>
+          <Typography sx={sectionTitleSx}>Status</Typography>
 
           <Controller
             name='status'
@@ -175,8 +253,12 @@ export default function UpdateSubscriptionForm({ initialData }) {
             render={({ field }) => (
               <FormControl fullWidth>
                 <Select {...field} sx={selectSx}>
+                  <MenuItem value='pending'>Pending</MenuItem>
+                  <MenuItem value='trialing'>Trialing</MenuItem>
                   <MenuItem value='active'>Active</MenuItem>
-                  <MenuItem value='inactive'>Inactive</MenuItem>
+                  <MenuItem value='past_due'>Past Due</MenuItem>
+                  <MenuItem value='canceled'>Canceled</MenuItem>
+                  <MenuItem value='expired'>Expired</MenuItem>
                 </Select>
               </FormControl>
             )}
@@ -184,41 +266,35 @@ export default function UpdateSubscriptionForm({ initialData }) {
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Start At
-          </Typography>
+          <Typography sx={sectionTitleSx}>Start At</Typography>
 
           <TextField
             fullWidth
             type='date'
-            error={!!errors.startAt}
-            {...register('startAt', {
+            error={!!errors.startedAt}
+            {...register('startedAt', {
               required: 'Start date is required'
             })}
             sx={inputSx}
             InputLabelProps={{ shrink: true }}
           />
-          <FieldErrorAlert errors={errors} fieldName='startAt' />
+          <FieldErrorAlert errors={errors} fieldName='startedAt' />
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            End At
-          </Typography>
+          <Typography sx={sectionTitleSx}>End At</Typography>
 
           <TextField
             fullWidth
             type='date'
-            {...register('endAt')}
+            {...register('endedAt')}
             sx={inputSx}
             InputLabelProps={{ shrink: true }}
           />
         </Box>
 
         <Box>
-          <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-            Cancel At
-          </Typography>
+          <Typography sx={sectionTitleSx}>Cancel At</Typography>
 
           <TextField
             fullWidth
@@ -230,24 +306,70 @@ export default function UpdateSubscriptionForm({ initialData }) {
         </Box>
       </Box>
 
-      <Box sx={{ mt: 3 }}>
-        <Typography sx={{ mb: 1, fontSize: '14px', fontWeight: 600, color: '#111827' }}>
-          Plan Feature Snapshot
+      <Box sx={{ mt: 4 }}>
+        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#111827', mb: 2 }}>
+          Plan Feature Snapshot - Capabilities
         </Typography>
 
-        <TextField
-          fullWidth
-          label='Enter Plan Feature Snapshot...'
-          multiline
-          minRows={4}
-          variant='outlined'
-          error={!!errors.planFeatureSnapshot}
-          {...register('planFeatureSnapshot', {
-            required: 'Plan feature snapshot is required'
-          })}
-          sx={inputSx}
-        />
-        <FieldErrorAlert errors={errors} fieldName='planFeatureSnapshot' />
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 1
+          }}
+        >
+          <CapabilityCheckbox
+            control={control}
+            name='planFeatureSnapshot.capabilities.workspace.customRole'
+            label='Workspace Custom Role'
+          />
+          <CapabilityCheckbox
+            control={control}
+            name='planFeatureSnapshot.capabilities.board.customRole'
+            label='Board Custom Role'
+          />
+          <CapabilityCheckbox
+            control={control}
+            name='planFeatureSnapshot.capabilities.column.customColor'
+            label='Column Custom Color'
+          />
+          <CapabilityCheckbox
+            control={control}
+            name='planFeatureSnapshot.capabilities.task.setDue'
+            label='Task Set Due'
+          />
+          <CapabilityCheckbox
+            control={control}
+            name='planFeatureSnapshot.capabilities.task.assignMembers'
+            label='Task Assign Members'
+          />
+        </Box>
+      </Box>
+
+      <Box sx={{ mt: 4 }}>
+        <Typography sx={{ fontSize: '16px', fontWeight: 700, color: '#111827', mb: 2 }}>
+          Plan Feature Snapshot - Limits
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 3
+          }}
+        >
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxMembers' label='Max Members' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxBoards' label='Max Boards' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxWorkspaceRoles' label='Max Workspace Roles' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxBoardRoles' label='Max Board Roles' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxColumnsPerBoard' label='Max Columns Per Board' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxCardsPerBoard' label='Max Cards Per Board' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxCommentsPerCard' label='Max Comments Per Card' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxChecklistItemsPerCard' label='Max Checklist Items Per Card' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxStorageMb' label='Max Storage (MB)' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxFileSizeMb' label='Max File Size (MB)' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+          <LimitField control={control} name='planFeatureSnapshot.limits.maxFilesPerUpload' label='Max File Uploads' sectionTitleSx={sectionTitleSx} inputSx={inputSx} />
+        </Box>
       </Box>
 
       <Stack direction='row' spacing={1.5} sx={{ mt: 3 }}>
@@ -277,17 +399,7 @@ export default function UpdateSubscriptionForm({ initialData }) {
         <Button
           type='button'
           variant='contained'
-          onClick={() =>
-            reset({
-              workspaceId: initialData?.workspaceId || '',
-              planId: initialData?.planId || '',
-              planFeatureSnapshot: initialData?.planFeatureSnapshot || '',
-              status: initialData?.status || 'active',
-              startAt: initialData?.startAt || '',
-              endAt: initialData?.endAt || '',
-              cancelAt: initialData?.cancelAt || ''
-            })
-          }
+          onClick={() => reset(buildDefaultValues(initialData))}
           sx={{
             minWidth: 100,
             height: 40,

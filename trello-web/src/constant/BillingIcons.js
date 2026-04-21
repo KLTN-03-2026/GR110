@@ -1,21 +1,22 @@
-import DashboardCustomizeOutlinedIcon from '@mui/icons-material/DashboardCustomizeOutlined';
-import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined';
-import FlashOnOutlinedIcon from '@mui/icons-material/FlashOnOutlined';
-import ViewWeekOutlinedIcon from '@mui/icons-material/ViewWeekOutlined';
-import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined';
-import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined';
-import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
-import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined';
-import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined';
-import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
-import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
-import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
-import CollectionsBookmarkOutlinedIcon from '@mui/icons-material/CollectionsBookmarkOutlined';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
-import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
-import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
-import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined';
-import NotesOutlinedIcon from '@mui/icons-material/NotesOutlined';
+import DashboardCustomizeOutlinedIcon from '@mui/icons-material/DashboardCustomizeOutlined'
+import InboxOutlinedIcon from '@mui/icons-material/InboxOutlined'
+import FlashOnOutlinedIcon from '@mui/icons-material/FlashOnOutlined'
+import ViewWeekOutlinedIcon from '@mui/icons-material/ViewWeekOutlined'
+import CalendarMonthOutlinedIcon from '@mui/icons-material/CalendarMonthOutlined'
+import ChecklistOutlinedIcon from '@mui/icons-material/ChecklistOutlined'
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined'
+import ContentCopyOutlinedIcon from '@mui/icons-material/ContentCopyOutlined'
+import AutoAwesomeOutlinedIcon from '@mui/icons-material/AutoAwesomeOutlined'
+import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined'
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined'
+import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined'
+import CollectionsBookmarkOutlinedIcon from '@mui/icons-material/CollectionsBookmarkOutlined'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined'
+import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined'
+import BookmarkBorderOutlinedIcon from '@mui/icons-material/BookmarkBorderOutlined'
+import NotesOutlinedIcon from '@mui/icons-material/NotesOutlined'
+import GroupOutlinedIcon from '@mui/icons-material/GroupOutlined'
 
 export const ICON_MAP = {
   board: DashboardCustomizeOutlinedIcon,
@@ -36,4 +37,5 @@ export const ICON_MAP = {
   support: FavoriteBorderOutlinedIcon,
   bookmark: BookmarkBorderOutlinedIcon,
   list: NotesOutlinedIcon,
-};
+  member: GroupOutlinedIcon
+}

@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   Chip,
   IconButton,
@@ -11,25 +10,62 @@ import {
   TableHead,
   TablePagination,
   TableRow,
+  Tooltip,
   Typography
 } from '@mui/material'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined'
+import { FeatureCell } from '../Plan/FeatureCell'
+import ConfirmDeleteModal from '../ModalDelete/ConfirmDeleteModal'
 
 function getStatusChipStyle(status) {
-  return status === 'active'
-    ? {
+  const statusMap = {
+    pending: {
+      label: 'Pending',
+      color: '#b45309',
+      backgroundColor: '#fffbeb',
+      borderColor: '#fcd34d'
+    },
+    trialing: {
+      label: 'Trialing',
+      color: '#2563eb',
+      backgroundColor: '#eff6ff',
+      borderColor: '#bfdbfe'
+    },
+    active: {
       label: 'Active',
       color: '#16a34a',
       backgroundColor: '#f0fdf4',
       borderColor: '#bbf7d0'
-    }
-    : {
-      label: 'Inactive',
+    },
+    past_due: {
+      label: 'Past Due',
       color: '#dc2626',
       backgroundColor: '#fef2f2',
       borderColor: '#fecaca'
+    },
+    canceled: {
+      label: 'Canceled',
+      color: '#6b7280',
+      backgroundColor: '#f9fafb',
+      borderColor: '#d1d5db'
+    },
+    expired: {
+      label: 'Expired',
+      color: '#7c3aed',
+      backgroundColor: '#f5f3ff',
+      borderColor: '#ddd6fe'
     }
+  }
+
+  return (
+    statusMap[status] || {
+      label: 'Unknown',
+      color: '#6b7280',
+      backgroundColor: '#f3f4f6',
+      borderColor: '#d1d5db'
+    }
+  )
 }
 
 function truncateText(value, maxLength = 50) {
@@ -38,18 +74,42 @@ function truncateText(value, maxLength = 50) {
   return `${value.slice(0, maxLength)}...`
 }
 
+function canCancelSubscription(status) {
+  return ['pending', 'trialing', 'active'].includes(status)
+}
+
 export default function SubscriptionTable({
   subscriptions,
   page,
   rowsPerPage,
   totalCount,
-  getWorkspaceTitle,
-  getPlanTitle,
   onPageChange,
   onRowsPerPageChange,
   onEdit,
-  onDelete
+  formatDateTime,
+  handleCancelSubscription,
+  cancelModalOpen,
+  selectedSubscription,
+  setSelectedSubscription,
+  handleCloseCancelModal,
+  handleOpenCancelModal,
 }) {
+
+  const handleConfirmCancel = async () => {
+    if (!selectedSubscription?._id) return
+
+    await handleCancelSubscription({
+      subscriptionId: selectedSubscription._id,
+      subscriptionData: {
+        ...selectedSubscription,
+        status: 'canceled',
+        canceledAt: new Date().toISOString()
+      }
+    })
+
+    handleCloseCancelModal()
+  }
+
   return (
     <Paper
       elevation={0}
@@ -81,6 +141,7 @@ export default function SubscriptionTable({
           <TableBody>
             {subscriptions.map((subscription, index) => {
               const statusStyle = getStatusChipStyle(subscription.status)
+              const canCancel = canCancelSubscription(subscription.status)
 
               return (
                 <TableRow
@@ -97,21 +158,24 @@ export default function SubscriptionTable({
                   </TableCell>
 
                   <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {getWorkspaceTitle(subscription.workspaceId)}
+                    {subscription.workspaceTitle}
                   </TableCell>
 
                   <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {getPlanTitle(subscription.planId)}
+                    {subscription.planTitle}
                   </TableCell>
 
-                  <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {truncateText(subscription.planFeatureSnapshot, 50)}
+                  <TableCell sx={{ fontSize: '15px', color: '#1f2937' }}>
+                    <FeatureCell
+                      feature={subscription.planFeatureSnapshot}
+                      truncateText={truncateText}
+                    />
                   </TableCell>
 
                   <TableCell>
                     <Chip
                       label={statusStyle.label}
-                      size="small"
+                      size='small'
                       sx={{
                         fontWeight: 500,
                         color: statusStyle.color,
@@ -122,40 +186,57 @@ export default function SubscriptionTable({
                   </TableCell>
 
                   <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {subscription.startAt || '-'}
+                    {formatDateTime(subscription.startedAt) || '-'}
                   </TableCell>
 
                   <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {subscription.endAt || '-'}
+                    {formatDateTime(subscription.endedAt) || '-'}
                   </TableCell>
 
                   <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
-                    {subscription.cancelAt || '-'}
+                    {formatDateTime(subscription.canceledAt) || 'ok'}
                   </TableCell>
 
                   <TableCell>
-                    <Stack direction="row" spacing={0.5}>
-                      <IconButton
-                        size="small"
-                        onClick={() => onEdit(subscription)}
-                        sx={{
-                          color: '#374151',
-                          '&:hover': { backgroundColor: '#f3f4f6' }
-                        }}
-                      >
-                        <EditOutlinedIcon fontSize="small" />
-                      </IconButton>
+                    <Stack direction='row' spacing={0.5}>
+                      <Tooltip title='Edit subscription'>
+                        <IconButton
+                          size='small'
+                          onClick={() => onEdit(subscription)}
+                          sx={{
+                            color: '#374151',
+                            '&:hover': { backgroundColor: '#f3f4f6' }
+                          }}
+                        >
+                          <EditOutlinedIcon fontSize='small' />
+                        </IconButton>
+                      </Tooltip>
 
-                      <IconButton
-                        size="small"
-                        onClick={() => onDelete(subscription)}
-                        sx={{
-                          color: '#ef4444',
-                          '&:hover': { backgroundColor: '#fef2f2' }
-                        }}
+                      <Tooltip
+                        title={
+                          canCancel
+                            ? 'Cancel subscription'
+                            : 'This subscription cannot be canceled'
+                        }
                       >
-                        <DeleteOutlineOutlinedIcon fontSize="small" />
-                      </IconButton>
+                        <span>
+                          <IconButton
+                            size='small'
+                            disabled={!canCancel}
+                            onClick={() =>
+                              handleOpenCancelModal(subscription)
+                            }
+                            sx={{
+                              color: canCancel ? '#ef4444' : '#9ca3af',
+                              '&:hover': {
+                                backgroundColor: canCancel ? '#fef2f2' : 'transparent'
+                              }
+                            }}
+                          >
+                            <CancelOutlinedIcon fontSize='small' />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -166,9 +247,9 @@ export default function SubscriptionTable({
       </TableContainer>
 
       <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
+        direction='row'
+        justifyContent='space-between'
+        alignItems='center'
         sx={{ px: 1, py: 1, borderTop: '1px solid #e5e7eb', backgroundColor: '#fff' }}
       >
         <Typography sx={{ pl: 1, fontSize: '15px', color: '#111827' }}>
@@ -176,14 +257,14 @@ export default function SubscriptionTable({
         </Typography>
 
         <TablePagination
-          component="div"
+          component='div'
           count={totalCount}
           page={page}
           onPageChange={onPageChange}
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={onRowsPerPageChange}
           rowsPerPageOptions={[5, 8, 10]}
-          labelRowsPerPage=""
+          labelRowsPerPage=''
           sx={{
             '.MuiTablePagination-toolbar': {
               minHeight: 40,
@@ -208,6 +289,17 @@ export default function SubscriptionTable({
               color: '#9ca3af'
             }
           }}
+        />
+        <ConfirmDeleteModal
+          open={cancelModalOpen}
+          title='Cancel Subscription'
+          description={
+            selectedSubscription
+              ? `Are you sure you want to cancel subscription of workspace "${selectedSubscription.workspaceTitle}"?`
+              : 'Are you sure you want to cancel this subscription?'
+          }
+          onClose={handleCloseCancelModal}
+          onConfirm={handleConfirmCancel}
         />
       </Stack>
     </Paper>

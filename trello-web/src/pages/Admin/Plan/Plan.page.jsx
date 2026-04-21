@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React from 'react'
 import {
   Box,
   Button,
@@ -13,205 +13,38 @@ import SearchIcon from '@mui/icons-material/Search'
 import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined'
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import PictureAsPdfOutlinedIcon from '@mui/icons-material/PictureAsPdfOutlined'
-import { useNavigate } from 'react-router-dom'
 import ConfirmDeleteModal from '~/components/Admin/ModalDelete/ConfirmDeleteModal'
 import PlanTable from '~/components/Admin/Plan/PlanTable'
-
-const mockPlans = [
-  {
-    _id: 'PLAN001',
-    title: 'Basic Plan',
-    feature: {
-      capabilities: {
-        workspace: {
-          customRole: false,
-          maxRoles: 2
-        },
-        board: {
-          createPrivateBoard: false
-        },
-        column: {
-          customColor: false
-        }
-      },
-      limits: {
-        maxMembers: 5,
-        maxBoards: 3,
-        maxColumnsPerBoard: 20,
-        maxCardsPerBoard: 100,
-        maxStorageMb: 512,
-        maxFileSizeMb: 5,
-        maxAttachmentsPerCard: 3
-      }
-    },
-    billingCycle: 'monthly',
-    description: 'Suitable for new users who need essential features to get started.',
-    originPrice: 29.99,
-    currentPrice: 19.99,
-    status: 'active'
-  },
-  {
-    _id: 'PLAN002',
-    title: 'Standard Plan',
-    feature: {
-      capabilities: {
-        workspace: {
-          customRole: true,
-          maxRoles: 5
-        },
-        board: {
-          createPrivateBoard: true
-        },
-        column: {
-          customColor: true
-        }
-      },
-      limits: {
-        maxMembers: 20,
-        maxBoards: 10,
-        maxColumnsPerBoard: 50,
-        maxCardsPerBoard: 500,
-        maxStorageMb: 2048,
-        maxFileSizeMb: 20,
-        maxAttachmentsPerCard: 10
-      }
-    },
-    billingCycle: 'monthly',
-    description: 'Includes additional workspace and permission management features.',
-    originPrice: 49.99,
-    currentPrice: 39.99,
-    status: 'active'
-  },
-  {
-    _id: 'PLAN003',
-    title: 'Premium Plan',
-    feature: {
-      capabilities: {
-        workspace: {
-          customRole: true,
-          maxRoles: 20
-        },
-        board: {
-          createPrivateBoard: true
-        },
-        column: {
-          customColor: true
-        }
-      },
-      limits: {
-        maxMembers: 100,
-        maxBoards: 50,
-        maxColumnsPerBoard: 100,
-        maxCardsPerBoard: 5000,
-        maxStorageMb: 10240,
-        maxFileSizeMb: 100,
-        maxAttachmentsPerCard: 30
-      }
-    },
-    billingCycle: 'yearly',
-    description: 'Advanced plan for teams that need full access to all premium modules.',
-    originPrice: 99.99,
-    currentPrice: 79.99,
-    status: 'active'
-  },
-  {
-    _id: 'PLAN004',
-    title: 'Enterprise Plan',
-    feature: {
-      capabilities: {
-        workspace: {
-          customRole: true,
-          maxRoles: 100
-        },
-        board: {
-          createPrivateBoard: true
-        },
-        column: {
-          customColor: true
-        }
-      },
-      limits: {
-        maxMembers: 500,
-        maxBoards: 200,
-        maxColumnsPerBoard: 200,
-        maxCardsPerBoard: 20000,
-        maxStorageMb: 51200,
-        maxFileSizeMb: 500,
-        maxAttachmentsPerCard: 100
-      }
-    },
-    billingCycle: 'yearly',
-    description: 'Best for large organizations with custom requirements and support.',
-    originPrice: 199.99,
-    currentPrice: 149.99,
-    status: 'inactive'
-  }
-]
+import { useAdminPlan } from '~/hooks/adminPlan.hook'
 
 export default function PlanPage() {
-  const navigate = useNavigate()
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(8)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState(null)
-  const [plans, setPlans] = useState(mockPlans)
+  const {
+    search,
+    page,
+    rowsPerPage,
+    deleteModalOpen,
+    selectedPlan,
+    plans,
+    totalCount,
+    loading,
 
-  const handleOpenDeleteModal = (plan) => {
-    setSelectedPlan(plan)
-    setDeleteModalOpen(true)
-  }
-
-  const handleCloseDeleteModal = () => {
-    setDeleteModalOpen(false)
-    setSelectedPlan(null)
-  }
-
-  const handleConfirmDelete = () => {
-    if (!selectedPlan) return
-
-    setPlans((prev) => prev.filter((item) => item._id !== selectedPlan._id))
-    handleCloseDeleteModal()
-  }
-
-  const filteredPlans = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-
-    if (!keyword) return plans
-
-    return plans.filter((plan) => {
-      return (
-        plan._id.toLowerCase().includes(keyword) ||
-        plan.title.toLowerCase().includes(keyword) ||
-        JSON.stringify(plan.feature).toLowerCase().includes(keyword) ||
-        plan.billingCycle.toLowerCase().includes(keyword) ||
-        plan.description.toLowerCase().includes(keyword) ||
-        plan.status.toLowerCase().includes(keyword)
-      )
-    })
-  }, [search, plans])
-
-  const paginatedPlans = useMemo(() => {
-    const start = page * rowsPerPage
-    const end = start + rowsPerPage
-    return filteredPlans.slice(start, end)
-  }, [filteredPlans, page, rowsPerPage])
-
-  const handleChangePage = (_, newPage) => {
-    setPage(newPage)
-  }
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
-  }
+    handleSearchChange,
+    handleOpenDeleteModal,
+    handleCloseDeleteModal,
+    handleConfirmDelete,
+    handleChangePage,
+    handleChangeRowsPerPage,
+    handleEditPlan,
+    handleCreatePlan,
+    handleUpdateBlockPlan
+  } = useAdminPlan()
 
   return (
     <Box>
       <Stack
-        direction='row'
-        justifyContent='space-between'
-        alignItems='flex-start'
+        direction="row"
+        justifyContent="space-between"
+        alignItems="flex-start"
         sx={{ mb: 3 }}
       >
         <Box>
@@ -238,8 +71,8 @@ export default function PlanPage() {
         </Box>
 
         <Button
-          variant='contained'
-          onClick={() => navigate('/admin/plan/create')}
+          variant="contained"
+          onClick={handleCreatePlan}
           sx={{
             textTransform: 'none',
             px: 3,
@@ -261,16 +94,16 @@ export default function PlanPage() {
       </Stack>
 
       <Stack
-        direction='row'
-        justifyContent='space-between'
-        alignItems='center'
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
         sx={{ mb: 2 }}
       >
         <TextField
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder='Search plans...'
-          size='small'
+          onChange={handleSearchChange}
+          placeholder="Search plans..."
+          size="small"
           sx={{
             '& .MuiInputLabel-root': {
               color: '#6b7280'
@@ -297,16 +130,16 @@ export default function PlanPage() {
           }}
           InputProps={{
             startAdornment: (
-              <InputAdornment position='start'>
+              <InputAdornment position="start">
                 <SearchIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
               </InputAdornment>
             )
           }}
         />
 
-        <Stack direction='row' spacing={1.2}>
+        <Stack direction="row" spacing={1.2}>
           <Button
-            variant='outlined'
+            variant="outlined"
             startIcon={<FilterListOutlinedIcon />}
             sx={{
               textTransform: 'none',
@@ -326,7 +159,7 @@ export default function PlanPage() {
           </Button>
 
           <Button
-            variant='outlined'
+            variant="outlined"
             startIcon={<FileDownloadOutlinedIcon />}
             sx={{
               textTransform: 'none',
@@ -346,7 +179,7 @@ export default function PlanPage() {
           </Button>
 
           <Button
-            variant='outlined'
+            variant="outlined"
             startIcon={<PictureAsPdfOutlinedIcon />}
             sx={{
               textTransform: 'none',
@@ -377,21 +210,23 @@ export default function PlanPage() {
         }}
       >
         <PlanTable
-          plans={paginatedPlans}
+          plans={plans}
           page={page}
           rowsPerPage={rowsPerPage}
-          onEdit={(plan) =>
-            navigate(`/admin/plan/update/${plan._id}`, {
-              state: { planData: plan }
-            })
-          }
+          onEdit={handleEditPlan}
           onDelete={handleOpenDeleteModal}
+          onBlock={handleUpdateBlockPlan}
+          deleteModalOpen={deleteModalOpen}
+          selectedPlan={selectedPlan}
+          onCloseDeleteModal={handleCloseDeleteModal}
+          onConfirmDelete={handleConfirmDelete}
+          deleteLoading={loading}
         />
 
         <Stack
-          direction='row'
-          justifyContent='space-between'
-          alignItems='center'
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
           sx={{
             px: 1,
             py: 1,
@@ -404,14 +239,14 @@ export default function PlanPage() {
           </Typography>
 
           <TablePagination
-            component='div'
-            count={filteredPlans.length}
+            component="div"
+            count={totalCount}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
             onRowsPerPageChange={handleChangeRowsPerPage}
             rowsPerPageOptions={[5, 8, 10]}
-            labelRowsPerPage=''
+            labelRowsPerPage=""
             sx={{
               '.MuiTablePagination-toolbar': {
                 minHeight: 40,
@@ -427,7 +262,7 @@ export default function PlanPage() {
 
       <ConfirmDeleteModal
         open={deleteModalOpen}
-        title='Delete Plan'
+        title="Delete Plan"
         description={
           selectedPlan
             ? `Are you sure you want to delete plan "${selectedPlan.title}"?`

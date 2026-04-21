@@ -1,5 +1,5 @@
-const PLAN_BILLING_CYCLE = ['monthly', 'yearly']
+const PLAN_BILLING_CYCLE = ['monthly']
 
-const PLAN_STATUS = ['active', 'inactive', 'archived']
+const PLAN_STATUS = ['active', 'inactive']
 
 export { PLAN_BILLING_CYCLE, PLAN_STATUS }

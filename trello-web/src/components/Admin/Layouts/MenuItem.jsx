@@ -47,6 +47,11 @@ export const menuSections = [
         icon: <CreditCardOutlinedIcon />
       },
       {
+        label: 'Payment',
+        path: '/admin/payment',
+        icon: <CreditCardOutlinedIcon />
+      },
+      {
         label: 'Plan',
         path: '/admin/plan',
         icon: <WorkspacePremiumOutlinedIcon />
