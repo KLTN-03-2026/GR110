@@ -124,6 +124,7 @@ function CardDetailModal() {
               <CardDetailActionButton
                 data={data.cardButton}
                 handler={handler.cardButton}
+                activeCard={activeCard}
               />
             </Box>
 

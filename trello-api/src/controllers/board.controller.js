@@ -17,7 +17,7 @@ class BoardController {
   static getBackground = async (req, res) => {
     new OkSuccessResponse({
       metadata: await BoardService.getBackground({
-        userContext: req.userContext,
+        userContext: req.userContext
       })
     }).send(res)
   }
@@ -71,7 +71,10 @@ class BoardController {
 
   static moveCardToDifferentColumn = async (req, res) => {
     new OkSuccessResponse({
-      metadata: await BoardService.moveCardToDifferentColumn({ data: req.body })
+      metadata: await BoardService.moveCardToDifferentColumn({
+        boardAccess: req.boardAccess,
+        data: req.body
+      })
     }).send(res)
   }
 
