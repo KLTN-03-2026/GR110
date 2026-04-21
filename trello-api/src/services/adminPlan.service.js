@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { NotFoundErrorResponse } from '~/core/error.response'
+import { BadRequestErrorResponse, ErrorResponse, NotFoundErrorResponse } from '~/core/error.response'
 import PlanRepo from '~/repo/adminPlan.repo'
 
 class AdminPlanService {
@@ -12,10 +12,10 @@ class AdminPlanService {
     const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
     const filter = {
-        isDeleted: false,
-        ...(keyword && {
+      isDeleted: false,
+      ...(keyword && {
         $or: [{ title: { $regex: escapedKeyword, $options: 'i' } }]
-        })
+      })
     }
 
     const [plans, totalCount] = await Promise.all([
@@ -42,7 +42,7 @@ class AdminPlanService {
     const updatedPlan = await PlanRepo.updateById({
       _id: planId,
       data: {
-        status: plan.status === 'active' ? 'inactive' : 'active',
+        status: plan.status === 'active' ? 'inactive' : 'active'
       }
     })
     return updatedPlan
@@ -51,6 +51,10 @@ class AdminPlanService {
   static deleteAdminPlan = async ({ planId }) => {
     const plan = await PlanRepo.findById({ _id: planId })
     if (!plan) throw new NotFoundErrorResponse('Plan not found!')
+
+    if (plan.isDefault === true) {
+      throw new BadRequestErrorResponse('The default plan cannot be deleted.')
+    }
 
     const deletedPlan = await PlanRepo.updateById({
       _id: planId,

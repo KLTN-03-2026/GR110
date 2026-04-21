@@ -3,11 +3,15 @@ import Joi from 'joi'
 const TRANSACTION_COLLECTION_NAME = 'transactions'
 
 const TRANSACTION_COLLECTION_SCHEMA = Joi.object({
-  gateway: Joi.string().required().trim().strict(),
+  gateway: Joi.string().valid('sepay', 'paypal').required().trim().strict(),
 
   transactionDate: Joi.string().required().trim().strict(),
 
-  accountNumber: Joi.string().required().trim().strict(),
+  accountNumber: Joi.when('gateway', {
+    is: 'sepay',
+    then: Joi.string().required().trim().strict(),
+    otherwise: Joi.string().allow(null, '').default(null)
+  }),
 
   subAccount: Joi.string().allow(null, '').default(null),
 
@@ -23,9 +27,9 @@ const TRANSACTION_COLLECTION_SCHEMA = Joi.object({
 
   referenceCode: Joi.string().required().trim().strict(),
 
-  accumulated: Joi.number().required(),
+  accumulated: Joi.number().allow(null).default(null),
 
-  sepayId: Joi.number().required(),
+  transactionId: Joi.string().required().trim().strict(),
 
   createdAt: Joi.date().default(() => new Date()),
   updatedAt: Joi.date().allow(null).default(null)
@@ -34,7 +38,7 @@ const TRANSACTION_COLLECTION_SCHEMA = Joi.object({
 const validateBeforeCreate = async (data) => {
   const customData = {
     ...data,
-    sepayId: data.id
+    transactionId: data.id
   }
 
   delete customData.id

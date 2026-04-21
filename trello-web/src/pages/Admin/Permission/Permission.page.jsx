@@ -8,67 +8,19 @@ import {
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import PermissionTable from '~/components/Admin/Permission/PermissionTable'
-
-const mockPermissions = [
-  {
-    _id: 'PER001',
-    permissionName: 'view_dashboard',
-    description: 'Allows users to access and view the dashboard page.'
-  },
-  {
-    _id: 'PER002',
-    permissionName: 'manage_users',
-    description: 'Allows users to create, update, delete and manage user accounts.'
-  },
-  {
-    _id: 'PER003',
-    permissionName: 'manage_plans',
-    description: 'Allows users to manage subscription plans and pricing settings.'
-  },
-  {
-    _id: 'PER004',
-    permissionName: 'manage_backgrounds',
-    description: 'Allows users to manage background resources and media assets.'
-  },
-  {
-    _id: 'PER005',
-    permissionName: 'manage_templates',
-    description: 'Allows users to create, update and delete board templates.'
-  }
-]
+import useAdminPermissionPage from '~/hooks/adminPermission.hook'
 
 export default function PermissionPage() {
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(0)
-  const [rowsPerPage, setRowsPerPage] = useState(8)
-
-  const filteredPermissions = useMemo(() => {
-    const keyword = search.trim().toLowerCase()
-
-    if (!keyword) return mockPermissions
-
-    return mockPermissions.filter((item) => {
-      return (
-        item.permissionName.toLowerCase().includes(keyword) ||
-        item.description.toLowerCase().includes(keyword)
-      )
-    })
-  }, [search])
-
-  const paginatedPermissions = useMemo(() => {
-    const start = page * rowsPerPage
-    const end = start + rowsPerPage
-    return filteredPermissions.slice(start, end)
-  }, [filteredPermissions, page, rowsPerPage])
-
-  const handleChangePage = (_, newPage) => {
-    setPage(newPage)
-  }
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10))
-    setPage(0)
-  }
+  const {
+    permissions,
+    totalCount,
+    search,
+    page,
+    rowsPerPage,
+    handleSearchChange,
+    handleChangePage,
+    handleChangeRowsPerPage
+  } = useAdminPermissionPage()
 
   return (
     <Box>
@@ -110,7 +62,7 @@ export default function PermissionPage() {
       >
         <TextField
           value={search}
-          onChange={(event) => setSearch(event.target.value)}
+          onChange={(event) => handleSearchChange(event)}
           placeholder='Search permissions...'
           size='small'
           sx={{
@@ -118,7 +70,8 @@ export default function PermissionPage() {
             '& .MuiOutlinedInput-root': {
               height: 38,
               borderRadius: '8px',
-              backgroundColor: '#fff'
+              backgroundColor: '#fff',
+              color: 'black'
             },
             '& .MuiInputBase-input': {
               fontSize: '15px'
@@ -135,10 +88,10 @@ export default function PermissionPage() {
       </Stack>
 
       <PermissionTable
-        permissions={paginatedPermissions}
+        permissions={permissions}
         page={page}
         rowsPerPage={rowsPerPage}
-        totalCount={filteredPermissions.length}
+        totalCount={totalCount}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />

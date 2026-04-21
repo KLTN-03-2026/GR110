@@ -16,6 +16,10 @@ import { adminBoardRoute } from './adminBoard.route'
 import { adminWorkspaceRoute } from './adminWorkspace.route'
 import { adminPlanRoute } from './adminPlan.route'
 import { adminAuthRouter } from './adminAuth.route'
+import { subscriptionsRouter } from './subscription.route'
+import { adminSubscriptionRoute } from './adminSubscription.route'
+import { adminPermission } from './adminPermission.route'
+import { adminPaymentRoute } from './adminPayment.route'
 const Router = express.Router()
 
 /** Check APIs v1/status */
@@ -71,5 +75,16 @@ Router.use('/admin/plans', adminPlanRoute)
 //Admin APIs
 Router.use('/admin', adminAuthRouter)
 
+//Admin Subscription
+Router.use('/admin/subscriptions', adminSubscriptionRoute)
+
+//Admin Permission
+Router.use('/admin/permissions', adminPermission)
+
+//Admin Payment
+Router.use('/admin/payments', adminPaymentRoute)
+
+//Subscription
+Router.use('/subscriptions', subscriptionsRouter)
 
 export const APIs_V1 = Router

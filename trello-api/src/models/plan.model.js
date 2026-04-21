@@ -33,7 +33,8 @@ const featureSchema = Joi.object({
     maxCommentsPerCard: Joi.number().integer().min(0).required(),
     maxChecklistItemsPerCard: Joi.number().integer().min(0).required(),
     maxStorageMb: Joi.number().integer().min(0).required(),
-    maxFileSizeMb: Joi.number().integer().min(0).required()
+    maxFileSizeMb: Joi.number().integer().min(0).required(),
+    maxFilesPerUpload: Joi.number().integer().min(0).required()
   }).required()
 }).required()
 
@@ -62,6 +63,8 @@ const PLAN_COLLECTION_SCHEMA = Joi.object({
     .default('active'),
 
   isDeleted: Joi.boolean().default(false),
+
+  isDefault: Joi.boolean().default(false),
 
   createdAt: Joi.date().default(() => new Date()),
   updatedAt: Joi.date().allow(null).default(null)

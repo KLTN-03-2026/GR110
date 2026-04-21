@@ -2,19 +2,6 @@ import {  useState, useCallback, useEffect } from 'react'
 import {  useSearchParams } from 'react-router-dom'
 import { fetchAdminBoardAPI } from '~/apis/adminBoard.api'
 
-const workspaceOptions = [
-  { id: 'WKS001', title: 'Main Workspace' },
-  { id: 'WKS002', title: 'Marketing Workspace' },
-  { id: 'WKS003', title: 'Design Workspace' }
-]
-
-const ownerOptions = [
-  { id: 'USR001', displayName: 'Nguyen Truong Phuc' },
-  { id: 'USR002', displayName: 'System Admin' },
-  { id: 'USR003', displayName: 'Content Editor' }
-]
-
-
 export default function useAdminBoardPage() {
 
   const [boards, setBoard] = useState([])
@@ -27,14 +14,6 @@ export default function useAdminBoardPage() {
     const search = searchParams.get('search') || ''
     const page = Number(searchParams.get('page') || 1)
     const rowsPerPage = Number(searchParams.get('limit') || 8)
-
-  const getWorkspaceTitle = useCallback((workspaceId) => {
-    return workspaceOptions.find((item) => item.id === workspaceId)?.title || workspaceId
-  }, [])
-
-  const getOwnerName = useCallback((ownerId) => {
-    return ownerOptions.find((item) => item.id === ownerId)?.displayName || ownerId
-  }, [])
 
  const updateQueryParams = useCallback(
     ({ nextSearch, nextPage, nextLimit }) => {
@@ -113,8 +92,6 @@ export default function useAdminBoardPage() {
     search,
     page,
     rowsPerPage,
-    getWorkspaceTitle,
-    getOwnerName,
     handleSearchChange,
     handleChangePage,
     handleChangeRowsPerPage,

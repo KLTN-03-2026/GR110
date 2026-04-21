@@ -30,9 +30,10 @@ import PermissionPage from './pages/Admin/Permission/Permission.page'
 import BoardPages from './pages/Admin/Board/Board.page'
 import SubscriptionPage from './pages/Admin/Subcription/Subcription.page'
 import UpdateSubscriptionPage from './pages/Admin/Subcription/UpdateSubcription.page'
-import CreateSubscriptionPage from './pages/Admin/Subcription/CrerateSubcription.page'
 import { selectCurrentAdmin } from './redux/adminUser/adminSlice'
 import ProfilePage from './pages/Admin/Profile/Profile.page'
+import WorkspacePaymentPage from './pages/Home/WorkspacePayment.page'
+import PaymentPage from './pages/Admin/Payment/Payment.page'
 /**
  * Giải pháp Clean Code trong việc xác định các route nào cần đăng nhập tài khoản xong thì mới cho truy cập
  * Sử dụng <Outlet /> của react-router-dom để hiển thị các Child Route (xem cách sử dụng trong App() bên dưới)
@@ -109,6 +110,11 @@ function App() {
               path=":workspaceId/billing"
               element={<WorkspaceBillingPage />}
             />
+
+            <Route
+              path=":workspaceId/payment/:subscriptionId"
+              element={<WorkspacePaymentPage />}
+            />
           </Route>
 
           {/* <Route index element={<Navigate to="boards" replace />} />
@@ -144,12 +150,12 @@ function App() {
           <Route path='user/update/:_id' element={<UpdateUserPage />} />
           <Route path='board' element={<BoardPages />} />
           <Route path='permission' element={<PermissionPage />} />
+          <Route path='payment' element={<PaymentPage />} />
           <Route path='background' element={<BackgroundPage />} />
           <Route path='background/create' element={<CreateBackgroundPage />} />
           <Route path='background/update/:_id' element={<UpdateBackgroundPage />} />
           <Route path='workspace' element={<WorkspacePage />} />
           <Route path='subscription' element={<SubscriptionPage />} />
-          <Route path='subscription/create' element={<CreateSubscriptionPage />} />
           <Route path='subscription/update/:_id' element={<UpdateSubscriptionPage />} />
           <Route path='plan' element={<PlanPage />} />
           <Route path='plan/create' element={<CreatePlanPage />} />

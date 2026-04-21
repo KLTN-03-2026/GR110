@@ -1,8 +1,6 @@
-import React from 'react'
 import {
   Box,
   Chip,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -14,8 +12,6 @@ import {
   TableRow,
   Typography
 } from '@mui/material'
-import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
-import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 
 function getStatusChipStyle(status) {
   return status === 'active'
@@ -54,8 +50,6 @@ export default function BoardTable({
   page,
   rowsPerPage,
   totalCount,
-  getWorkspaceTitle,
-  getOwnerName,
   onPageChange,
   onRowsPerPageChange,
 }) {

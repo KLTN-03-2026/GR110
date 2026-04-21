@@ -62,25 +62,7 @@ class UserRepo {
     return result
   }
 
-  static countDocuments = async ({ filter }) => {
-    const count = await GET_DB()
-      .collection(userModel.USER_COLLECTION_NAME)
-      .countDocuments(filter)
-    return count
-  }
-
-  static findManyWithPagination = async ({
-    filter = {},
-    skip = 0,
-    limit = 8
-  }) => {
-    return await GET_DB()
-      .collection(userModel.USER_COLLECTION_NAME)
-      .find(filter)
-      .skip(skip)
-      .limit(limit)
-      .toArray()
-  }
+ 
 }
 
 export default UserRepo

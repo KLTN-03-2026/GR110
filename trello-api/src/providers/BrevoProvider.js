@@ -12,7 +12,6 @@ import { env } from '~/config/environment'
  */
 let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi()
 let apiKey = apiInstance.authentications['apiKey']
-// apiKey.apiKey = env.BREVO_API_KEY
 
 apiKey.apikey = env.API_KEY_MAIL
 const sendEmail = async (recipientEmail, customSubject, htmlContent) => {

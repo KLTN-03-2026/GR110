@@ -7,8 +7,6 @@ export const env = {
   LOCAL_DEV_APP_HOST: process.env.LOCAL_DEV_APP_HOST,
   LOCAL_DEV_APP_PORT: process.env.LOCAL_DEV_APP_PORT,
 
-  API_KEY_MAIL: process.env.API_KEY_MAIL,
-
   BUILD_MODE: process.env.BUILD_MODE,
 
   AUTHOR: process.env.AUTHOR,
@@ -38,5 +36,17 @@ export const env = {
   AWS_USER_SECRET_ACCESS_KEY: process.env.AWS_USER_SECRET_ACCESS_KEY,
   AWS_REGION: process.env.AWS_REGION,
   AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
-  AWS_CLOUDFRONT_DOMAIN: process.env.AWS_CLOUDFRONT_DOMAIN
+  AWS_CLOUDFRONT_DOMAIN: process.env.AWS_CLOUDFRONT_DOMAIN,
+
+  //SEPAY
+  SEPAY_TOKEN:process.env.SEPAY_TOKEN,
+
+  //PAYPAL
+  PAYPAL_CLIENT_ID:process.env.PAYPAL_CLIENT_ID,
+  PAYPAL_SECRET: process.env.PAYPAL_SECRET,
+  PAYPAL_BASE_URL:process.env.PAYPAL_BASE_URL,
+
+  //Mail
+
+  API_KEY_MAIL: process.env.API_KEY_MAIL,
 }

@@ -100,7 +100,8 @@ const buildDefaultValues = (initialData) => ({
       maxCommentsPerCard: initialData?.feature?.limits?.maxCommentsPerCard ?? 50,
       maxChecklistItemsPerCard: initialData?.feature?.limits?.maxChecklistItemsPerCard ?? 20,
       maxStorageMb: initialData?.feature?.limits?.maxStorageMb ?? 512,
-      maxFileSizeMb: initialData?.feature?.limits?.maxFileSizeMb ?? 5
+      maxFileSizeMb: initialData?.feature?.limits?.maxFileSizeMb ?? 5,
+      maxFilesPerUpload: initialData?.feature?.limits?.maxFilesPerUpload ?? 5
     }
   }
 })
@@ -154,7 +155,8 @@ export default function UpdatePlanForm({ initialData }) {
           maxCommentsPerCard: Number(data.feature.limits.maxCommentsPerCard),
           maxChecklistItemsPerCard: Number(data.feature.limits.maxChecklistItemsPerCard),
           maxStorageMb: Number(data.feature.limits.maxStorageMb),
-          maxFileSizeMb: Number(data.feature.limits.maxFileSizeMb)
+          maxFileSizeMb: Number(data.feature.limits.maxFileSizeMb),
+          maxFilesPerUpload: Number(data.feature.limits.maxFilesPerUpload)
         }
       }
     }
@@ -383,6 +385,13 @@ export default function UpdatePlanForm({ initialData }) {
             control={control}
             name='feature.limits.maxFileSizeMb'
             label='Max File Size (MB)'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+          <LimitField
+            control={control}
+            name='feature.limits.maxFilesPerUpload'
+            label='Max File Uploads'
             sectionTitleSx={sectionTitleSx}
             inputSx={inputSx}
           />

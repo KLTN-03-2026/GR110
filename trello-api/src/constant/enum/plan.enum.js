@@ -1,4 +1,4 @@
-const PLAN_BILLING_CYCLE = ['monthly', 'yearly']
+const PLAN_BILLING_CYCLE = ['monthly']
 
 const PLAN_STATUS = ['active', 'inactive']
 

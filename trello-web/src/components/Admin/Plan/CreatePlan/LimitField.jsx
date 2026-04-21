@@ -1,5 +1,5 @@
-import { Box, TextField, Typography } from '@mui/material';
-import { Controller } from 'react-hook-form';
+import { Box, TextField, Typography } from '@mui/material'
+import { Controller } from 'react-hook-form'
 
 export function LimitField({ control, name, label, sectionTitleSx, inputSx }) {
   return (
@@ -10,9 +10,20 @@ export function LimitField({ control, name, label, sectionTitleSx, inputSx }) {
         control={control}
         rules={{
           required: `${label} is required`,
-          min: {
-            value: 0,
-            message: `${label} must be greater than or equal to 0`
+          validate: (value) => {
+            if (value === '' || value === null || value === undefined) {
+              return `${label} is required`
+            }
+
+            if (!/^\d+$/.test(value)) {
+              return `${label} must be a valid non-negative number`
+            }
+
+            if (Number(value) < 0) {
+              return `${label} must be greater than or equal to 0`
+            }
+
+            return true
           }
         }}
         render={({ field, fieldState }) => (
@@ -20,9 +31,14 @@ export function LimitField({ control, name, label, sectionTitleSx, inputSx }) {
             <TextField
               {...field}
               fullWidth
-              type='number'
-              value={field.value ?? 0}
-              onChange={(e) => field.onChange(Number(e.target.value))}
+              type='text'
+              value={field.value ?? ''}
+              onChange={(e) => {
+                const value = e.target.value
+                if (/^\d*$/.test(value)) {
+                  field.onChange(value)
+                }
+              }}
               error={!!fieldState.error}
               sx={inputSx}
             />

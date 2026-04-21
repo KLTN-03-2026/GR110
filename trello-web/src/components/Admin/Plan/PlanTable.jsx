@@ -1,5 +1,4 @@
 import {
-  Box,
   Chip,
   IconButton,
   Stack,
@@ -9,18 +8,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tooltip,
-  Typography
 } from '@mui/material'
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined'
 import DeleteOutlineOutlinedIcon from '@mui/icons-material/DeleteOutlineOutlined'
 import ConfirmDeleteModal from '../ModalDelete/ConfirmDeleteModal'
-
-function truncateText(value, maxLength = 50) {
-  if (!value) return '-'
-  if (value.length <= maxLength) return value
-  return `${value.slice(0, maxLength)}...`
-}
+import { FeatureCell } from './FeatureCell'
 
 function formatCurrency(value) {
   if (value === null || value === undefined) return '0 ₫'
@@ -34,107 +26,23 @@ function formatCurrency(value) {
 function getStatusChipStyle(status) {
   return status === 'active'
     ? {
-        label: 'Active',
-        color: '#16a34a',
-        backgroundColor: '#f0fdf4',
-        borderColor: '#bbf7d0'
-      }
+      label: 'Active',
+      color: '#16a34a',
+      backgroundColor: '#f0fdf4',
+      borderColor: '#bbf7d0'
+    }
     : {
-        label: 'Inactive',
-        color: '#dc2626',
-        backgroundColor: '#fef2f2',
-        borderColor: '#fecaca'
-      }
+      label: 'Inactive',
+      color: '#dc2626',
+      backgroundColor: '#fef2f2',
+      borderColor: '#fecaca'
+    }
 }
 
-function getFeatureDisplayData(feature) {
-  const limits = feature?.limits || {}
-  const capabilities = feature?.capabilities || {}
-
-  const limitSummary = [
-    `${limits.maxMembers ?? 0} members`,
-    `${limits.maxBoards ?? 0} boards`,
-    `${limits.maxColumnsPerBoard ?? 0} cols/board`,
-    `${limits.maxStorageMb ?? 0}MB storage`
-  ]
-
-  const enabledCapabilities = [
-    capabilities?.workspace?.customRole && 'Custom role',
-    capabilities?.board?.customRole && 'Board role',
-    capabilities?.board?.createPrivateBoard && 'Private board',
-    capabilities?.column?.customColor && 'Custom color',
-    capabilities?.task?.setDue && 'Set due',
-    capabilities?.task?.assignMembers && 'Assign members'
-  ].filter(Boolean)
-
-  return {
-    limitLine: limitSummary.join(' • '),
-    capabilityLine:
-      enabledCapabilities.length > 0
-        ? enabledCapabilities.join(' • ')
-        : 'No extra features enabled',
-    detailLines: [
-      `Members: ${limits.maxMembers ?? 0}`,
-      `Boards: ${limits.maxBoards ?? 0}`,
-      `Columns/Board: ${limits.maxColumnsPerBoard ?? 0}`,
-      `Cards/Board: ${limits.maxCardsPerBoard ?? 0}`,
-      `Comments/Card: ${limits.maxCommentsPerCard ?? 0}`,
-      `Checklist Items/Card: ${limits.maxChecklistItemsPerCard ?? 0}`,
-      `Storage: ${limits.maxStorageMb ?? 0}MB`,
-      `File Size: ${limits.maxFileSizeMb ?? 0}MB`,
-      `Workspace Custom Role: ${capabilities?.workspace?.customRole ? 'Yes' : 'No'}`,
-      `Board Custom Role: ${capabilities?.board?.customRole ? 'Yes' : 'No'}`,
-      `Private Board: ${capabilities?.board?.createPrivateBoard ? 'Yes' : 'No'}`,
-      `Column Custom Color: ${capabilities?.column?.customColor ? 'Yes' : 'No'}`,
-      `Task Set Due: ${capabilities?.task?.setDue ? 'Yes' : 'No'}`,
-      `Task Assign Members: ${capabilities?.task?.assignMembers ? 'Yes' : 'No'}`
-    ]
-  }
-}
-
-function FeatureCell({ feature }) {
-  const { limitLine, capabilityLine, detailLines } =
-    getFeatureDisplayData(feature)
-
-  return (
-    <Tooltip
-      arrow
-      placement="top-start"
-      title={
-        <Box sx={{ py: 0.5 }}>
-          {detailLines.map((line, index) => (
-            <Typography key={index} sx={{ fontSize: '12px', lineHeight: 1.6 }}>
-              {line}
-            </Typography>
-          ))}
-        </Box>
-      }
-    >
-      <Box sx={{ minWidth: 260, maxWidth: 340 }}>
-        <Typography
-          sx={{
-            fontSize: '14px',
-            fontWeight: 600,
-            color: '#111827',
-            lineHeight: 1.5
-          }}
-        >
-          {limitLine}
-        </Typography>
-
-        <Typography
-          sx={{
-            mt: 0.5,
-            fontSize: '13px',
-            color: '#6b7280',
-            lineHeight: 1.5
-          }}
-        >
-          {truncateText(capabilityLine, 55)}
-        </Typography>
-      </Box>
-    </Tooltip>
-  )
+function truncateText(value, maxLength = 50) {
+    if (!value) return '-'
+    if (value.length <= maxLength) return value
+    return `${value.slice(0, maxLength)}...`
 }
 
 export default function PlanTable({
@@ -213,7 +121,7 @@ export default function PlanTable({
                 </TableCell>
 
                 <TableCell sx={{ fontSize: '15px', color: '#1f2937' }}>
-                  <FeatureCell feature={plan.feature} />
+                  <FeatureCell feature={plan.feature} truncateText={truncateText} />
                 </TableCell>
 
                 <TableCell

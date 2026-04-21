@@ -21,6 +21,14 @@ export default function ConfirmDeleteModal({
       onClose={onClose}
       maxWidth='xs'
       fullWidth
+       PaperProps={{
+        sx: {
+          backgroundColor: '#ffffff',
+          color: '#111827',
+          borderRadius: '14px',
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.16)'
+        }
+      }}
     >
       <DialogTitle
         sx={{

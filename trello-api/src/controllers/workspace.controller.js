@@ -129,5 +129,14 @@ class WorkspaceController {
       })
     }).send(res)
   }
+
+  static fetchPlans = async(req, res) => {
+    new OkSuccessResponse({
+      metadata: await WorkspaceService.fetchPlans({
+        userContext: req.userContext
+      })
+    }).send(res)
+  }
+
 }
 export default WorkspaceController

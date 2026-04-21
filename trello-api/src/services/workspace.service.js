@@ -13,6 +13,7 @@ import WorkspaceRoleRepo from '~/repo/workspaceRole.repo'
 import { mongoClientInstance } from '~/config/mongodb'
 import BoardRepo from '~/repo/board.repo'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
+import PlanRepo from '~/repo/adminPlan.repo'
 
 const generateWorkspaceAdminRole = ({ workspaceId }) => {
   return {
@@ -405,6 +406,13 @@ class WorkspaceService {
 
     return updatedMember
   }
+
+  static fetchPlans = async ({ userContext }) => {
+    const plans = await WorkspaceRepo.fetchByPlan()
+
+    return plans
+  }
+
 }
 
 const ensureWorkspaceHasAtLeastOneAdmin = async ({ member, adminRole }) => {

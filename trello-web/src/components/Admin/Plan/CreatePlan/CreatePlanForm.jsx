@@ -51,7 +51,8 @@ const defaultValues = {
       maxCommentsPerCard: 0,
       maxChecklistItemsPerCard: 0,
       maxStorageMb: 0,
-      maxFileSizeMb: 0
+      maxFileSizeMb: 0,
+      maxFilesPerUpload: 0
     }
   }
 }
@@ -151,12 +152,13 @@ export default function CreatePlanForm() {
           maxCommentsPerCard: Number(data.feature.limits.maxCommentsPerCard),
           maxChecklistItemsPerCard: Number(data.feature.limits.maxChecklistItemsPerCard),
           maxStorageMb: Number(data.feature.limits.maxStorageMb),
-          maxFileSizeMb: Number(data.feature.limits.maxFileSizeMb)
+          maxFileSizeMb: Number(data.feature.limits.maxFileSizeMb),
+          maxFilesPerUpload: Number(data.feature.limits.maxFilesPerUpload)
         }
       }
     }
-    console.log('Create Plan Payload:', payload)
     await createAdminPlanAPI({planData : payload})
+    reset()
   }
 
   return (
@@ -370,6 +372,13 @@ export default function CreatePlanForm() {
             control={control}
             name='feature.limits.maxFileSizeMb'
             label='Max File Size (MB)'
+            sectionTitleSx={sectionTitleSx}
+            inputSx={inputSx}
+          />
+          <LimitField
+            control={control}
+            name='feature.limits.maxFilesPerUpload'
+            label='Max File Uploads'
             sectionTitleSx={sectionTitleSx}
             inputSx={inputSx}
           />
