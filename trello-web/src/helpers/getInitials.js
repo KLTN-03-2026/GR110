@@ -1,11 +1,8 @@
-export const getInitials = (name = '') => {
-  if (!name || typeof name !== 'string') return ''
-
+export const getInitials = (name) => {
   return name
-    .trim()
-    .split(/\s+/)
-    .map((word) => word[0])
-    .slice(0, 2)
+    .split(' ')
+    .map((w) => w[0])
     .join('')
     .toUpperCase()
+    .slice(0, 2)
 }

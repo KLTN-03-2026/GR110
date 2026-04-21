@@ -7,7 +7,6 @@ import {
 
 const isAuthorized = async (req, res, next) => {
   const adminAccessToken = req.cookies.accessTokenAdmin
-  console.log(adminAccessToken);
   
   if (!adminAccessToken)
     throw new UnAuthorizedErrorResponse('Unauthorized! (Token not found)')

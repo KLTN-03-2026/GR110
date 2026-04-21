@@ -2,6 +2,7 @@ import { workspaceModel } from '~/models/workspace.model'
 import { GET_DB } from '~/config/mongodb'
 import { workspaceMemberModel } from '~/models/workspaceMember.model'
 import { planModel } from '~/models/plan.model'
+import { subscriptionModel } from '~/models/subscription.model'
 
 class WorkspaceRepo {
   static findOne = async ({ filter, options = {} }) => {
@@ -69,12 +70,67 @@ class WorkspaceRepo {
       .toArray()
   }
 
-  static fetchByPlan = async () => {
+  static fetchByPlan = async (workspaceId) => {
     try {
       const result = await GET_DB()
         .collection(planModel.PLAN_COLLECTION_NAME)
-        .find({ isDeleted: false, status: 'active' })
+        .aggregate([
+          {
+            $match: {
+              isDeleted: false,
+              status: 'active'
+            }
+          },
+          {
+            $lookup: {
+              from: subscriptionModel.SUBSCRIPTION_COLLECTION_NAME,
+              let: { planIdStr: { $toString: '$_id' } },
+              pipeline: [
+                {
+                  $match: {
+                    workspaceId,
+                    status: 'active'
+                  }
+                },
+                {
+                  $match: {
+                    $expr: {
+                      $eq: ['$planId', '$$planIdStr']
+                    }
+                  }
+                }
+              ],
+              as: 'currentSubscription'
+            }
+          },
+          {
+            $addFields: {
+              isCurrentPlan: {
+                $gt: [{ $size: '$currentSubscription' }, 0]
+              }
+            }
+          },
+          {
+            $project: {
+              currentSubscription: 0
+            }
+          },
+          {
+            $sort: {
+              currentPrice: 1
+            }
+          }
+        ])
         .toArray()
+
+      const hasActiveSubscription = result.some((plan) => plan.isCurrentPlan)
+
+      if (!hasActiveSubscription) {
+        return result.map((plan) => ({
+          ...plan,
+          isCurrentPlan: plan._id?.toString() === '69dc9cc2454ef403fb52c8ba'
+        }))
+      }
 
       return result
     } catch (error) {

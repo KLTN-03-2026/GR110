@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material'
+import { alpha, useTheme } from '@mui/material/styles'
 
 function formatPrice(value, locale = 'en-US') {
   if (typeof value === 'number') {
@@ -14,22 +15,29 @@ function formatPrice(value, locale = 'en-US') {
 }
 
 export function PlanPrice({ price, unit, interval, selected = false }) {
+  const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
+
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: 0.5 }}>
       <Box
         sx={{
           display: 'flex',
           alignItems: 'baseline',
-          gap: 1,
+          gap: 0.75,
           flexWrap: 'nowrap'
         }}
       >
         <Typography
-          component="span"
+          component='span'
           sx={{
-            fontSize: '26px !important',
-            fontWeight: 500,
-            color: selected ? '#d8b4fe' : '#c1c7d6',
+            fontSize: '24px !important',
+            fontWeight: 700,
+            color: selected
+              ? theme.palette.primary.main
+              : isDark
+                ? alpha(theme.palette.text.primary, 0.72)
+                : theme.palette.text.secondary,
             lineHeight: 1,
             flexShrink: 0
           }}
@@ -38,13 +46,13 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
         </Typography>
 
         <Typography
-          component="span"
+          component='span'
           sx={{
-            fontSize: '38px !important',
-            lineHeight: '0.92 !important',
+            fontSize: { xs: '34px !important', md: '38px !important' },
+            lineHeight: '0.95 !important',
             fontWeight: '900 !important',
             letterSpacing: '-0.05em',
-            color: '#fff',
+            color: 'text.primary',
             whiteSpace: 'nowrap',
             flexShrink: 0,
             display: 'inline-block'
@@ -54,11 +62,11 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
         </Typography>
 
         <Typography
-          component="span"
+          component='span'
           sx={{
-            fontSize: '16px !important',
-            fontWeight: 500,
-            color: '#d4d8e2',
+            fontSize: '15px !important',
+            fontWeight: 600,
+            color: 'text.secondary',
             lineHeight: 1.1,
             whiteSpace: 'nowrap',
             flexShrink: 0

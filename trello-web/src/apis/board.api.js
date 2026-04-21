@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify'
 import authorizeAxiosInstance from '~/utils/authorizeAxios'
 import { API_ROOT } from '~/utils/constants'
 
@@ -87,11 +88,12 @@ export const deleteBoardRoleAPI = async ({ boardId, roleId }) => {
   }
 }
 
-export const updateStatusBoardAPI = async ({ _id, data }) => {
-  const response = await authorizeAxiosInstance.put(
-    `${API_ROOT}/v1/boards/status/${_id}`,
+export const deleteStatusBoardAPI = async ({ _id, data }) => {
+  const response = await authorizeAxiosInstance.delete(
+    `${API_ROOT}/v1/boards/${_id}`,
     data
   )
+  toast.success('Board deleted success')
   return {
     message: response.data.message,
     metadata: response.data.metadata
@@ -161,3 +163,20 @@ export const deleteColumnAPI = async ({ columnId, boardId }) => {
   )
   return response.data.metadata
 }
+
+export const createBackground = async ({ boardId, payload }) => {
+  const response = await authorizeAxiosInstance.post(
+    `${API_ROOT}/v1/boards/custom-background/${boardId}`, payload
+  )
+  toast.success('Upload background success')
+  return response.data.metadata
+}
+
+export const deleteBackground = async ({boardId, backgroundId }) => {
+  const response = await authorizeAxiosInstance.delete(
+    `${API_ROOT}/v1/boards/custom-background/${boardId}/${backgroundId}`
+  )
+  toast.success('Delete background success')
+  return response.data.metadata
+}
+

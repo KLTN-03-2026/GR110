@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Taskio Ticket Reply</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Tahoma,Verdana,Segoe,sans-serif;color:#374151;">
+  <table
+    width="100%"
+    cellspacing="0"
+    cellpadding="0"
+    style="border-collapse:collapse;background-color:#f4f6f8;"
+  >
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table
+          width="640"
+          cellspacing="0"
+          cellpadding="0"
+          style="border-collapse:collapse;width:640px;max-width:100%;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;box-shadow:0 8px 24px rgba(15,23,42,0.06);"
+        >
+          <tr>
+            <td style="background:linear-gradient(135deg,#ea6b3d 0%,#f08a5d 100%);padding:28px 36px;">
+              <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+                <tr>
+                  <td align="left">
+                    <p style="margin:0 0 8px 0;font-size:13px;line-height:1.5;color:#ffe6dc;font-weight:700;letter-spacing:0.4px;text-transform:uppercase;">
+                      Taskio Support
+                    </p>
+                    <h1 style="margin:0;font-size:28px;line-height:1.3;color:#ffffff;font-weight:700;">
+                      Reply to your support ticket
+                    </h1>
+                    <p style="margin:10px 0 0 0;font-size:14px;line-height:1.7;color:#fff1eb;">
+                      We reviewed your request and prepared a response below.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:36px;">
+              <p style="margin:0 0 16px 0;font-size:16px;line-height:1.8;color:#111827;">
+                Hello <strong><%= customerName || 'there' %></strong>,
+              </p>
+
+              <p style="margin:0 0 24px 0;font-size:15px;line-height:1.9;color:#4b5563;">
+                Thank you for contacting <strong>Taskio</strong>. We have reviewed your ticket and provided our response below. Please review the details carefully.
+              </p>
+
+              <table
+                width="100%"
+                cellspacing="0"
+                cellpadding="0"
+                style="border-collapse:separate;border-spacing:0;margin:0 0 20px 0;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;"
+              >
+                <tr>
+                  <td style="padding:22px 24px;">
+                    <p style="margin:0 0 10px 0;font-size:12px;line-height:1.5;color:#6b7280;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;">
+                      Ticket title
+                    </p>
+                    <p style="margin:0 0 18px 0;font-size:17px;line-height:1.7;color:#111827;font-weight:700;">
+                      <%= ticketTitle || '-' %>
+                    </p>
+
+                    <p style="margin:0 0 10px 0;font-size:12px;line-height:1.5;color:#6b7280;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;">
+                      Your message
+                    </p>
+                    <p style="margin:0;font-size:15px;line-height:1.9;color:#374151;white-space:pre-wrap;">
+                      <%= ticketContent || '-' %>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <table
+                width="100%"
+                cellspacing="0"
+                cellpadding="0"
+                style="border-collapse:separate;border-spacing:0;margin:0 0 24px 0;background:linear-gradient(180deg,#fff7ed 0%,#fff1e6 100%);border:1px solid #fed7aa;border-left:5px solid #ea6b3d;border-radius:14px;"
+              >
+                <tr>
+                  <td style="padding:22px 24px;">
+                    <p style="margin:0 0 10px 0;font-size:12px;line-height:1.5;color:#9a3412;font-weight:700;letter-spacing:0.6px;text-transform:uppercase;">
+                      Taskio response
+                    </p>
+                    <p style="margin:0;font-size:15px;line-height:1.95;color:#7c2d12;white-space:pre-wrap;">
+                      <%= replyContent || '-' %>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <table
+                width="100%"
+                cellspacing="0"
+                cellpadding="0"
+                style="border-collapse:separate;border-spacing:0;margin:0 0 24px 0;background-color:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;"
+              >
+                <tr>
+                  <td style="padding:18px 20px;">
+                    <p style="margin:0;font-size:14px;line-height:1.8;color:#475569;">
+                      Need more help? You can reply to this email or create a new support ticket in Taskio and our team will continue assisting you.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 8px 0;font-size:15px;line-height:1.8;color:#111827;">
+                Best regards,
+              </p>
+              <p style="margin:0;font-size:15px;line-height:1.8;color:#111827;font-weight:700;">
+                <%= staffName || 'Taskio Support Team' %>
+              </p>
+              <p style="margin:2px 0 0 0;font-size:14px;line-height:1.7;color:#6b7280;">
+                Customer Support · Taskio
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:18px 36px;background-color:#f9fafb;border-top:1px solid #e5e7eb;">
+              <p style="margin:0;font-size:13px;line-height:1.8;color:#6b7280;text-align:center;">
+                Taskio © 2025 — Manage your tasks and teamwork efficiently.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

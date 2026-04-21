@@ -25,8 +25,7 @@ import {
 } from '~/helpers/boardPermission.cache'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
 import BackgroundRepo from '~/repo/adminBackground.repo'
-import { emitBoardUpdated } from '~/realtime/realtimeEmitters/boardRealtime.emitter'
-import { emitCardMoved } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
+import S3Provider from '~/providers/S3Provider'
 
 const DEFAULT_BOARD_LABELS = [
   { title: '', color: 'green' },
@@ -155,7 +154,12 @@ class BoardService {
 
   static getBackground = async ({ userContext }) => {
     return await BackgroundRepo.findMany({
-      filter: { isDelete: false, status: 'active', entity: 'board' },
+      filter: {
+        isDelete: false,
+        status: 'active',
+        entity: 'board',
+        type: { $in: ['system', 'board'] }
+      },
       options: {}
     })
   }
@@ -371,42 +375,33 @@ class BoardService {
         return updatedBoard
       })
 
-      emitBoardUpdated({ boardId: _id.toString(), board: updatedBoard })
-
       return updatedBoard
     } finally {
       await session.endSession()
     }
   }
 
-  static moveCardToDifferentColumn = async ({ boardAccess, data }) => {
+  static moveCardToDifferentColumn = async ({ data }) => {
     const session = mongoClientInstance.startSession()
 
     try {
       await session.withTransaction(async () => {
-        const updatePrevColumn = await ColumnRepo.updateById({
+        await ColumnRepo.updateById({
           _id: data.prevColumnId,
           data: { cardOrderIds: data.prevCardOrderIds, updatedAt: Date.now() },
           session
         })
 
-        const updateNextColumn = await ColumnRepo.updateById({
+        await ColumnRepo.updateById({
           _id: data.nextColumnId,
           data: { cardOrderIds: data.nextCardOrderIds, updatedAt: Date.now() },
           session
         })
 
-        const updatedCard = await CardRepo.updateOne({
+        await CardRepo.updateOne({
           filter: { _id: new ObjectId(data.currentCardId) },
           data: { $set: { columnId: data.nextColumnId } },
           session
-        })
-
-        emitCardMoved({
-          boardId: boardAccess.board._id,
-          card: updatedCard,
-          prevColumn: updatePrevColumn,
-          nextColumn: updateNextColumn
         })
       })
     } finally {
@@ -941,28 +936,99 @@ class BoardService {
     }
   }
 
-  // static delete = async ({ _id, userContext }) => {
-  //   const deleted = await BoardRepo.deleteOne({
-  //     filter: { _id: new ObjectId(_id) }
-  //   })
-
-  //   if (deletedRole.deletedCount === 0)
-  //     throw new ConflictErrorResponse(
-  //       'Role does not exist or has already been deleted.'
-  //     )
-
-  //   return {}
-  // }
-
-  static updateStatus = async ({ _id, userContext, data }) => {
-    const updateData = {
-      status: BOARD_STATUS[1],
-      updatedAt: Date.now()
+  static delete = async ({ _id }) => {
+    const session = mongoClientInstance.startSession()
+    try {
+      session.startTransaction()
+      await BoardMemberRepo.deleteManyByBoardId({ boardId: _id, session })
+      await BoardRoleRepo.deleteManyByBoardId({ boardId: _id, session })
+      const deletedBoard = await BoardRepo.deleteById({ _id })
+      session.commitTransaction()
+      return deletedBoard
+    } catch (error) {
+      throw error
     }
+  }
 
-    const updatedBoard = await BoardRepo.updateOne({ _id, data: updateData })
+  static createBackground = async ({ boardId, file }) => {
+    const session = await mongoClientInstance.startSession()
+    try {
+      session.startTransaction()
 
-    return updatedBoard
+      const board = await BoardRepo.findById({
+        _id: boardId
+      })
+
+      if (!board) throw new NotFoundErrorResponse('Board Not Found')
+
+      const upload = await S3Provider.upload(file)
+
+      const newBackground = {
+        entity: 'board',
+        title: board.title,
+        image: S3Provider.getUrl(upload.fileKey),
+        status: 'active',
+        type: 'board',
+        boardId: boardId,
+        isDelete: false
+      }
+
+      const background = BackgroundRepo.createOne({
+        data: newBackground,
+        session
+      })
+
+      await session.commitTransaction()
+
+      return background
+    } catch (error) {
+      await session.abortTransaction()
+      throw error
+    }
+  }
+
+  static deleteBackground = async ({ boardId, backgroundId }) => {
+    const session = mongoClientInstance.startSession()
+
+    try {
+      session.startTransaction()
+
+      const board = await BoardRepo.findById({
+        _id: boardId
+      })
+
+      if (!board) throw new NotFoundErrorResponse('Board Not Found')
+
+      const background = BackgroundRepo.findById({
+        _id: backgroundId
+      })
+
+      if (!background) throw new NotFoundErrorResponse('Background Not Found')
+
+      const key = S3Provider.getKeyFromUrl(background.image)
+      if (key) {
+        await S3Provider.delete(key)
+      }
+
+      await BackgroundRepo.deleteById({
+        _id: backgroundId
+      })
+
+      const boardupdated = await BoardRepo.updateById({
+        _id: boardId,
+        data: {
+          cover: {
+            type: 'color',
+            value: 'blue'
+          },
+          updatedAt: new Date()
+        }
+      })
+
+      return boardupdated
+    } catch (error) {
+      throw error
+    }
   }
 }
 

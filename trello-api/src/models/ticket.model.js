@@ -1,5 +1,5 @@
 import Joi from 'joi'
-import { TICKET_CREATED_BY } from '~/constant/enum/ticket.enum'
+import { TICKET_CREATED_BY, TICKET_TYPE } from '~/constant/enum/ticket.enum'
 import {
   EMAIL_RULE,
   EMAIL_RULE_MESSAGE,
@@ -14,8 +14,10 @@ const TICKET_COLLECTION_SCHEMA = Joi.object({
     .required()
     .pattern(EMAIL_RULE)
     .message(EMAIL_RULE_MESSAGE),
+  
+  title: Joi.string().required(),
 
-  type: Joi.string().required(),
+  type: Joi.string().valid(...TICKET_TYPE).required(),
 
   content: Joi.string().required(),
 
@@ -34,7 +36,7 @@ const TICKET_COLLECTION_SCHEMA = Joi.object({
   updatedAt: Joi.date().allow(null).default(null)
 })
 
-export const templateModel = {
+export const ticketModel = {
   TICKET_COLLECTION_NAME,
   TICKET_COLLECTION_SCHEMA
 }

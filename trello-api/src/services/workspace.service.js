@@ -407,9 +407,8 @@ class WorkspaceService {
     return updatedMember
   }
 
-  static fetchPlans = async ({ userContext }) => {
-    const plans = await WorkspaceRepo.fetchByPlan()
-
+  static fetchPlans = async ({ userContext, workspaceId }) => {
+    const plans = await WorkspaceRepo.fetchByPlan(workspaceId)
     return plans
   }
 

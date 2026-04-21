@@ -73,6 +73,14 @@ class BackgroundRepo {
       .limit(limit)
       .toArray()
   }
+
+  static deleteById = async ({ _id }) => {
+    const result = await GET_DB()
+      .collection(backgroundModel.BACKGROUND_COLLECTION_NAME)
+      .deleteOne({ _id: new ObjectId(_id) })
+
+    return result
+  }
 }
 
 export default BackgroundRepo

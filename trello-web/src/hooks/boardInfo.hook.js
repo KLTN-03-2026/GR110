@@ -11,6 +11,11 @@ export function useBoardInfo() {
   const board = useSelector((state) => state.activeBoard.board)
   const [selectedBackground, setSelectedBackground] = useState(null)
   const [backgrounds, setBackgrounds] = useState([])
+  const systemBackgrounds =
+    backgrounds?.filter((item) => item.type === 'system') || []
+
+  const customBackgrounds =
+    backgrounds?.filter((item) => item.type === 'board') || []
 
   const type = {
     PUBLIC: 'public',
@@ -67,6 +72,7 @@ export function useBoardInfo() {
       )
 
       setBackgrounds(activeBackgrounds)
+
       return activeBackgrounds
     } catch (error) {
       console.log(error)
@@ -76,44 +82,40 @@ export function useBoardInfo() {
   }, [])
 
   useEffect(() => {
-    getBackground()
-  }, [getBackground])
+    const init = async () => {
+      if (!board) return
 
-  useEffect(() => {
-    if (!board) return
+      const activeBackgrounds = await getBackground()
 
-    reset({
-      title: board.title || '',
-      description: board.description || '',
-      visibility: board.visibility || type.PRIVATE,
-      cover: {
-        type: board?.cover?.type || '',
-        value: board?.cover?.value || ''
-      }
-    })
-
-    if (board?.cover?.type === 'image') {
-      const matchedImage = backgrounds.find(
-        (item) => item.image === board.cover.value
-      )
-
-      setSelectedBackground(
-        matchedImage || {
-          _id: board.cover.value,
-          image: board.cover.value,
-          title: 'Current background'
+      reset({
+        title: board.title || '',
+        description: board.description || '',
+        visibility: board.visibility || type.PRIVATE,
+        cover: {
+          type: board?.cover?.type || '',
+          value: board?.cover?.value || ''
         }
-      )
-    } else if (board?.cover?.type === 'color') {
-      const matchedColor = backgroundBoardList.find(
-        (item) => item.key === board.cover.value
-      )
+      })
 
-      setSelectedBackground(matchedColor || null)
-    } else {
-      setSelectedBackground(null)
+      if (board?.cover?.type === 'image') {
+        const matchedImage = activeBackgrounds.find(
+          (item) => item.image === board.cover.value
+        )
+
+        setSelectedBackground(matchedImage)
+      } else if (board?.cover?.type === 'color') {
+        const matchedColor = backgroundBoardList.find(
+          (item) => item.key === board.cover.value
+        )
+
+        setSelectedBackground(matchedColor || null)
+      } else {
+        setSelectedBackground(null)
+      }
     }
-  }, [board, backgrounds, reset])
+
+    init()
+  }, [board, getBackground, reset])
 
   const onSubmit = async (payload) => {
     const res = await fetchUpdateBoardInfoAPI({ _id: boardId, data: payload })
@@ -176,6 +178,8 @@ export function useBoardInfo() {
     setSelectedBackground,
     selectedBackground,
     backgrounds,
-    getBackground
+    getBackground,
+    systemBackgrounds,
+    customBackgrounds
   }
 }

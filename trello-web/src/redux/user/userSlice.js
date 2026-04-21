@@ -34,6 +34,8 @@ export const logoutUserApi = createAsyncThunk(
 export const updateUserAPI = createAsyncThunk(
   'user/updateUserAPI',
   async (data) => {
+    console.log('ok ', data);
+    
     const response = await authorizeAxiosInstance.put(
       `${API_ROOT}/v1/users/update`,
       data
@@ -61,6 +63,8 @@ export const userSlice = createSlice({
     })
   }
 })
+
+// export const {} = userSlice.actions
 
 export const selectCurrentUser = (state) => {
   return state.user.currentUser

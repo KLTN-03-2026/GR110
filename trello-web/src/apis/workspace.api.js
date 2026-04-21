@@ -79,9 +79,9 @@ export const removeWorkspaceMemberAPI = async ({ workspaceId, memberId }) => {
   return response.data.metadata
 }
 
-export const fetchWorkspacePlan = async () => {
+export const fetchWorkspacePlan = async (workspaceId) => {
   const response = await authorizeAxiosInstance.get(
-    `${API_ROOT}/v1/workspaces/plans`
+    `${API_ROOT}/v1/workspaces/plans/${workspaceId}`
   )
   return response.data.metadata
 }

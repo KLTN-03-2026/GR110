@@ -30,6 +30,17 @@ class S3Provider {
     return `https://${this.cloudfront}/${key}`
   }
 
+  static getKeyFromUrl(fileUrl) {
+    if (!fileUrl) return null
+
+    try {
+      const url = new URL(fileUrl)
+      return decodeURIComponent(url.pathname.replace(/^\/+/, ''))
+    } catch (error) {
+      return null
+    }
+  }
+
   static async upload(file, folder = 'uploads') {
     const key = this.buildKey(folder, file.originalname)
 

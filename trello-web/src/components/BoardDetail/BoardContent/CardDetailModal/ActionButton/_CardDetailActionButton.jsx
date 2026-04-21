@@ -5,8 +5,6 @@ import CardDatesPopover from './CardDatesPopover'
 import CardChecklistPopover from './CardChecklistPopover'
 import CardMemberPopover from './CardMemberPopover'
 import CardLabelPopover from './CardLabelPopover'
-import CardAIAssistPopover from './CardAIAssistPopover'
-import { useEffect, useRef } from 'react'
 
 const cardDetailActionButtonSx = {
   textTransform: 'none',
@@ -32,7 +30,7 @@ const cardDetailActionButtonSx = {
   }
 }
 
-function CardDetailActionButton({ data, handler, activeCard }) {
+function CardDetailActionButton({ data, handler }) {
   const { dates, memberIds, labelIds } = data
   const {
     handleUpdateCardDates,
@@ -40,15 +38,8 @@ function CardDetailActionButton({ data, handler, activeCard }) {
     handleAssignMemberToCard,
     handleRemoveMemberFromCard,
     handleUploadFiles,
-    handleUpdateCardLabel,
-    handleGenerateAIAssist,
-    handleApplyAIAssist
+    handleUpdateCardLabel
   } = handler
-
-  const activeCardRef = useRef(activeCard)
-  useEffect(() => {
-    activeCardRef.current = activeCard
-  }, [activeCard])
 
   return (
     <Box
@@ -86,15 +77,6 @@ function CardDetailActionButton({ data, handler, activeCard }) {
         Attachment
         <input hidden type="file" multiple onChange={handleUploadFiles} />
       </Button>
-
-      <CardAIAssistPopover
-        handleGenerate={(userPrompt) =>
-          handleGenerateAIAssist(activeCardRef.current, userPrompt)
-        }
-        handleApply={(payload) =>
-          handleApplyAIAssist(payload, activeCardRef.current)
-        }
-      />
     </Box>
   )
 }

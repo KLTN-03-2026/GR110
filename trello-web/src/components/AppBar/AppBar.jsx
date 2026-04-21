@@ -7,9 +7,10 @@ import HelpOutlineIcon from '@mui/icons-material/HelpOutline'
 import Notifications from './Notifications/Notifications'
 import AutoCompleteSearchBoard from './SearchBoards/AutoCompleteSearchBoard'
 import Box from '@mui/material/Box'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 function AppBar() {
+  const navigate = useNavigate()
   return (
     <Box
       sx={{
@@ -47,7 +48,7 @@ function AppBar() {
         <Notifications />
 
         <Tooltip title="Help">
-          <HelpOutlineIcon sx={{ cursor: 'pointer', color: 'white' }} />
+          <HelpOutlineIcon onClick={() => navigate('/h/tickets')} sx={{ cursor: 'pointer', color: 'white' }} />
         </Tooltip>
 
         <Profiles />

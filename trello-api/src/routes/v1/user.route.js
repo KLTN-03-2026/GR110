@@ -1,6 +1,7 @@
 import express from 'express'
 import { userValidation } from '~/validations/userValidation'
 import { authMiddleware } from '~/middlewares/auth.middleware'
+import { multerUploadMiddleware } from '~/middlewares/multerUpload.middleware'
 import UserController from '~/controllers/user.controller'
 import asyncHandler from '~/helpers/asyncHandler'
 import validate from '~/utils/validate'
@@ -28,7 +29,7 @@ Router.route('/refresh_token').put(asyncHandler(UserController.refreshToken))
 
 Router.route('/update').put(
   asyncHandler(authMiddleware.isAuthorized),
-  // asyncHandler(multerUploadMiddleware.uploadSingleImage.single('avatar')),
+  asyncHandler(multerUploadMiddleware.uploadSingleImage),
   asyncHandler(validate(userValidation.update)),
   asyncHandler(UserController.update)
 )

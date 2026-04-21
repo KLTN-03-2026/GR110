@@ -1,4 +1,5 @@
 import { Box, Button, Container, Stack, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { PlanCard } from '~/components/Workspace/workspaceBilling/PlanCard'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import useBillingPage from '~/hooks/workspaceBilling.hook'
@@ -8,18 +9,22 @@ import { createWorkspacePayment } from '~/apis/subscriptions.api'
 
 export default function WorkspaceBillingPage() {
   const { plans } = useBillingPage()
-
   const [selectedPlan, setSelectedPlan] = useState('')
 
   useEffect(() => {
     if (!plans.length || selectedPlan) return
 
-    const freePlan = plans.find(
-      (plan) => plan.title?.trim().toLowerCase() === 'free'
-    )
+    const PLAN_FREE = '69dc9cc2454ef403fb52c8ba'
+    const currentPlan = plans.find((plan) => plan.isCurrentPlan)
 
-    if (freePlan) {
-      setSelectedPlan(freePlan.id)
+    if (currentPlan) {
+      setSelectedPlan(currentPlan.id)
+      return
+    }
+
+    const defaultPlan = plans.find((plan) => plan.id === PLAN_FREE)
+    if (defaultPlan) {
+      setSelectedPlan(defaultPlan.id)
       return
     }
 
@@ -27,11 +32,15 @@ export default function WorkspaceBillingPage() {
   }, [plans, selectedPlan])
 
   const activePlan = plans.find((plan) => plan.id === selectedPlan)
-  const navigate = useNavigate();
-  const {workspaceId} = useParams();
+
+  const navigate = useNavigate()
+  const { workspaceId } = useParams()
 
   const handleSelectPlan = async () => {
-    const res = await createWorkspacePayment({ workspaceId, planId: activePlan.id })
+    const res = await createWorkspacePayment({
+      workspaceId,
+      planId: activePlan.id
+    })
 
     navigate(`/h/workspaces/${workspaceId}/payment/${res.subscription.id}`, {
       state: res
@@ -51,8 +60,8 @@ export default function WorkspaceBillingPage() {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ReceiptLongOutlinedIcon fontSize="large" color="primary" />
-          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+          <ReceiptLongOutlinedIcon fontSize='large' color='primary' />
+          <Typography variant='h5' sx={{ fontWeight: 'bold' }}>
             Workspace Billings
           </Typography>
         </Box>
@@ -62,7 +71,7 @@ export default function WorkspaceBillingPage() {
         sx={(theme) => ({
           minHeight: '75vh',
           bgcolor: theme.palette.mode === 'dark' ? '#151822' : '#f6f8fc',
-          color: '#fff',
+          color: theme.palette.text.primary,
           display: 'flex',
           alignItems: 'flex-start',
           py: { xs: 4, md: 5 },
@@ -71,9 +80,9 @@ export default function WorkspaceBillingPage() {
           })
         })}
       >
-        <Container maxWidth="xl">
+        <Container maxWidth='xl'>
           <Box sx={{ py: { xs: 5, md: 7 } }}>
-            <Stack spacing={1.5} alignItems="center" sx={{ mb: 5 }}>
+            <Stack spacing={1.5} alignItems='center' sx={{ mb: 5 }}>
               <Typography
                 sx={(theme) => ({
                   fontSize: { xs: 26, md: 40 },
@@ -122,11 +131,11 @@ export default function WorkspaceBillingPage() {
               ))}
             </Box>
 
-            <Stack alignItems="center" sx={{ mt: 4 }}>
+            <Stack alignItems='center' sx={{ mt: 4 }}>
               <Button
-                variant="contained"
+                variant='contained'
                 onClick={() => handleSelectPlan()}
-                disabled={activePlan?.title === 'Free'}
+                disabled={activePlan?.isCurrentPlan}
                 sx={{
                   minWidth: 320,
                   maxWidth: '100%',
@@ -146,7 +155,7 @@ export default function WorkspaceBillingPage() {
               </Button>
 
               <Typography
-                variant="body2"
+                variant='body2'
                 sx={(theme) => ({
                   mt: 3,
                   color: theme.palette.text.secondary,
@@ -156,7 +165,7 @@ export default function WorkspaceBillingPage() {
                 For more control, security, and support, check out Trello
                 Enterprise{' '}
                 <Box
-                  component="span"
+                  component='span'
                   sx={(theme) => ({
                     color: theme.palette.primary.main,
                     textDecoration: 'underline',

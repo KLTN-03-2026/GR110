@@ -40,8 +40,9 @@ function CoverActionButton({ children, onClick }) {
   )
 }
 
-function CardHeader({ data, handler }) {
+function CardHeader({ data, handler, attachmentHandlers, attachmentData }) {
   const { columnName, status, memberIds, cover, archivedAt } = data
+
   const {
     handleCloseModal,
     handleUpdateCover,
@@ -51,6 +52,10 @@ function CardHeader({ data, handler }) {
     handleJoinCard,
     handleLeaveCard
   } = handler
+
+  const { handleUploadFiles } = attachmentHandlers
+  const { attachments } = attachmentData
+
   const [coverPopperOpen, setCoverPopperOpen] = useState(false)
   const [moreOptionPopperOpen, setMorOptionPopperOpen] = useState(false)
   const imageButtonRef = useRef(null)
@@ -84,7 +89,7 @@ function CardHeader({ data, handler }) {
           bgcolor:
             cover?.type === 'attachment'
               ? (theme) =>
-                  theme.palette.mode === 'dark' ? '#6f8fb0' : '#7d9cbc'
+                theme.palette.mode === 'dark' ? '#6f8fb0' : '#7d9cbc'
               : 'transparent'
         }}
       >
@@ -97,16 +102,30 @@ function CardHeader({ data, handler }) {
           }}
         >
           {cover?.type === 'attachment' ? (
-            <Box
-              component="img"
-              src={cover?.value}
-              alt="card-cover"
-              sx={{
-                height: 200,
-                display: 'block',
-                mx: 'auto'
-              }}
-            />
+            cover?.display === 'full' ? (
+              <Box
+                component="img"
+                src={cover?.value}
+                alt="card-cover"
+                sx={{
+                  width: '100%',
+                  height: 200,
+                  objectFit: 'cover',
+                  display: 'block'
+                }}
+              />
+            ) : (
+              <Box
+                component="img"
+                src={cover?.value}
+                alt="card-cover"
+                sx={{
+                  height: 200,
+                  display: 'block',
+                  mx: 'auto'
+                }}
+              />
+            )
           ) : cover?.type === 'color' ? (
             <Box
               sx={{
@@ -201,6 +220,8 @@ function CardHeader({ data, handler }) {
         open={coverPopperOpen}
         onClose={handleCloseCoverPopper}
         handleUpdateCover={handleUpdateCover}
+        handleUploadFiles={handleUploadFiles}
+        attachments={attachments}
       />
 
       <MoreOptionPopper

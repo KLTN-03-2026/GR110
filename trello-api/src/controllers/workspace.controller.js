@@ -133,7 +133,8 @@ class WorkspaceController {
   static fetchPlans = async(req, res) => {
     new OkSuccessResponse({
       metadata: await WorkspaceService.fetchPlans({
-        userContext: req.userContext
+        userContext: req.userContext,
+        workspaceId: req.params.workspaceId
       })
     }).send(res)
   }

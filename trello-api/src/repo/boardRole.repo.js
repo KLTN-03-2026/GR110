@@ -39,6 +39,15 @@ class BoardRoleRepo {
       .collection(boardRoleModel.BOARD_ROLE_COLLECTION_NAME)
       .countDocuments(filter, options)
   }
+
+  static deleteManyByBoardId = async ({ boardId, session }) => {
+    return await GET_DB()
+      .collection(boardRoleModel.BOARD_ROLE_COLLECTION_NAME)
+      .deleteMany(
+        { boardId: String(boardId) },
+        { session }
+      )
+  }
 }
 
 export default BoardRoleRepo

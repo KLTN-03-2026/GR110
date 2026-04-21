@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {
-  addNotification,
   fetchInvitationsAPI,
   updateBoardInvitationAPI,
   updateWorkspaceInvitationAPI
 } from '~/redux/notifications/notificationSlice'
 import { selectCurrentUser } from '~/redux/user/userSlice'
+import { addNotification } from '~/redux/notifications/notificationSlice'
+import { socketIoInstance } from '~/socketClient'
 import { useNavigate } from 'react-router-dom'
 import { fetchWorkspacesAPI } from '~/redux/workspace/workspacesSlice'
-import { initSocket } from '~/socket/socket'
 
 export const useNotification = () => {
   const navigate = useNavigate()
@@ -18,12 +18,13 @@ export const useNotification = () => {
   const notifications = useSelector((state) => state.notifications)
 
   const [anchorEl, setAnchorEl] = useState(null)
-  const [notificationCount, setNotificationCount] = useState(null)
+  const [newNotification, setNewNotification] = useState(false)
 
   const open = useMemo(() => Boolean(anchorEl), [anchorEl])
 
   const handleClickNotificationIcon = (event) => {
     setAnchorEl(event.currentTarget)
+    setNewNotification(false)
   }
 
   const handleClose = () => {
@@ -31,45 +32,36 @@ export const useNotification = () => {
   }
 
   useEffect(() => {
-    if (notifications) {
-      const pendingCount = notifications.filter((n) => n.status === 'pending')
-      setNotificationCount(pendingCount?.length)
-    }
-  }, [notifications])
-
-  useEffect(() => {
     if (!currentUser?._id) return
 
     dispatch(fetchInvitationsAPI())
 
-    const socket = initSocket()
+    const handleReceiveInvitation = (invitation) => {
+      if (invitation.inviteeId !== currentUser._id) return
 
-    const join = () => socket.emit('user:join', { userId: currentUser._id })
-
-    if (socket.connected) join()
-
-    socket.on('connect', join)
-
-    const handleReceiveInvitation = ({ userId, data }) => {
-      console.log('data::::', data)
-      if (userId !== currentUser._id) return
-      dispatch(addNotification(data))
+      dispatch(addNotification(invitation))
+      setNewNotification(true)
     }
 
-    socket.on('invitation:created', handleReceiveInvitation)
+    socketIoInstance.on('BE_USER_RECEIVED_INVITATION', handleReceiveInvitation)
+
+    return () => {
+      socketIoInstance.off(
+        'BE_USER_RECEIVED_INVITATION',
+        handleReceiveInvitation
+      )
+    }
   }, [dispatch, currentUser?._id])
 
   const handleUpdateNotification = async ({ notification, status }) => {
     const updatedNotification = await dispatch(
-      notification.entity === 'workspace'
-        ? updateWorkspaceInvitationAPI({
-            _id: notification._id,
-            payload: { status }
-          })
-        : updateBoardInvitationAPI({
-            _id: notification._id,
-            payload: { status }
-          })
+       notification.entity === 'workspace' ? updateWorkspaceInvitationAPI({
+        _id: notification._id,
+        payload: { status }
+      }) : updateBoardInvitationAPI({
+        _id: notification._id,
+        payload: { status }
+      })
     ).unwrap()
 
     if (updatedNotification.status === 'accepted') {
@@ -87,9 +79,10 @@ export const useNotification = () => {
     anchorEl,
     open,
     notifications,
-    notificationCount,
+    newNotification,
+    setNewNotification,
     handleClickNotificationIcon,
     handleUpdateNotification,
-    handleClose
+    handleClose,
   }
 }

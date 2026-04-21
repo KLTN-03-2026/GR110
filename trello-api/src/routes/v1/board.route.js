@@ -11,7 +11,7 @@ import { boardMiddleware } from '~/middlewares/boardPermission.middleware'
 import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
 import { deleteBoardRoleParamSchema } from '~/validations/boardRole.validation'
 import { boardMemberValidation } from '~/validations/boardMember.validation'
-import AIController from '~/controllers/ai.controller'
+import { multerUploadMiddleware } from '~/middlewares/multerUpload.middleware'
 
 const Router = express.Router()
 
@@ -65,10 +65,10 @@ Router.route('/:boardId')
     asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.UPDATE)),
     asyncHandler(BoardController.update)
   )
-// .delete(
-//   asyncHandler(authMiddleware.isAuthorized),
-//   asyncHandler(BoardController.delete)
-// )
+  .delete(
+    asyncHandler(authMiddleware.isAuthorized),
+    asyncHandler(BoardController.delete)
+  )
 
 Router.route('/supports/moving_card/:boardId').put(
   asyncHandler(authMiddleware.isAuthorized),
@@ -150,17 +150,13 @@ Router.route('/roles/:boardId/:roleId').delete(
   asyncHandler(BoardController.deleteRole)
 )
 
-Router.route('/status/:_id').put(
+Router.route('/custom-background/:boardId').post(
   asyncHandler(authMiddleware.isAuthorized),
-  asyncHandler(BoardController.updateStatus)
+  asyncHandler(multerUploadMiddleware.uploadSingleImage),
+  asyncHandler(BoardController.createBackground)
 )
-
-Router.route('/ai-generate').post(
+Router.route('/custom-background/:boardId/:backgroundId').delete(
   asyncHandler(authMiddleware.isAuthorized),
-  asyncHandler(
-    workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.BOARD_CREATE)
-  ),
-  asyncHandler(AIController.generateBoard)
+  asyncHandler(BoardController.deleteBackground)
 )
-
 export const boardRoute = Router

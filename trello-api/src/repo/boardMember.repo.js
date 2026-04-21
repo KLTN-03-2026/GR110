@@ -236,6 +236,15 @@ class BoardMemberRepo {
       .collection(boardMemberModel.BOARD_MEMBER_COLLECTION_NAME)
       .countDocuments(filter)
   }
+
+  static deleteManyByBoardId = async ({ boardId, session }) => {
+    return await GET_DB()
+      .collection(boardMemberModel.BOARD_MEMBER_COLLECTION_NAME)
+      .deleteMany(
+        { boardId},
+        { session }
+      )
+  }
 }
 
 export default BoardMemberRepo

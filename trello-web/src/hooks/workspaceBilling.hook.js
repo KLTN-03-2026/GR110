@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import { fetchWorkspacePlan } from '~/apis/workspace.api'
 
 const mapPlanFromDbToUi = (plan) => {
@@ -44,16 +45,19 @@ const mapPlanFromDbToUi = (plan) => {
     features,
     description: plan.description,
     originPrice: plan.originPrice,
-    status: plan.status
+    status: plan.status,
+    isCurrentPlan: plan.isCurrentPlan
   }
 }
 
 export default function useBillingPage() {
   const [plans, setPlans] = useState([])
 
+  const {workspaceId} = useParams()
+
   useEffect(() => {
     const fetchPlans = async () => {
-      const data = await fetchWorkspacePlan()
+      const data = await fetchWorkspacePlan(workspaceId)
       setPlans(data.map(mapPlanFromDbToUi))
     }
 

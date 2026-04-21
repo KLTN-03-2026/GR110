@@ -1,7 +1,6 @@
 import {
   Alert,
   Box,
-  Button,
   Divider,
   Paper,
   Stack,
@@ -20,19 +19,35 @@ const formatCurrency = (value = 0) =>
 export default function PaymentCheckoutCard({
   payment,
   localStatus,
-  onCheckPayment,
-  selectedGateway,
-  onContinuePaypal
+  selectedGateway
 }) {
   const isSepay = selectedGateway === 'sepay'
   const isPaypal = selectedGateway === 'paypal'
 
-  const buttonText =
-    localStatus === 'idle'
-      ? "I've completed the payment"
-      : localStatus === 'checking'
-        ? 'Checking payment...'
-        : 'Payment confirmed'
+  const statusConfig = {
+    idle: {
+      label: 'Pending payment',
+      severity: 'info',
+      icon: <AccessTimeRoundedIcon />,
+      message: isSepay
+        ? 'Please scan the QR code and complete the transfer. The system will automatically update when the webhook confirms the payment.'
+        : 'Please proceed with payment via PayPal. The system will automatically update when the transaction is confirmed.'
+    },
+    checking: {
+      label: 'Processing payment',
+      severity: 'warning',
+      icon: <AccessTimeRoundedIcon />,
+      message: 'The system has recorded the transaction and is awaiting confirmation from the payment gateway.'
+    },
+    success: {
+      label: 'Payment completed',
+      severity: 'success',
+      icon: <CheckCircleRoundedIcon />,
+      message: 'Payment successful. Your workspace package will be updated automatically.'
+    }
+  }
+
+  const currentStatus = statusConfig[localStatus] || statusConfig.idle
 
   return (
     <Paper
@@ -132,7 +147,7 @@ export default function PaymentCheckoutCard({
               icon={<AccessTimeRoundedIcon />}
               sx={{ borderRadius: 2, mt: 1, width: '100%' }}
             >
-              Note: Please do not edit the payment details to proceed with automatic activation.
+              Please do not adjust the price or payment details to proceed with automatic verification.
             </Alert>
           </Box>
         )}
@@ -277,83 +292,15 @@ export default function PaymentCheckoutCard({
           </Stack>
         </Box>
 
-        {isSepay && localStatus === 'idle' && (
-          <Alert severity='info' icon={<AccessTimeRoundedIcon />} sx={{ borderRadius: 2 }}>
-            After you complete the transfer, press the button below so the system can verify
-            the webhook result.
-          </Alert>
-        )}
+        <Alert
+          severity={currentStatus.severity}
+          icon={currentStatus.icon}
+          sx={{ borderRadius: 2 }}
+        >
+          <strong>{currentStatus.label}:</strong> {currentStatus.message}
+        </Alert>
 
-        {isSepay && localStatus === 'checking' && (
-          <Alert severity='warning' sx={{ borderRadius: 2 }}>
-            We are checking the payment status from the payment gateway...
-          </Alert>
-        )}
-
-        {isSepay && localStatus === 'success' && (
-          <Alert
-            severity='success'
-            icon={<CheckCircleRoundedIcon />}
-            sx={{ borderRadius: 2 }}
-          >
-            Payment received successfully. Your workspace plan will be updated shortly.
-          </Alert>
-        )}
-
-        {isPaypal && (
-          <Alert severity='info' sx={{ borderRadius: 2 }}>
-            You will leave this page briefly and return after PayPal confirms your payment.
-          </Alert>
-        )}
-
-        {isSepay && (
-          <Button
-            fullWidth
-            variant={localStatus === 'success' ? 'outlined' : 'contained'}
-            color={localStatus === 'success' ? 'success' : 'primary'}
-            disabled={localStatus === 'checking' || localStatus === 'success'}
-            onClick={onCheckPayment}
-            sx={{
-              height: 50,
-              textTransform: 'none',
-              fontWeight: 800,
-              fontSize: 15,
-              borderRadius: 2,
-              boxShadow: 'none',
-              '&:hover': {
-                boxShadow: 'none'
-              }
-            }}
-          >
-            {buttonText}
-          </Button>
-        )}
-
-        {isPaypal && (
-          // <Button
-          //   fullWidth
-          //   variant='contained'
-          //   onClick={onContinuePaypal}
-          //   sx={{
-          //     height: 50,
-          //     textTransform: 'none',
-          //     fontWeight: 800,
-          //     fontSize: 15,
-          //     borderRadius: 2,
-          //     boxShadow: 'none',
-          //     background: 'linear-gradient(90deg, #0070ba 0%, #1546a0 100%)',
-          //     '&:hover': {
-          //       boxShadow: 'none',
-          //       background: 'linear-gradient(90deg, #0064a8 0%, #123f93 100%)'
-          //     }
-          //   }}
-          // >
-          //   Continue with PayPal
-          // </Button>
-          <PaypalCheckout 
-          payment={payment}
-          />
-        )}
+        {isPaypal && <PaypalCheckout payment={payment} />}
       </Stack>
     </Paper>
   )

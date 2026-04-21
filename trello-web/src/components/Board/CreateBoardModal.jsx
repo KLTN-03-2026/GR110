@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Modal from '@mui/material/Modal'
 import { useForm, Controller } from 'react-hook-form'
 import TextField from '@mui/material/TextField'
@@ -61,25 +61,25 @@ const visibilityOptions = [
   {
     value: type.PUBLIC,
     label: 'Public',
-    icon: <PublicIcon fontSize="small" />,
+    icon: <PublicIcon fontSize='small' />,
     color: 'warning.main'
   },
   {
     value: type.PRIVATE,
     label: 'Private',
-    icon: <LockOutlinedIcon fontSize="small" />,
+    icon: <LockOutlinedIcon fontSize='small' />,
     color: 'info.main'
   },
   {
     value: type.WORKSPACE,
     label: 'Workspace',
-    icon: <Groups2OutlinedIcon fontSize="small" />,
+    icon: <Groups2OutlinedIcon fontSize='small' />,
     color: 'success.main'
   }
 ]
 
 function CreateBoardModal({ ui, handler }) {
-  const [background, setBackground] = useState([])
+  const [backgrounds, setBackgrounds] = useState([])
   const [anchorEl, setAnchorEl] = useState(null)
   const [selectedBackground, setSelectedBackground] = useState(null)
 
@@ -105,43 +105,51 @@ function CreateBoardModal({ ui, handler }) {
     }
   })
 
+  const systemBackgrounds =
+    backgrounds?.filter((item) => item.type === 'system') || []
+
+  const previewSrc = useMemo(() => {
+    if (selectedBackground?.image) return selectedBackground.image
+    if (selectedBackground?.src) return selectedBackground.src
+  }, [selectedBackground])
+
+  const getBackground = async () => {
+    try {
+      const res = await fetchBackgroundAPI()
+      const data = Array.isArray(res) ? res : res?.backgrounds || []
+      const activeBackgrounds = data.filter(
+        (item) => item.status === 'active' && !item.isDelete
+      )
+
+      setBackgrounds(activeBackgrounds)
+      return activeBackgrounds
+    } catch (error) {
+      console.log(error)
+      setBackgrounds([])
+      return []
+    }
+  }
+
   useEffect(() => {
     if (!isOpen) return
 
     const onGetData = async () => {
-      try {
-        const backgrounds = await fetchBackgroundAPI()
+      const activeBackgrounds = await getBackground()
+      const firstBackground = activeBackgrounds?.find(
+        (item) => item.type === 'system'
+      ) || null
 
-        setBackground(backgrounds)
+      reset({
+        title: '',
+        description: '',
+        visibility: type.PRIVATE,
+        cover: {
+          type: 'image',
+          value: firstBackground?.image || ''
+        }
+      })
 
-        const firstBackground = backgrounds?.[0] || null
-
-        reset({
-          title: '',
-          description: '',
-          visibility: type.PRIVATE,
-          cover: {
-            type: 'image',
-            value: firstBackground?.image || ''
-          }
-        })
-
-        setSelectedBackground(firstBackground)
-      } catch (error) {
-        console.log(error)
-        setBackground([])
-        setSelectedBackground(null)
-
-        reset({
-          title: '',
-          description: '',
-          visibility: type.PRIVATE,
-          cover: {
-            type: 'image',
-            value: ''
-          }
-        })
-      }
+      setSelectedBackground(firstBackground)
     }
 
     onGetData()
@@ -227,15 +235,15 @@ function CreateBoardModal({ ui, handler }) {
           >
             <Box>
               <Typography
-                id="create-board-modal-title"
-                variant="h6"
+                id='create-board-modal-title'
+                variant='h6'
                 sx={{ fontWeight: 700 }}
               >
                 Create board
               </Typography>
             </Box>
 
-            <IconButton onClick={handleClose} size="small">
+            <IconButton onClick={handleClose} size='small'>
               <CloseIcon />
             </IconButton>
           </Box>
@@ -256,11 +264,8 @@ function CreateBoardModal({ ui, handler }) {
               }}
             >
               <Box
-                component="img"
-                src={
-                  selectedBackground?.image ||
-                  'https://images.unsplash.com/photo-1742156345582-b857d994c84e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'
-                }
+                component='img'
+                src={previewSrc}
                 alt={selectedBackground?.title || 'board-background'}
                 sx={{
                   width: '100%',
@@ -289,8 +294,8 @@ function CreateBoardModal({ ui, handler }) {
                 }}
               >
                 <Box
-                  component="img"
-                  src="https://trello.com/assets/14cda5dc635d1f13bc48.svg"
+                  component='img'
+                  src='https://trello.com/assets/14cda5dc635d1f13bc48.svg'
                   sx={{
                     width: 220,
                     filter: 'drop-shadow(0 10px 18px rgba(0,0,0,0.18))'
@@ -311,8 +316,8 @@ function CreateBoardModal({ ui, handler }) {
                   flexWrap: 'nowrap'
                 }}
               >
-                {background.slice(0, 6).map((item) => {
-                  const isSelected = selectedBackground?._id === item._id
+                {systemBackgrounds.slice(0, 6).map((item) => {
+                  const isSelected = selectedBackground?.image === item.image
 
                   return (
                     <Box
@@ -327,7 +332,7 @@ function CreateBoardModal({ ui, handler }) {
                       onClick={() => handleSelectBackground(item, 'image')}
                     >
                       <Box
-                        component="img"
+                        component='img'
                         src={item.image}
                         alt={item.title}
                         sx={{
@@ -379,9 +384,7 @@ function CreateBoardModal({ ui, handler }) {
                 }}
               >
                 {backgroundBoardList.slice(0, 5).map((item) => {
-                  const isSelected =
-                    selectedBackground?.key === item.key ||
-                    selectedBackground?.image === item.src
+                  const isSelected = selectedBackground?.key === item.key
 
                   return (
                     <Box
@@ -396,7 +399,7 @@ function CreateBoardModal({ ui, handler }) {
                       onClick={() => handleSelectBackground(item, 'color')}
                     >
                       <Box
-                        component="img"
+                        component='img'
                         src={item.src}
                         alt={item.key}
                         sx={{
@@ -463,7 +466,10 @@ function CreateBoardModal({ ui, handler }) {
                 anchorEl={anchorEl}
                 selectedBackground={selectedBackground}
                 openBackgroundPopover={openBackgroundPopover}
-                imagesBackground={background}
+                systemBackgrounds={systemBackgrounds}
+                customBackgrounds={[]}
+                getBackground={getBackground}
+                showCustom={false}
               />
             </Box>
 
@@ -475,13 +481,13 @@ function CreateBoardModal({ ui, handler }) {
                 <Box>
                   <TextField
                     fullWidth
-                    label="Title"
-                    placeholder="Enter board title..."
-                    variant="outlined"
+                    label='Title'
+                    placeholder='Enter board title...'
+                    variant='outlined'
                     InputProps={{
                       startAdornment: (
-                        <InputAdornment position="start">
-                          <AbcIcon fontSize="small" />
+                        <InputAdornment position='start'>
+                          <AbcIcon fontSize='small' />
                         </InputAdornment>
                       )
                     }}
@@ -498,24 +504,24 @@ function CreateBoardModal({ ui, handler }) {
                     })}
                     error={!!errors.title}
                   />
-                  <FieldErrorAlert errors={errors} fieldName="title" />
+                  <FieldErrorAlert errors={errors} fieldName='title' />
                 </Box>
 
                 <Box>
                   <TextField
                     fullWidth
-                    label="Description"
-                    placeholder="Write a short description for this board..."
+                    label='Description'
+                    placeholder='Write a short description for this board...'
                     rows={3}
                     multiline
-                    variant="outlined"
+                    variant='outlined'
                     InputProps={{
                       startAdornment: (
                         <InputAdornment
-                          position="start"
+                          position='start'
                           sx={{ alignSelf: 'flex-start', mt: 1.2 }}
                         >
-                          <DescriptionOutlinedIcon fontSize="small" />
+                          <DescriptionOutlinedIcon fontSize='small' />
                         </InputAdornment>
                       )
                     }}
@@ -527,16 +533,16 @@ function CreateBoardModal({ ui, handler }) {
                     })}
                     error={!!errors.description}
                   />
-                  <FieldErrorAlert errors={errors} fieldName="description" />
+                  <FieldErrorAlert errors={errors} fieldName='description' />
                 </Box>
 
                 <Controller
-                  name="visibility"
+                  name='visibility'
                   control={control}
                   render={({ field }) => (
                     <Box>
                       <Typography
-                        variant="subtitle2"
+                        variant='subtitle2'
                         sx={{
                           mb: 1.25,
                           fontWeight: 700,
@@ -563,7 +569,7 @@ function CreateBoardModal({ ui, handler }) {
                             <FormControlLabel
                               key={item.value}
                               value={item.value}
-                              control={<Radio size="small" />}
+                              control={<Radio size='small' />}
                               label={
                                 <Box
                                   sx={{
@@ -644,8 +650,8 @@ function CreateBoardModal({ ui, handler }) {
                   }}
                 >
                   <Button
-                    type="button"
-                    variant="outlined"
+                    type='button'
+                    variant='outlined'
                     onClick={handleClose}
                     sx={{
                       minWidth: 110,
@@ -658,8 +664,8 @@ function CreateBoardModal({ ui, handler }) {
                   </Button>
 
                   <Button
-                    type="submit"
-                    variant="contained"
+                    type='submit'
+                    variant='contained'
                     disabled={isSubmitting}
                     sx={{
                       minWidth: 130,

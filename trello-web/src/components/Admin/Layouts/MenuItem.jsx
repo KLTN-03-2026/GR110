@@ -35,6 +35,11 @@ export const menuSections = [
         label: 'Workspace',
         path: '/admin/workspace',
         icon: <WorkspacesOutlinedIcon />
+      },
+      {
+        label: 'Tickets',
+        path: '/admin/ticket',
+        icon: <PersonOutlineOutlinedIcon />
       }
     ]
   },

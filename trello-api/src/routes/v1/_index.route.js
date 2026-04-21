@@ -20,6 +20,8 @@ import { subscriptionsRouter } from './subscription.route'
 import { adminSubscriptionRoute } from './adminSubscription.route'
 import { adminPermission } from './adminPermission.route'
 import { adminPaymentRoute } from './adminPayment.route'
+import { ticketRouter } from './ticket.route'
+import { adminTicketRoute } from './adminTicket.route'
 const Router = express.Router()
 
 /** Check APIs v1/status */
@@ -81,10 +83,16 @@ Router.use('/admin/subscriptions', adminSubscriptionRoute)
 //Admin Permission
 Router.use('/admin/permissions', adminPermission)
 
+//Admin Ticket
+Router.use('/admin/tickets', adminTicketRoute)
+
 //Admin Payment
 Router.use('/admin/payments', adminPaymentRoute)
 
 //Subscription
 Router.use('/subscriptions', subscriptionsRouter)
+
+// /Ticket
+Router.use('/tickets', ticketRouter)
 
 export const APIs_V1 = Router

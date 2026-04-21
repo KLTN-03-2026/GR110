@@ -3,10 +3,10 @@ import { useParams } from 'react-router-dom'
 import {
   createBoardRoleAPI,
   deleteBoardRoleAPI,
+  deleteStatusBoardAPI,
   fetchBoardPermissionAPI,
   fetchBoardRoleAPI,
   updateBoardRoleAPI,
-  updateStatusBoardAPI
 } from '~/apis/board.api'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -141,14 +141,9 @@ export const useBoardSetting = () => {
   const handleDeleteBoard = async () => {
     setIsDeletingBoard(false)
     try {
-      const resData = await updateStatusBoardAPI({
+      await deleteStatusBoardAPI({
         _id: boardId,
         data: {}
-      })
-      setAlert({
-        open: true,
-        severity: 'success',
-        message: resData.message
       })
       setIsDeleting(false)
       setTimeout(() => {
