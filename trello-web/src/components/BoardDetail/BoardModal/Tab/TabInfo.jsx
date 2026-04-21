@@ -33,7 +33,9 @@ function TabInfo() {
     setSelectedBackground,
     selectedBackground,
     board,
-    backgrounds
+    systemBackgrounds,
+    customBackgrounds,
+    getBackground
   } = useBoardInfo()
 
   const visibilityAlertConfig = {
@@ -73,13 +75,6 @@ function TabInfo() {
     })
     handleCloseBackgroundPopover()
   }
-
-  const currentCoverType = selectedBackground?.type || board?.cover?.type
-  const currentCoverValue = selectedBackground?.type
-    ? selectedBackground.type === 'image'
-      ? selectedBackground.image
-      : selectedBackground.key
-    : board?.cover?.value
 
   const FALLBACK_IMAGE =
     'https://images.unsplash.com/photo-1742156345582-b857d994c84e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1200'
@@ -145,13 +140,13 @@ function TabInfo() {
         <Box sx={{ mt: 2 }}>
           <TextField
             fullWidth
-            label="Title"
-            type="text"
-            variant="outlined"
+            label='Title'
+            type='text'
+            variant='outlined'
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <AbcIcon fontSize="small" />
+                <InputAdornment position='start'>
+                  <AbcIcon fontSize='small' />
                 </InputAdornment>
               )
             }}
@@ -160,27 +155,27 @@ function TabInfo() {
             })}
             error={!!errors.title}
           />
-          <FieldErrorAlert errors={errors} fieldName="title" />
+          <FieldErrorAlert errors={errors} fieldName='title' />
         </Box>
 
         <Box sx={{ mt: 2 }}>
           <TextField
             fullWidth
-            label="Description"
+            label='Description'
             rows={2}
-            type="text"
-            variant="outlined"
+            type='text'
+            variant='outlined'
             multiline
             InputProps={{
               startAdornment: (
-                <InputAdornment position="start">
-                  <DescriptionOutlinedIcon fontSize="small" />
+                <InputAdornment position='start'>
+                  <DescriptionOutlinedIcon fontSize='small' />
                 </InputAdornment>
               )
             }}
             {...register('description')}
           />
-          <FieldErrorAlert errors={errors} fieldName="description" />
+          <FieldErrorAlert errors={errors} fieldName='description' />
         </Box>
 
         <Box sx={{ mt: 2 }}>
@@ -199,7 +194,7 @@ function TabInfo() {
             }}
           >
             <Box
-              component="img"
+              component='img'
               src={previewBackgroundSrc}
               alt={selectedBackground?.key || 'board-background'}
               sx={{
@@ -229,8 +224,8 @@ function TabInfo() {
               }}
             >
               <Box
-                component="img"
-                src="https://trello.com/assets/14cda5dc635d1f13bc48.svg"
+                component='img'
+                src='https://trello.com/assets/14cda5dc635d1f13bc48.svg'
                 sx={{
                   width: 260,
                   filter: 'drop-shadow(0 10px 18px rgba(0,0,0,0.18))'
@@ -249,14 +244,12 @@ function TabInfo() {
                 gap: 1
               }}
             >
-              {backgrounds.slice(0, 6).map((item) => {
-                const isSelected =
-                  currentCoverType === 'image' &&
-                  currentCoverValue === item.image
-
+              {systemBackgrounds.slice(0, 6).map((item) => {
+                const isSelected = selectedBackground?._id === item._id
+                
                 return (
                   <Box
-                    key={item.key}
+                    key={item._id}
                     sx={{
                       position: 'relative',
                       width: 135,
@@ -267,7 +260,7 @@ function TabInfo() {
                     onClick={() => handleSelectBackground(item, 'image')}
                   >
                     <Box
-                      component="img"
+                      component='img'
                       src={item.image}
                       alt={item._id}
                       sx={{
@@ -318,8 +311,7 @@ function TabInfo() {
               }}
             >
               {backgroundBoardList.slice(0, 5).map((item) => {
-                const isSelected =
-                  currentCoverType === 'color' && currentCoverValue === item.key
+                const isSelected = selectedBackground?.key === item.key
 
                 return (
                   <Box
@@ -334,7 +326,7 @@ function TabInfo() {
                     onClick={() => handleSelectBackground(item, 'color')}
                   >
                     <Box
-                      component="img"
+                      component='img'
                       src={item.src}
                       alt={item.key}
                       sx={{
@@ -400,14 +392,16 @@ function TabInfo() {
             anchorEl={anchorEl}
             selectedBackground={selectedBackground}
             openBackgroundPopover={openBackgroundPopover}
-            imagesBackground={backgrounds}
+            systemBackgrounds={systemBackgrounds}
+            customBackgrounds={customBackgrounds}
+            getBackground={getBackground}
           />
         </Box>
 
         <Box sx={{ mt: 3 }}>
           <Typography sx={{ mb: 0.5, fontWeight: 600 }}>Visibility</Typography>
           <Controller
-            name="visibility"
+            name='visibility'
             control={control}
             render={({ field }) => (
               <Box>
@@ -423,8 +417,8 @@ function TabInfo() {
                 >
                   <FormControlLabel
                     value={type.PUBLIC}
-                    control={<Radio size="small" />}
-                    label="Public"
+                    control={<Radio size='small' />}
+                    label='Public'
                     sx={{
                       m: 0,
                       p: 0,
@@ -438,8 +432,8 @@ function TabInfo() {
 
                   <FormControlLabel
                     value={type.PRIVATE}
-                    control={<Radio size="small" />}
-                    label="Private"
+                    control={<Radio size='small' />}
+                    label='Private'
                     sx={{
                       m: 0,
                       p: 0,
@@ -451,8 +445,8 @@ function TabInfo() {
 
                   <FormControlLabel
                     value={type.WORKSPACE}
-                    control={<Radio size="small" />}
-                    label="Workspace"
+                    control={<Radio size='small' />}
+                    label='Workspace'
                     sx={{
                       m: 0,
                       p: 0,
@@ -480,10 +474,10 @@ function TabInfo() {
 
         <Box sx={{ alignSelf: 'flex-end', mt: 3 }}>
           <Button
-            className="interceptor-loading"
-            type="submit"
-            variant="contained"
-            color="primary"
+            className='interceptor-loading'
+            type='submit'
+            variant='contained'
+            color='primary'
           >
             Save Change
           </Button>

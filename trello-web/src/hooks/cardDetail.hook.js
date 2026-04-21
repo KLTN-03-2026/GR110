@@ -1,11 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux'
 import {
-  addAttachmentCurrentActiveCard,
   addCardCommentAPI,
-  addCommentCurrentActiveCard,
-  addLogCurrentActiveCard,
-  addTaskCurrentActiveCard,
-  applyAIAssistAPI,
   archiveCardAPI,
   assignMemberToCardAPI,
   clearAndHideCurrentActiveCard,
@@ -14,22 +9,15 @@ import {
   deleteCardAPI,
   deleteCardCommentAPI,
   deleteCheckListAPI,
-  generateAIAssistAPI,
   joinCardAPI,
   leaveCardAPI,
-  removeAttachmentCurrentActiveCard,
-  removeCommentCurrentActiveCard,
   removeMemberFromCardAPI,
-  removeTaskCurrentActiveCard,
   restoreCardAPI,
   selectIsShowModalActiveCard,
   updateAttachmentAPI,
-  updateAttachmentCurrentActiveCard,
   updateCardBasicAPI,
   updateCardLabelAPI,
   updateCheckListAPI,
-  updateCurrentActiveCard,
-  updateTaskCurrentActiveCard,
   uploadAttachmentAPI
 } from '~/redux/activeCard/activeCardSlice'
 import {
@@ -40,13 +28,9 @@ import {
 import { pick } from 'lodash'
 import { CARD_FIELDS } from '~/constant/cardFields'
 import { getAttachmentDownloadUrl } from '~/apis/attachment.api'
-import { toast } from 'react-toastify'
-import { useEffect } from 'react'
-import { initSocket } from '~/socket/socket'
 
 const useCardDetail = () => {
   const dispatch = useDispatch()
-
   const activeCard = useSelector(
     (state) => state.activeCard?.currentActiveCard?.cardDetail
   )
@@ -67,107 +51,6 @@ const useCardDetail = () => {
   const board = useSelector((state) => state.activeBoard?.board)
 
   const isShowModalActiveCard = useSelector(selectIsShowModalActiveCard)
-
-  useEffect(() => {
-    if (!activeCard || !isShowModalActiveCard) return
-
-    const socket = initSocket()
-    // ================ Card ================
-    const handleCardUpdated = ({ card: updatedCard }) => {
-      if (updatedCard._id !== activeCard._id) return
-      const data = { cardDetail: updatedCard }
-      dispatch(updateCurrentActiveCard(data))
-    }
-
-    const handleCardArchived = ({ card: updatedCard, log }) => {
-      if (updatedCard._id !== activeCard._id) return
-      const data = { cardDetail: updatedCard }
-      dispatch(updateCurrentActiveCard(data))
-      dispatch(addLogCurrentActiveCard(log))
-    }
-
-    const handleCardRestored = ({ card: updatedCard, log }) => {
-      if (updatedCard._id !== activeCard._id) return
-      const data = { cardDetail: updatedCard }
-      dispatch(updateCurrentActiveCard(data))
-      dispatch(addLogCurrentActiveCard(log))
-    }
-
-    // ================ Comment ================
-
-    const handleAddComment = ({ comment, card, log }) => {
-      if (activeCard._id !== card._id) return
-      dispatch(addCommentCurrentActiveCard(comment))
-      dispatch(addLogCurrentActiveCard(log))
-    }
-
-    const handleDeleteComment = ({ comment, card, log }) => {
-      if (activeCard._id !== card._id) return
-      dispatch(removeCommentCurrentActiveCard(comment))
-      dispatch(addLogCurrentActiveCard(log))
-    }
-
-    // ================ Attachment ================
-    const handleAddAttachment = ({ attachments, card, log }) => {
-      if (activeCard._id !== card._id) return
-      dispatch(addAttachmentCurrentActiveCard(attachments))
-      dispatch(addLogCurrentActiveCard(log))
-    }
-
-    const handleUpdateAttachment = ({ attachment, card }) => {
-      if (activeCard._id !== card) return
-      dispatch(updateAttachmentCurrentActiveCard(attachment))
-    }
-
-    const handleDeleteAttachment = ({ attachment, card, log }) => {
-      if (activeCard._id !== card._id) return
-      dispatch(removeAttachmentCurrentActiveCard(attachment))
-      dispatch(addLogCurrentActiveCard(log))
-    }
-    // ================ Task ================
-    const handleCreateTask = ({ task, log }) => {
-      if (activeCard._id !== task.cardId) return
-      dispatch(addTaskCurrentActiveCard(task))
-      if (log) dispatch(addLogCurrentActiveCard(log))
-    }
-
-    const handleUpdateTask = ({ task }) => {
-      if (activeCard._id !== task.cardId) return
-      dispatch(updateTaskCurrentActiveCard(task))
-    }
-
-    const handleDeleteTask = ({ task, log }) => {
-      if (activeCard._id !== task.cardId) return
-      dispatch(removeTaskCurrentActiveCard(task))
-      if (log) dispatch(addLogCurrentActiveCard(log))
-    }
-
-    socket.on('card:updated', handleCardUpdated)
-    socket.on('card:archived', handleCardArchived)
-    socket.on('card:restored', handleCardRestored)
-    socket.on('comment:created', handleAddComment)
-    socket.on('comment:deleted', handleDeleteComment)
-    socket.on('attachment:created', handleAddAttachment)
-    socket.on('attachment:updated', handleUpdateAttachment)
-    socket.on('attachment:deleted', handleDeleteAttachment)
-    socket.on('task:created', handleCreateTask)
-    socket.on('task:updated', handleUpdateTask)
-    socket.on('task:deleted', handleDeleteTask)
-
-    return () => {
-      socket.off('card:updated', handleCardUpdated)
-      socket.off('card:archived', handleCardArchived)
-      socket.off('card:restored', handleCardRestored)
-      socket.off('comment:created', handleAddComment)
-      socket.off('comment:deleted', handleDeleteComment)
-      socket.off('attachment:created', handleAddAttachment)
-      socket.off('attachment:updated', handleUpdateAttachment)
-      socket.off('attachment:deleted', handleDeleteAttachment)
-      socket.off('task:created', handleCreateTask)
-      socket.off('task:updated', handleUpdateTask)
-      socket.off('task:deleted', handleDeleteTask)
-    }
-  }, [activeCard, isShowModalActiveCard])
 
   const handleCloseModal = () => {
     dispatch(clearAndHideCurrentActiveCard())
@@ -220,7 +103,14 @@ const useCardDetail = () => {
   const handleUpdateCover = async (data) => {
     const payload = !data
       ? { cover: null }
-      : { cover: { type: data.type, value: data.value } }
+      : {
+          cover: {
+            type: data.type,
+            value: data.value,
+            display: data.display || 'default'
+          }
+        }
+
     const updatedCard = await dispatch(
       updateCardBasicAPI({
         _id: activeCard._id,
@@ -228,6 +118,7 @@ const useCardDetail = () => {
         payload
       })
     )
+
     dispatch(updateCardInBoard(updatedCard.payload.card))
   }
 
@@ -238,7 +129,6 @@ const useCardDetail = () => {
       )
       dispatch(removeCardInBoard(updatedCard.payload.card))
     } catch (error) {
-      console.log('error::', error)
       throw new Error()
     }
   }
@@ -250,7 +140,6 @@ const useCardDetail = () => {
       )
       dispatch(restoreCardInBoard(updatedCard.payload.card))
     } catch (error) {
-      console.log('error::', error)
       throw new Error()
     }
   }
@@ -258,6 +147,23 @@ const useCardDetail = () => {
   const handleDeleteCard = async () => {
     await dispatch(deleteCardAPI({ _id: activeCard._id, boardId: board._id }))
   }
+
+  // const onUploadCardCover = (event) => {
+  //   const error = singleFileValidator(event.target?.files[0])
+  //   if (error) {
+  //     toast.error(error)
+  //     return
+  //   }
+  //   let reqData = new FormData()
+  //   reqData.append('cardCover', event.target?.files[0])
+
+  //   toast.promise(
+  //     callApiUpdateCard(reqData).finally(() => {
+  //       event.target.value = ''
+  //     }),
+  //     { pending: 'Updating...' }
+  //   )
+  // }
 
   // ============================= Comment =============================
   const handleAddComment = async (data) => {
@@ -406,20 +312,9 @@ const useCardDetail = () => {
     formData.append('cardId', activeCard._id)
     formData.append('boardId', activeCard.boardId)
 
-    try {
-      const uploaded = await toast.promise(
-        dispatch(uploadAttachmentAPI({ payload: formData })).unwrap(),
-        {
-          pending: 'Uploading attachments...',
-          success: 'Upload attachments successfully!'
-        }
-      )
-
-      const card = uploaded?.cardDetail
-      dispatch(updateCardInBoard(pick(card, CARD_FIELDS)))
-    } finally {
-      e.target.value = ''
-    }
+    const uploaded = await dispatch(uploadAttachmentAPI({ payload: formData }))
+    const card = uploaded.payload?.cardDetail
+    dispatch(updateCardInBoard(pick(card, CARD_FIELDS)))
   }
 
   const handleDownloadAttachment = async ({ _id }) => {
@@ -451,32 +346,6 @@ const useCardDetail = () => {
     } catch {
       throw new Error()
     }
-  }
-  // ============================= AI Assist =============================
-  const handleGenerateAIAssist = async (card, userPrompt) => {
-    const c = card || activeCard
-    if (!c?._id || !c?.boardId) return null
-    const result = await dispatch(
-      generateAIAssistAPI({
-        boardId: c.boardId,
-        cardId: c._id,
-        userPrompt
-      })
-    ).unwrap()
-    return result
-  }
-
-  const handleApplyAIAssist = async (payload, card) => {
-    const c = card || activeCard
-    if (!c?._id || !c?.boardId) return
-    const result = await dispatch(
-      applyAIAssistAPI({
-        boardId: c.boardId,
-        cardId: c._id,
-        payload
-      })
-    ).unwrap()
-    dispatch(updateCardInBoard(pick(result.card, CARD_FIELDS)))
   }
   // ============================= Labels =============================
   const handleUpdateCardLabel = async (data) => {
@@ -540,9 +409,7 @@ const useCardDetail = () => {
         handleAssignMemberToCard,
         handleRemoveMemberFromCard,
         handleUploadFiles,
-        handleUpdateCardLabel,
-        handleGenerateAIAssist,
-        handleApplyAIAssist
+        handleUpdateCardLabel
       },
       checklists: {
         handleCreateTask,

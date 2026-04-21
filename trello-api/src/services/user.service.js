@@ -15,6 +15,7 @@ import {
 import WorkspaceService from './workspace.service'
 import { mongoClientInstance } from '~/config/mongodb'
 import { ObjectId } from 'mongodb'
+import S3Provider from '~/providers/S3Provider'
 
 class UserService {
   static fetchByUser = async ({ data }) => {
@@ -55,15 +56,17 @@ class UserService {
 
     const verificationLink = `${WEBSITE_DOMAIN}/account/verification?email=${user.email}&token=${user.verifyToken}`
 
-    const customSubject =
-      'Trello MERN Stack Advanced: Please verify your email before using our services!'
-
-    const htmlContent = `
-     <h3>Here is your verification link:</h3>
-     <h3>${verificationLink}</h3>
-     <h3>Sincerely</h3>x
-   `
-    sendEmailService(user.email, customSubject, htmlContent)
+    await sendEmailService({
+      recipientEmail: user.email,
+      customSubject: 'Taskio - Verification Link',
+      templateName: 'RegisterMail',
+      data: {
+        email: user.email,
+        username: user.username,
+        displayName: user.displayName,
+        verificationLink
+      }
+    })
     return pickUser(user)
   }
 
@@ -185,13 +188,11 @@ class UserService {
         data: { password: bcryptjs.hashSync(data.new_password, 8) }
       })
     } else if (userAvatarFile) {
-      const uploadResult = await CloudinaryProvider.streamUpload(
-        userAvatarFile.buffer,
-        'users'
-      )
+      const upload = await S3Provider.upload(userAvatarFile)
+
       updatedUser = await UserRepo.updateById({
         _id: existUser._id,
-        data: { avatar: uploadResult.secure_url }
+        data: { avatar: S3Provider.getUrl(upload.fileKey) }
       })
     } else {
       updatedUser = await UserRepo.updateById({
@@ -219,15 +220,18 @@ class UserService {
 
     const resetPasswordLink = `${WEBSITE_DOMAIN}/auth/change-password?email=${email}&token=${resetPassToken}`
 
-    sendEmailService(
-      email,
-      'Password Recovery Link',
-      `
-        <h3>Here is your password recovery link:</h3>
-        <h3>${resetPasswordLink}</h3>
-        <h3>Sincerely</h3>
-      `
-    )
+    await sendEmailService({
+      recipientEmail: email,
+      customSubject: 'Taskio - Password Recovery Link',
+      templateName: 'ForgotPassword',
+      data: {
+        email: existUser.email,
+        username: existUser.username,
+        displayName: existUser.displayName,
+        resetPasswordLink
+      }
+    })
+
     return pickUser(updatedUser)
   }
 

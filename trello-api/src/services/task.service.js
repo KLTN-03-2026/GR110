@@ -6,12 +6,6 @@ import {
   NotFoundErrorResponse
 } from '~/core/error.response'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
-import { emitCardUpdatedBasic } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
-import {
-  emitTaskCreated,
-  emitTaskDeleted,
-  emitTaskUpdated
-} from '~/realtime/realtimeEmitters/taskRealtime.emitter'
 import ActivityLogRepo from '~/repo/activityLog.repo'
 import BoardMemberRepo from '~/repo/boardMember.repo'
 import CardRepo from '~/repo/card.repo'
@@ -132,31 +126,12 @@ class TaskService {
         }
       })
 
-      if (result.card)
-        emitCardUpdatedBasic({
-          boardId: boardAccess.board._id,
-          card: result.card
-        })
-
-      let createdLog = null
-
       if (insertedLog) {
-        createdLog = await ActivityLogRepo.findOne({
+        const log = await ActivityLogRepo.findOne({
           filter: { _id: new ObjectId(insertedLog.insertedId) }
         })
-        emitTaskCreated({
-          boardId: boardAccess.board._id,
-          task: result.task,
-          log: createdLog
-        })
-        return { ...result, log: createdLog }
+        return { ...result, log }
       }
-
-      emitTaskCreated({
-        boardId: boardAccess.board._id,
-        task: result.task,
-        log: createdLog
-      })
 
       return { ...result, log: null }
     } finally {
@@ -273,18 +248,6 @@ class TaskService {
         return { task: updatedTask, card: updatedCard }
       })
 
-      if ('isCompleted' in data)
-        emitCardUpdatedBasic({
-          boardId: boardAccess.board._id,
-          card: result.card
-        })
-
-      emitTaskUpdated({
-        boardId: boardAccess.board._id,
-        card: result.card,
-        task: result.task
-      })
-
       return result
     } finally {
       await session.endSession()
@@ -382,39 +345,19 @@ class TaskService {
         return {
           task: {
             _id: task._id,
-            parentTaskId: task.parentTaskId || null,
-            cardId: task.cardId
+            parentTaskId: task.parentTaskId || null
           },
           card: updatedCard
         }
       })
 
-      if (result?.card)
-        emitCardUpdatedBasic({
-          boardId: boardAccess.board._id,
-          card: result.card
-        })
-
-      let createdLog = null
-
       if (insertedLog) {
-        createdLog = await ActivityLogRepo.findOne({
+        const log = await ActivityLogRepo.findOne({
           filter: { _id: new ObjectId(insertedLog.insertedId) },
           options: { session }
         })
-        emitTaskDeleted({
-          boardId: boardAccess.board._id,
-          task: result.task,
-          log: createdLog
-        })
-        return { ...result, log: createdLog }
+        return { ...result, log }
       }
-
-      emitTaskDeleted({
-        boardId: boardAccess.board._id,
-        task: result.task,
-        log: createdLog
-      })
 
       return { ...result, log: null }
     } finally {

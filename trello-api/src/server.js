@@ -1,81 +1,86 @@
 import express from 'express'
 import cors from 'cors'
-import cookieParser from 'cookie-parser'
-import exitHook from 'async-exit-hook'
-import http from 'http'
-
 import { corsOptions } from '~/config/cors'
+import exitHook from 'async-exit-hook'
 import { CONNECT_DB, CLOSE_DB } from '~/config/mongodb'
 import { env } from '~/config/environment'
 import { APIs_V1 } from '~/routes/v1/_index.route'
 import { errorHandlingMiddleware } from '~/middlewares/errorHandling.middleware'
-import { CONNECT_REDIS_CACHE, CLOSE_REDIS_CACHE } from '~/config/redisCache'
-import {
-  CONNECT_REDIS_REALTIME,
-  CLOSE_REDIS_REALTIME
-} from '~/config/redisRealtime'
-import { INIT_SOCKET } from './config/socket'
+import cookieParser from 'cookie-parser'
 
-const START_SERVER = async () => {
+// Xử lý socket real-time với gói socket.io
+// https://socket.io/get-started/chat/#integrating-socketio
+import http from 'http'
+import socketIo from 'socket.io'
+import { inviteUserToBoardSocket } from './sockets/inviteUserToBoardSocket'
+import { CONNECT_REDIS } from './providers/RedisProvider'
+
+const START_SERVER = () => {
   const app = express()
-
+  // Fix cái vụ Cache from disk của ExpressJS
+  // https://stackoverflow.com/a/53240717/8324172
   app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store')
     next()
   })
 
-  // CORS
+  // Xử lý CORS
   app.use(cors(corsOptions))
 
-  // Cookie parser
+  // cấu hình cookie parser
   app.use(cookieParser())
 
-  // Parse JSON body
+  // Enable req.body json data
   app.use(express.json())
 
-  // APIs V1
+  // Use APIs V1
   app.use('/v1', APIs_V1)
 
-  // Error handling middleware
+  // Middleware xử lý lỗi tập trung
   app.use(errorHandlingMiddleware)
 
-  // Tạo HTTP server bọc app Express
+  // tạo mới một server bọc thằng app cảu expess để cấu hình tính năng real-time
   const server = http.createServer(app)
 
-  // Khởi tạo Socket.IO + Redis adapter
-  await INIT_SOCKET(server)
+  const io = socketIo(server, { cors: corsOptions })
+  io.on('connection', (socket) => {
+    inviteUserToBoardSocket(socket)
+  })
 
-  // Start server
+  // Môi trường Production (cụ thể hiện tại là đang support Render.com)
   if (env.BUILD_MODE === 'production') {
     server.listen(process.env.PORT, () => {
       console.log(
-        `4. Production: Hi ${env.AUTHOR}, Back-end Server is running successfully at Port: ${process.env.PORT}`
+        `3. Production: Hi ${env.AUTHOR}, Back-end Server is running successfully at Port: ${process.env.PORT}`
       )
     })
   } else {
-    server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+    // Môi trường Local Dev
+    // server.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+    //   console.log(
+    //     `3. Local DEV: Hi ${env.AUTHOR}, Back-end Server is running successfully at Host: ${env.LOCAL_DEV_APP_HOST} and Port: ${env.LOCAL_DEV_APP_PORT}`
+    //   )
+    // })
+
+    //TESST SEPAY
+    server.listen(env.LOCAL_DEV_APP_PORT, () => {
       console.log(
-        `4. Local DEV: Hi ${env.AUTHOR}, Back-end Server is running successfully at Host: ${env.LOCAL_DEV_APP_HOST} and Port: ${env.LOCAL_DEV_APP_PORT}`
+        `3. Local DEV: Hi ${env.AUTHOR}, Back-end Server is running successfully at Host: ${env.LOCAL_DEV_APP_HOST} and Port: ${env.LOCAL_DEV_APP_PORT}`
       )
     })
   }
 
-  // Cleanup
-  exitHook(async () => {
-    console.log('5. Server is shutting down...')
-
-    await CLOSE_REDIS_CACHE()
-    console.log('6. Disconnected Redis cache.')
-
-    await CLOSE_REDIS_REALTIME()
-    console.log('7. Disconnected Redis realtime.')
-
-    await CLOSE_DB()
-    console.log('8. Disconnected from MongoDB Cloud Atlas.')
+  // Thực hiện các tác vụ cleanup trước khi dừng server
+  // Đọc thêm ở đây: https://stackoverflow.com/q/14031763/8324172
+  exitHook(() => {
+    console.log('4. Server is shutting down...')
+    CLOSE_DB()
+    console.log('5. Disconnected from MongoDB Cloud Atlas')
   })
 }
 
-// IIFE
+// Chỉ khi Kết nối tới Database thành công thì mới Start Server Back-end lên.
+// Immediately-invoked / Anonymous Async Functions (IIFE)
 ;(async () => {
   try {
     console.log(process.env.MONGODB_URI)
@@ -83,18 +88,23 @@ const START_SERVER = async () => {
     console.log('1. Connecting to MongoDB Cloud Atlas...')
     await CONNECT_DB()
     console.log('2. Connected to MongoDB Cloud Atlas!')
+    await CONNECT_REDIS()
+    console.log('3. Connected Redis successfully!')
 
-    console.log('3. Connecting Redis cache...')
-    await CONNECT_REDIS_CACHE()
-    console.log('3.1 Connected Redis cache successfully!')
-
-    console.log('3.2 Connecting Redis realtime...')
-    await CONNECT_REDIS_REALTIME()
-    console.log('3.3 Connected Redis realtime successfully!')
-
-    await START_SERVER()
+    // Khởi động Server Back-end sau khi đã Connect Database thành công
+    START_SERVER()
   } catch (error) {
     console.error(error)
-    process.exit(1)
+    process.exit(0)
   }
 })()
+
+// // Chỉ khi Kết nối tới Database thành công thì mới Start Server Back-end lên.
+// console.log('1. Connecting to MongoDB Cloud Atlas...')
+// CONNECT_DB()
+//   .then(() => console.log('2. Connected to MongoDB Cloud Atlas!'))
+//   .then(() => START_SERVER())
+//   .catch(error => {
+//     console.error(error)
+//     process.exit(0)
+//   })

@@ -25,7 +25,7 @@ function Notifications() {
   const {
     open,
     notifications,
-    notificationCount,
+    newNotification,
     handleClickNotificationIcon,
     handleUpdateNotification,
     handleClose,
@@ -36,15 +36,11 @@ function Notifications() {
     <Box>
       <Tooltip title="Notifications">
         <Badge
-          badgeContent={notificationCount}
           color="warning"
+          variant={newNotification ? 'dot' : 'standard'}
           overlap="circular"
           sx={{
             '& .MuiBadge-badge': {
-              fontSize: '0.65rem',
-              minWidth: '16px',
-              height: '16px',
-              padding: '0 4px',
               boxShadow: (theme) =>
                 `0 0 0 2px ${theme.palette.background.paper}`
             }
@@ -57,7 +53,7 @@ function Notifications() {
             aria-expanded={open ? 'true' : undefined}
             onClick={handleClickNotificationIcon}
             sx={{
-              color: 'white',
+              color: newNotification ? 'warning.main' : 'white',
               bgcolor: open ? 'rgba(255,255,255,0.08)' : 'transparent',
               transition: 'all 0.2s ease',
               '&:hover': {
@@ -87,10 +83,9 @@ function Notifications() {
             sx: {
               mt: 1.5,
               width: 420,
-              maxHeight: '70vh',
-              overflowY: 'auto',
               maxWidth: 'calc(100vw - 24px)',
               borderRadius: 4,
+              overflow: 'hidden',
               border: '1px solid',
               borderColor: 'divider',
               bgcolor: 'background.paper',
@@ -132,12 +127,10 @@ function Notifications() {
         )}
 
         {notifications?.map((notification, index) => {
-          const inviter = notification.inviter
+          const inviter = notification.inviter?.[0]
           const workspace = notification.entityInfo
           const entity = notification.entity
-          const title =
-            workspace?.title ||
-            `Untitled ${entity == 'board' ? 'board' : 'workspace'}`
+          const title = workspace?.title || `Untitled ${entity == 'board' ? "board" : "workspace"}`
           const status = notification.status
           const message = notification.message
 
@@ -226,7 +219,7 @@ function Notifications() {
                         }}
                       >
                         <Chip
-                          label={entity != 'board' ? 'Workspace' : 'Board'}
+                          label= {entity !='board' ? "Workspace" : "Board"} 
                           size="small"
                           color="primary"
                           variant="outlined"

@@ -37,8 +37,6 @@ const useBoardList = () => {
     handleCloseCreateBoard()
   }
 
-  
-
   return {
     ui: {
       board: {

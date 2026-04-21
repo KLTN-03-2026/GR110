@@ -25,7 +25,7 @@ function CardDetailModal() {
     handleUpdateCardTitle,
     handleUpdateCardDescription,
     data,
-    handler
+    handler,
   } = useCardDetail()
 
   const { handleUpdateIsCompleted } = handler
@@ -62,7 +62,12 @@ function CardDetailModal() {
       >
         {/* Header cố định, không co giãn */}
         <Box sx={{ flexShrink: 0 }}>
-          <CardHeader data={data.cardHeader} handler={handler.cardHeader} />
+          <CardHeader
+            data={data.cardHeader}
+            handler={handler.cardHeader}
+            attachmentHandlers={handler.attachments}
+            attachmentData={data.attachments}
+          />
         </Box>
 
         {/* Body dùng flex thay Grid — dễ kiểm soát scroll hơn */}
@@ -124,7 +129,6 @@ function CardDetailModal() {
               <CardDetailActionButton
                 data={data.cardButton}
                 handler={handler.cardButton}
-                activeCard={activeCard}
               />
             </Box>
 

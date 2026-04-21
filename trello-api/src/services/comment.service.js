@@ -7,11 +7,6 @@ import {
   NotFoundErrorResponse
 } from '~/core/error.response'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
-import { emitCardUpdatedBasic } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
-import {
-  emitCommentCreated,
-  emitCommentDeleted
-} from '~/realtime/realtimeEmitters/commentRealtime.emitter'
 import ActivityLogRepo from '~/repo/activityLog.repo'
 import CardRepo from '~/repo/card.repo'
 import CommentRepo from '~/repo/comment.repo'
@@ -95,18 +90,6 @@ class CommentService {
         filter: { _id: new ObjectId(result.log.insertedId) }
       })
 
-      emitCommentCreated({
-        boardId: boardAccess.board._id,
-        card: result.card,
-        comment: commentDetail,
-        log
-      })
-
-      emitCardUpdatedBasic({
-        boardId: boardAccess.board._id,
-        card: result.card
-      })
-
       return { comment: commentDetail, card: result.card, log }
     } finally {
       await session.endSession()
@@ -188,18 +171,6 @@ class CommentService {
         const log = await ActivityLogRepo.findOne({
           filter: { _id: new ObjectId(createdLog.insertedId) },
           options: { session }
-        })
-
-        emitCardUpdatedBasic({
-          boardId: boardAccess.board._id,
-          card: updatedCard
-        })
-
-        emitCommentDeleted({
-          boardId: boardAccess.board._id,
-          card: updatedCard,
-          comment: { _id },
-          log
         })
 
         return {

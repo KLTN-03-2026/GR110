@@ -70,7 +70,6 @@ class InvitationRepo {
         },
         {
           $addFields: {
-            inviter: { $arrayElemAt: ['$inviter', 0] },
             entityInfo: {
               $cond: {
                 if: { $eq: ['$entity', 'board'] },

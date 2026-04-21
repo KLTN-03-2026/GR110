@@ -14,12 +14,6 @@ import CommentRepo from '~/repo/comment.repo'
 import TaskRepo from '~/repo/task.repo'
 import WorkspaceRepo from '~/repo/workspace.repo'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
-import {
-  emitColumnArchived,
-  emitColumnCreated,
-  emitColumnRestored,
-  emitColumnUpdated
-} from '~/realtime/realtimeEmitters/columnRealtime.emitter'
 
 class ColumnService {
   static fetchArchived = async ({ boardId }) => {
@@ -87,12 +81,6 @@ class ColumnService {
           },
           session
         })
-
-        emitColumnCreated({
-          boardId: boardAccess.board._id.toString(),
-          column
-        })
-
         return column
       })
     } finally {
@@ -133,11 +121,6 @@ class ColumnService {
 
     const updatedColumn = await ColumnRepo.updateById({ _id, data: updateData })
 
-    emitColumnUpdated({
-      boardId: boardAccess.board._id.toString(),
-      column: updatedColumn
-    })
-
     return updatedColumn
   }
 
@@ -176,11 +159,6 @@ class ColumnService {
             content: `archived column "${column.title}"`
           },
           session
-        })
-
-        emitColumnArchived({
-          boardId: boardAccess.board._id.toString(),
-          column: updatedColumn
         })
 
         return updatedColumn
@@ -232,11 +210,6 @@ class ColumnService {
 
       const columnDetail = await ColumnRepo.getDetail({
         _id: updatedColumn._id
-      })
-
-      emitColumnRestored({
-        boardId: boardAccess.board._id.toString(),
-        column: columnDetail
       })
 
       return columnDetail

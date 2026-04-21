@@ -24,6 +24,22 @@ const UNSPLASH_PHOTOS = [
   'https://media.istockphoto.com/id/2173405087/vi/anh/g%C3%B3c-nh%C3%ACn-t%E1%BB%AB-tr%C3%AAn-xu%E1%BB%91ng-c%E1%BB%A7a-ng%C6%B0%E1%BB%9Di-%C4%91%C3%A0n-%C3%B4ng-kinh-doanh-%C4%91%E1%BA%B7t-b%E1%BA%A3ng-scrum-tr%C3%AAn-b%C3%A0n-t%E1%BA%A1i-ph%C3%B2ng-h%E1%BB%8Dp-tri%E1%BB%87u.jpg?s=612x612&w=0&k=20&c=debffp9orbIzi8AQutfPVrAoVKS-2Dtk0fJYuwb2aKk='
 ]
 
+const buildAttachmentUrl = (attachment) => {
+  if (!attachment) return ''
+
+  if (typeof attachment === 'string') return attachment
+  if (attachment.url) return attachment.url
+  if (attachment.image) return attachment.image
+
+  if (attachment.fileKey) {
+    const cdn = import.meta.env.VITE_CLOUDFRONT_DOMAIN || ''
+    if (!cdn) return ''
+    return `${cdn.replace(/\/$/, '')}/${attachment.fileKey}`
+  }
+
+  return ''
+}
+
 function CardCoverPopper({
   cover = null,
   anchorEl,
@@ -31,11 +47,17 @@ function CardCoverPopper({
   onClose,
   handleSelectCover,
   attachments = [],
-  handleUpdateCover
+  handleUpdateCover,
+  handleUploadFiles
 }) {
   const COLORS = Object.keys(cardCoverColor)
   const selectedType = cover?.type ?? null
   const selectedValue = cover?.value ?? null
+
+  const imageAttachments = (attachments || []).filter((item) =>
+    item?.fileType?.startsWith('image/')
+  )
+
   return (
     <Popper
       open={open}
@@ -84,6 +106,217 @@ function CardCoverPopper({
           </Box>
 
           <Box sx={{ p: 2, maxHeight: 520, overflowY: 'auto' }}>
+            {cover?.type === 'attachment' && cover?.value && (
+              <>
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: 'text.secondary',
+                    mb: 1
+                  }}
+                >
+                  Size
+                </Typography>
+
+                <Grid container spacing={1} sx={{ mb: 2 }}>
+                  <Grid item xs={6}>
+                    <Box
+                      onClick={() =>
+                        handleUpdateCover({
+                          ...cover,
+                          display: 'default'
+                        })
+                      }
+                      sx={{
+                        position: 'relative',
+                        height: 58,
+                        borderRadius: 1.5,
+                        cursor: 'pointer',
+                        border: '2px solid',
+                        borderColor:
+                          (cover?.display || 'default') === 'default'
+                            ? 'primary.main'
+                            : 'transparent',
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.06)'
+                            : '#f1f5f9',
+                        overflow: 'hidden',
+                        p: 1
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: 1,
+                          bgcolor: (theme) =>
+                            theme.palette.mode === 'dark' ? '#5e748d' : '#89a8c8',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        <Box
+                          component="img"
+                          src={cover.value}
+                          alt="default-preview"
+                          sx={{
+                            height: 24,
+                            width: 'auto',
+                            maxWidth: '72%',
+                            objectFit: 'contain',
+                            display: 'block'
+                          }}
+                        />
+                      </Box>
+
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          left: 12,
+                          right: 12,
+                          bottom: 10,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 0.5,
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: '62%',
+                            height: 3,
+                            borderRadius: 999,
+                            bgcolor: 'rgba(255,255,255,0.55)'
+                          }}
+                        />
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 0.5
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 14,
+                              height: 3,
+                              borderRadius: 999,
+                              bgcolor: 'rgba(255,255,255,0.4)'
+                            }}
+                          />
+                          <Box
+                            sx={{
+                              width: 14,
+                              height: 3,
+                              borderRadius: 999,
+                              bgcolor: 'rgba(255,255,255,0.4)'
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+
+                  <Grid item xs={6}>
+                    <Box
+                      onClick={() =>
+                        handleUpdateCover({
+                          ...cover,
+                          display: 'full'
+                        })
+                      }
+                      sx={{
+                        position: 'relative',
+                        height: 58,
+                        borderRadius: 1.5,
+                        cursor: 'pointer',
+                        border: '2px solid',
+                        borderColor:
+                          cover?.display === 'full'
+                            ? 'primary.main'
+                            : 'transparent',
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.06)'
+                            : '#f1f5f9',
+                        overflow: 'hidden',
+                        p: 1
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: 1,
+                          overflow: 'hidden',
+                          position: 'relative'
+                        }}
+                      >
+                        <Box
+                          component="img"
+                          src={cover.value}
+                          alt="full-preview"
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block'
+                          }}
+                        />
+
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            left: 10,
+                            right: 10,
+                            bottom: 10,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 0.5,
+                            pointerEvents: 'none'
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: '62%',
+                              height: 3,
+                              borderRadius: 999,
+                              bgcolor: 'rgba(255,255,255,0.55)'
+                            }}
+                          />
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              gap: 0.5
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 14,
+                                height: 3,
+                                borderRadius: 999,
+                                bgcolor: 'rgba(255,255,255,0.4)'
+                              }}
+                            />
+                            <Box
+                              sx={{
+                                width: 14,
+                                height: 3,
+                                borderRadius: 999,
+                                bgcolor: 'rgba(255,255,255,0.4)'
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </>
+            )}
             <Button
               fullWidth
               variant="contained"
@@ -177,59 +410,136 @@ function CardCoverPopper({
               Attachments
             </Typography>
 
-            <Box sx={{ display: 'flex', gap: 1, mb: 1.5, flexWrap: 'wrap' }}>
-              {attachments.map((attachment, index) => {
-                const attachmentValue =
-                  attachment?._id ?? attachment?.id ?? index
-                const attachmentSrc = attachment?.url ?? attachment
+            {imageAttachments.length > 0 ? (
+              <Grid container spacing={0.75} sx={{ mb: 1.5 }}>
+                {imageAttachments.map((attachment, index) => {
+                  const attachmentValue = attachment?._id ?? attachment?.id
 
-                return (
-                  <Box
-                    key={attachmentValue}
-                    onClick={() =>
-                      handleSelectCover({
-                        type: 'attachment',
-                        value: attachment?._id ?? attachment?.id ?? index
-                      })
-                    }
-                    sx={{
-                      width: 88,
-                      height: 60,
-                      borderRadius: 1.5,
-                      overflow: 'hidden',
-                      cursor: 'pointer',
-                      border: '2px solid',
-                      borderColor:
-                        selectedType === 'attachment' &&
-                        selectedValue === attachmentValue
-                          ? 'primary.main'
-                          : 'transparent'
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src={attachmentSrc}
-                      alt={`attachment-${index}`}
-                      sx={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover'
-                      }}
-                    />
-                  </Box>
-                )
-              })}
-            </Box>
+                  const attachmentSrc = buildAttachmentUrl(attachment)
+
+                  const isSelected =
+                    selectedType === 'attachment' &&
+                    selectedValue === attachmentValue
+
+                  return (
+                    <Grid item xs={4} key={attachmentValue}>
+                      <Box
+                        onClick={() =>
+                          handleUpdateCover({
+                            type: 'attachment',
+                            value: attachmentSrc,
+                            display: cover?.display || 'default'
+                          })
+                        }
+                        sx={{
+                          position: 'relative',
+                          width: '100%',
+                          height: 54,
+                          borderRadius: 1,
+                          cursor: 'pointer',
+                          border: '2px solid',
+                          borderColor:
+                            selectedType === 'attachment' &&
+                              selectedValue === attachmentSrc
+                              ? 'primary.main'
+                              : 'transparent',
+                          overflow: 'hidden',
+                          '&:hover img': {
+                            opacity: 0.85
+                          }
+                        }}
+                      >
+                        <Box
+                          component="img"
+                          src={attachmentSrc}
+                          alt={attachment?.fileName || `attachment-${index}`}
+                          sx={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            display: 'block'
+                          }}
+                        />
+
+                        {selectedType === 'attachment' &&
+                          selectedValue === attachmentSrc && (
+                            <CheckRoundedIcon
+                              sx={{
+                                position: 'absolute',
+                                top: 4,
+                                right: 4,
+                                fontSize: 18,
+                                color: 'common.white',
+                                bgcolor: 'rgba(0,0,0,0.28)',
+                                borderRadius: '50%',
+                                p: 0.25
+                              }}
+                            />
+                          )}
+
+                        {isSelected && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              width: 18,
+                              height: 18,
+                              borderRadius: '50%',
+                              bgcolor: 'primary.main',
+                              color: 'white',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              boxShadow: 2
+                            }}
+                          >
+                            <CheckRoundedIcon sx={{ fontSize: 13 }} />
+                          </Box>
+                        )}
+                      </Box>
+                    </Grid>
+                  )
+                })}
+              </Grid>
+            ) : (
+              <Box
+                sx={{
+                  height: 62,
+                  borderRadius: 2,
+                  border: '1px dashed',
+                  borderColor: 'divider',
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.03)'
+                      : '#f8fafc',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  mb: 1.5
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: 'text.secondary'
+                  }}
+                >
+                  No image attachments yet
+                </Typography>
+              </Box>
+            )}
 
             <Button
+              component="label"
               fullWidth
               variant="contained"
               disableElevation
-              onClick={handleUpdateCover}
               sx={{
+                height: 40,
                 bgcolor: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? 'rgba(255,255,255,0.1)'
+                    ? 'rgba(255,255,255,0.08)'
                     : '#f0f1f4',
                 color: 'text.primary',
                 fontWeight: 600,
@@ -237,15 +547,23 @@ function CardCoverPopper({
                 borderRadius: 1.5,
                 textTransform: 'none',
                 mb: 2,
+                boxShadow: 'none',
                 '&:hover': {
                   bgcolor: (theme) =>
                     theme.palette.mode === 'dark'
-                      ? 'rgba(255,255,255,0.16)'
-                      : '#e6e8ec'
+                      ? 'rgba(255,255,255,0.14)'
+                      : '#e6e8ec',
+                  boxShadow: 'none'
                 }
               }}
             >
               Upload a cover image
+              <input
+                hidden
+                type="file"
+                accept="image/*"
+                onChange={handleUploadFiles}
+              />
             </Button>
 
             <Typography
@@ -264,7 +582,11 @@ function CardCoverPopper({
                 <Grid item key={i} xs={4}>
                   <Box
                     onClick={() =>
-                      handleUpdateCover({ type: 'attachment', value: src })
+                      handleUpdateCover({
+                        type: 'attachment',
+                        value: src,
+                        display: cover?.display || 'default'
+                      })
                     }
                     sx={{
                       position: 'relative',
@@ -319,4 +641,5 @@ function CardCoverPopper({
     </Popper>
   )
 }
+
 export default CardCoverPopper

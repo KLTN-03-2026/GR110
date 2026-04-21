@@ -18,12 +18,6 @@ import ActivityLogRepo from '~/repo/activityLog.repo'
 import WorkspaceRepo from '~/repo/workspace.repo'
 import BoardRepo from '~/repo/board.repo'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
-import {
-  emitCardArchived,
-  emitCardCreated,
-  emitCardRestored,
-  emitCardUpdatedBasic
-} from '~/realtime/realtimeEmitters/cardRealtime.emitter'
 
 class CardService {
   static fetchArchived = async ({ boardId }) => {
@@ -133,11 +127,6 @@ class CardService {
           session
         })
 
-        emitCardCreated({
-          boardId: boardAccess.board._id,
-          card
-        })
-
         return card
       })
     } finally {
@@ -218,20 +207,13 @@ class CardService {
         return updatedCard
       })
 
-      emitCardUpdatedBasic({
-        boardId: boardAccess.board._id,
-        card: updatedCard
-      })
-
       if (insertedLogs) {
         const log = await ActivityLogRepo.findOne({
           filter: { _id: insertedLogs.insertedId },
           options: { session }
         })
-
         return { card: updatedCard, log }
       }
-
       return { card: updatedCard, log: null }
     } finally {
       await session.endSession()
@@ -278,12 +260,6 @@ class CardService {
         const log = await ActivityLogRepo.findOne({
           filter: { _id: createdLog.insertedId },
           options: { session }
-        })
-
-        emitCardArchived({
-          boardId: boardAccess.board._id,
-          card: updatedCard,
-          log
         })
 
         return { card: updatedCard, log }
@@ -333,12 +309,6 @@ class CardService {
         const log = await ActivityLogRepo.findOne({
           filter: { _id: createdLog.insertedId },
           options: { session }
-        })
-
-        emitCardRestored({
-          boardId: boardAccess.board._id,
-          card: updatedCard,
-          log
         })
 
         return { card: updatedCard, log }
@@ -396,11 +366,6 @@ class CardService {
           options: { session }
         })
 
-        emitCardUpdatedBasic({
-          boardId: card.boardId,
-          card: updatedCard
-        })
-
         return { card: updatedCard, log }
       })
     } finally {
@@ -454,11 +419,6 @@ class CardService {
         const log = await ActivityLogRepo.findOne({
           filter: { _id: createdLog.insertedId },
           options: { session }
-        })
-
-        emitCardUpdatedBasic({
-          boardId: card.boardId,
-          card: updatedCard
         })
 
         return { card: updatedCard, log }
@@ -554,11 +514,6 @@ class CardService {
           options: { session }
         })
 
-        emitCardUpdatedBasic({
-          boardId: card.boardId,
-          card: updatedCard
-        })
-
         return { card: updatedCard, log }
       })
     } finally {
@@ -650,11 +605,6 @@ class CardService {
           options: { session }
         })
 
-        emitCardUpdatedBasic({
-          boardId: card.boardId,
-          card: updatedCard
-        })
-
         return { card: updatedCard, log }
       })
     } finally {
@@ -693,11 +643,6 @@ class CardService {
         data: { $push: { labelIds: labelId } }
       })
     }
-
-    emitCardUpdatedBasic({
-      boardId: card.boardId,
-      card: updatedCard
-    })
 
     return updatedCard
   }

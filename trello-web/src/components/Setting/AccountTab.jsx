@@ -71,6 +71,7 @@ function AccountTab() {
 
   const uploadAvatar = (e) => {
     const file = e.target?.files[0]
+    
     const error = singleFileValidator(file)
 
     if (error) {
@@ -79,7 +80,7 @@ function AccountTab() {
     }
 
     const reqData = new FormData()
-    reqData.append('avatar', file)
+    reqData.append('file', file)
 
     toast
       .promise(dispatch(updateUserAPI(reqData)), {
@@ -93,16 +94,16 @@ function AccountTab() {
 
   return (
     <Box
-  sx={{
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    px: 2,
-    py: 0,
-    background: 'transparent'
-  }}
->
+      sx={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2,
+        py: 0,
+        background: 'transparent'
+      }}
+    >
       <Paper
         elevation={0}
         sx={{
@@ -214,7 +215,8 @@ function AccountTab() {
                   }}
                 >
                   Upload avatar
-                  <VisuallyHiddenInput type="file" onChange={uploadAvatar} />
+                  {/* <VisuallyHiddenInput type="file" onChange={uploadAvatar} /> */}
+                  <input hidden type='file' accept='image/*' onChange={uploadAvatar} ></input>
                 </Button>
               </Tooltip>
             </Box>

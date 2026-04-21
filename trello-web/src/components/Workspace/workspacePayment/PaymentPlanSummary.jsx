@@ -43,18 +43,34 @@ function PaymentFeatureItem({ feature }) {
 
   return (
     <Stack direction="row" spacing={1.25} alignItems="flex-start">
-      <Icon
+      <Box
         sx={(theme) => ({
           mt: '2px',
-          fontSize: 18,
-          color: theme.palette.text.secondary,
+          width: 28,
+          height: 28,
+          borderRadius: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor:
+            theme.palette.mode === 'dark'
+              ? 'rgba(255,255,255,0.04)'
+              : 'rgba(15,23,42,0.04)',
           flexShrink: 0
         })}
-      />
+      >
+        <Icon
+          sx={(theme) => ({
+            fontSize: 17,
+            color: theme.palette.text.secondary
+          })}
+        />
+      </Box>
+
       <Typography
         sx={(theme) => ({
           fontSize: 14,
-          lineHeight: 1.45,
+          lineHeight: 1.5,
           color: theme.palette.text.primary
         })}
       >
@@ -83,7 +99,7 @@ export default function PaymentPlanSummary({
             : '0 8px 24px rgba(15, 23, 42, 0.06)'
       })}
     >
-      <Stack spacing={3}>
+      <Stack spacing={2.5}>
         <Stack spacing={1.25}>
           <Chip
             icon={<WorkspacePremiumRoundedIcon />}
@@ -104,9 +120,10 @@ export default function PaymentPlanSummary({
 
           <Typography
             sx={(theme) => ({
-              fontSize: { xs: 24, md: 30 },
+              fontSize: { xs: 22, md: 26 },
               fontWeight: 800,
-              color: theme.palette.text.primary
+              color: theme.palette.text.primary,
+              lineHeight: 1.2
             })}
           >
             {workspaceTitle || '--'}
@@ -147,8 +164,8 @@ export default function PaymentPlanSummary({
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-              gap: 1.5
+              gridTemplateColumns: '1fr',
+              gap: 1.25
             }}
           >
             {planFeatures.map((feature, index) => (

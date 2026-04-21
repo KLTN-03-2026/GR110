@@ -101,27 +101,13 @@ export const activeBoardSlice = createSlice({
 
     restoreCardInBoard: (state, action) => {
       const restoringCard = action.payload
-      if (!restoringCard) return
 
-      const column = state.board?.columns?.find(
+      const column = state.board.columns.find(
         (i) => i._id === restoringCard.columnId
       )
 
-      if (!column) return
-
-      if (!column.cards) column.cards = []
-      if (!column.cardOrderIds) column.cardOrderIds = []
-
-      const cardExists = column.cards.some(
-        (card) => card._id === restoringCard._id
-      )
-      const cardOrderExists = column.cardOrderIds.includes(restoringCard._id)
-
-      if (!cardExists) {
+      if (column) {
         column.cards.push(restoringCard)
-      }
-
-      if (!cardOrderExists) {
         column.cardOrderIds.push(restoringCard._id)
       }
     },

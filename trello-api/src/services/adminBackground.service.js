@@ -16,6 +16,8 @@ class AdminBackgroundService {
         title: backgroundData.title,
         image: S3Provider.getUrl(uploaded.fileKey),
         status: backgroundData.status,
+        type: 'system',
+        boardId: null,
         isDelete: false
       }
 

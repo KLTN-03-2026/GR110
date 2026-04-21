@@ -1,26 +1,43 @@
 import nodemailer from 'nodemailer'
+import ejs from 'ejs'
+import path from 'path'
 import { env } from '~/config/environment'
 
-export const sendEmailService = async (
+export const sendEmailService = async ({
   recipientEmail,
   customSubject,
-  htmlContent
-) => {
-  let transporter = nodemailer.createTransport({
+  htmlContent = '',
+  templateName = '',
+  data = {}
+}) => {
+  const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 587,
-    secure: false, // Use `true` for port 465, `false` for all other ports
+    secure: false,
     auth: {
       user: env.EMAIL_USERNAME,
       pass: env.EMAIL_PASSWORD
     }
   })
 
+  let finalHtmlContent = htmlContent
+
+  if (templateName) {
+    const templatePath = path.join(
+      process.cwd(),
+      'src/views',
+      `${templateName}.ejs`
+    )
+
+    finalHtmlContent = await ejs.renderFile(templatePath, data)
+  }
+
   const info = await transporter.sendMail({
     from: env.EMAIL_USERNAME,
     to: recipientEmail,
     subject: customSubject,
-    html: htmlContent
+    html: finalHtmlContent
   })
+
   return info
 }

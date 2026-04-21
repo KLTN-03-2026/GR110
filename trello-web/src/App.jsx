@@ -34,6 +34,8 @@ import { selectCurrentAdmin } from './redux/adminUser/adminSlice'
 import ProfilePage from './pages/Admin/Profile/Profile.page'
 import WorkspacePaymentPage from './pages/Home/WorkspacePayment.page'
 import PaymentPage from './pages/Admin/Payment/Payment.page'
+import TicketPage from './pages/Tickets/Tickets.page'
+import AdminTicketPage from './pages/Admin/Ticket/Ticket.page'
 /**
  * Giải pháp Clean Code trong việc xác định các route nào cần đăng nhập tài khoản xong thì mới cho truy cập
  * Sử dụng <Outlet /> của react-router-dom để hiển thị các Child Route (xem cách sử dụng trong App() bên dưới)
@@ -89,6 +91,7 @@ function App() {
         {/* Board list  */}
         <Route path="/h" element={<HomeLayout />}>
           <Route path="boards" element={<BoardPage />} />
+          <Route path="tickets" element={<TicketPage />} />
 
           <Route path="workspaces" element={<WorkspaceLayout />}>
             <Route
@@ -145,6 +148,7 @@ function App() {
         <Route path='/admin' element={<AdminLayout />}>
           <Route path='profile' element={<ProfilePage />} />
 
+          <Route path='ticket' element={<AdminTicketPage />} />
           <Route path='user' element={<UserPage />} />
           <Route path='user/create' element={<CreateUserPage />} />
           <Route path='user/update/:_id' element={<UpdateUserPage />} />

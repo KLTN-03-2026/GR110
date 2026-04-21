@@ -219,5 +219,31 @@ class BoardRepo {
       .collection(boardModel.BOARD_COLLECTION_NAME)
       .updateMany(filter, data, { returnDocument: 'after', session })
   }
+
+  static updateById = async ({ _id, data, options = {} }) => {
+    const result = await GET_DB()
+      .collection(boardModel.BOARD_COLLECTION_NAME)
+      .findOneAndUpdate(
+        { _id: new ObjectId(_id) },
+        { $set: data },
+        {
+          returnDocument: 'after',
+          ...options
+        }
+      )
+
+    return result
+  }
+
+  static deleteById = async ({ _id, options = {} }) => {
+    const result = await GET_DB()
+      .collection(boardModel.BOARD_COLLECTION_NAME)
+      .deleteOne(
+        { _id: new ObjectId(_id) },
+        options
+      )
+
+    return result
+  }
 }
 export default BoardRepo
