@@ -71,7 +71,10 @@ class BoardController {
 
   static moveCardToDifferentColumn = async (req, res) => {
     new OkSuccessResponse({
-      metadata: await BoardService.moveCardToDifferentColumn({ data: req.body })
+      metadata: await BoardService.moveCardToDifferentColumn({
+        boardAccess: req.boardAccess,
+        data: req.body
+      })
     }).send(res)
   }
 
@@ -186,7 +189,6 @@ class BoardController {
   }
 
   static deleteBackground = async(req, res) => {
-    console.log('okkokokokokokokokokokokok');
     
     new OkSuccessResponse({
       message: 'Delete background successfully',

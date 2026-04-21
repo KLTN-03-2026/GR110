@@ -126,9 +126,10 @@ function CardDetailModal() {
             </Box>
 
             <Box sx={{ mt: 3, mb: 3 }}>
-              <CardDetailActionButton
+               <CardDetailActionButton
                 data={data.cardButton}
                 handler={handler.cardButton}
+                activeCard={activeCard}
               />
             </Box>
 

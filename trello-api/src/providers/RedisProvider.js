@@ -8,10 +8,10 @@ const CONNECT_REDIS = async () => {
 
   redisClientInstance = createClient({
     socket: {
-      host: env.REDIS_HOST,
-      port: env.REDIS_PORT
+      host: env.REDIS_CACHE_HOST,
+      port: env.REDIS_CACHE_PORT
     },
-    password: env.REDIS_PASSWORD || undefined,
+    password: env.REDIS_CACHE_PASSWORD || undefined,
     database: env.REDIS_DB
   })
 

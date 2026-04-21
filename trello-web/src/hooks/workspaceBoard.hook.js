@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { createNewBoardsAPI } from '~/apis'
+import { aiGenerateBoardAPI, createNewBoardsAPI } from '~/apis'
 import { fetchBoardByWorkspaceIdAPI } from '~/apis/board.api'
 
 export const useWorkspaceBoards = () => {
@@ -39,6 +39,17 @@ export const useWorkspaceBoards = () => {
     }
   }
 
+  const handleAIGenerateBoard = async (prompt) => {
+    try {
+      setIsSubmitting(true)
+      const board = await aiGenerateBoardAPI({ prompt, workspaceId })
+      setBoards((prev) => [board, ...prev])
+      return board
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return {
     ui: { boardList: { page: 1, createModal: { isOpen: isOpenCreateBoard } } },
     data: { boardList: { boards, count } },
@@ -48,7 +59,8 @@ export const useWorkspaceBoards = () => {
         createModal: {
           isSubmitting,
           handleCreateBoard,
-          handleClose: handleCloseCreateBoard
+          handleClose: handleCloseCreateBoard,
+          handleAIGenerateBoard
         }
       }
     }

@@ -12,6 +12,7 @@ import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
 import { deleteBoardRoleParamSchema } from '~/validations/boardRole.validation'
 import { boardMemberValidation } from '~/validations/boardMember.validation'
 import { multerUploadMiddleware } from '~/middlewares/multerUpload.middleware'
+import AIController from '~/controllers/ai.controller'
 
 const Router = express.Router()
 
@@ -159,4 +160,13 @@ Router.route('/custom-background/:boardId/:backgroundId').delete(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(BoardController.deleteBackground)
 )
+
+Router.route('/ai-generate').post(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(
+    workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.BOARD_CREATE)
+  ),
+  asyncHandler(AIController.generateBoard)
+)
+
 export const boardRoute = Router

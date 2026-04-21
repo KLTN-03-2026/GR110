@@ -45,7 +45,7 @@ export const notificationsSlice = createSlice({
       state.notifications = action.payload
     },
     addNotification: (state, action) => {
-      state.notifications.unshift(action.payload)
+      state.unshift(action.payload)
     }
   },
   extraReducers: (builder) => {
@@ -54,6 +54,15 @@ export const notificationsSlice = createSlice({
     })
 
     builder.addCase(updateWorkspaceInvitationAPI.fulfilled, (state, action) => {
+      const updatedNotification = action.payload
+      return state.map((n) =>
+        n._id === updatedNotification._id
+          ? { ...n, status: updatedNotification.status }
+          : n
+      )
+    })
+
+    builder.addCase(updateBoardInvitationAPI.fulfilled, (state, action) => {
       const updatedNotification = action.payload
       return state.map((n) =>
         n._id === updatedNotification._id

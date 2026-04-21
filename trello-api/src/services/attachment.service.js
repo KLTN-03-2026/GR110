@@ -14,6 +14,12 @@ import AttachmentRepo from '~/repo/attachment.repo'
 import ActivityLogRepo from '~/repo/activityLog.repo'
 import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
+import { emitCardUpdatedBasic } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
+import {
+  emitAttachmentCreated,
+  emitAttachmentDeleted,
+  emitAttachmentUpdated
+} from '~/realtime/realtimeEmitters/attachmentRealtime.emitter'
 
 class AttachmentService {
   static upload = async ({ boardAccess, cardId, files }) => {
@@ -161,6 +167,18 @@ class AttachmentService {
         url: S3Provider.getUrl(a.fileKey)
       }))
 
+      emitAttachmentCreated({
+        boardId: board._id.toString(),
+        card: updatedCard,
+        attachments: attachmentsWithUrl,
+        log
+      })
+
+      emitCardUpdatedBasic({
+        boardId: boardAccess.board._id,
+        card: updatedCard
+      })
+
       return { cardDetail: updatedCard, attachments: attachmentsWithUrl, log }
     } catch (err) {
       await session.abortTransaction()
@@ -189,6 +207,12 @@ class AttachmentService {
     const updatedAttachment = await AttachmentRepo.updateOne({
       filter: { _id: new ObjectId(_id) },
       data: { $set: { fileName: data?.fileName } }
+    })
+
+     emitAttachmentUpdated({
+      boardId: attachment.boardId,
+      card: attachment.cardId,
+      attachment: updatedAttachment
     })
 
     return {
@@ -311,6 +335,18 @@ class AttachmentService {
         log = await ActivityLogRepo.findOne({
           filter: { _id: createdLog.insertedId },
           options: { session }
+        })
+
+         emitCardUpdatedBasic({
+          boardId: boardAccess.board._id,
+          card: updatedCard
+        })
+
+        emitAttachmentDeleted({
+          boardId: board._id.toString(),
+          card: updatedCard,
+          attachment: { _id },
+          log
         })
 
         return {}

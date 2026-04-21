@@ -276,7 +276,11 @@ Project description: "${prompt}"`
           description: `AI-generated board from: "${prompt}"`,
           visibility: 'private',
           type: 'normal',
-          createdBy: userContext._id
+          createdBy: userContext._id,
+          cover: {
+            type: 'color',
+            value: 'blue'
+          }
         }
 
         const createdBoard = await BoardRepo.createOne({

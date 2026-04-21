@@ -16,6 +16,7 @@ import BoardRoleRepo from '~/repo/boardRole.repo'
 import BoardMemberRepo from '~/repo/boardMember.repo'
 import ActivityLogRepo from '~/repo/activityLog.repo'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
+import { emitInvitationCreated } from '~/realtime/realtimeEmitters/invitationRealtime.emitter'
 
 class InvitationService {
   static getInvitations = async ({ userContext }) => {
@@ -121,7 +122,33 @@ class InvitationService {
       message: data.message
     }))
 
-    await InvitationRepo.createMany({ data: createInvitationsData })
+    const insertedInvitations = await InvitationRepo.createMany({
+      data: createInvitationsData
+    })
+
+    const invitationIds = Object.values(insertedInvitations.insertedIds)
+
+    const createdInvitations = await InvitationRepo.findMany({
+      filter: { _id: { $in: invitationIds } }
+    })
+
+    const inviter = await UserRepo.findById({ _id: userContext._id })
+
+    createdInvitations.map((invitation) => {
+      const data = {
+        ...invitation,
+        inviter: {
+          _id: inviter._id,
+          displayName: inviter.displayName,
+          avatar: inviter.avatar
+        },
+        entityInfo: { ...workspace }
+      }
+      emitInvitationCreated({
+        userId: invitation.inviteeId,
+        data
+      })
+    })
   }
 
   static createBoardInvitation = async ({ userContext, boardAccess, data }) => {
@@ -195,7 +222,9 @@ class InvitationService {
       message: data.message
     }))
 
-    await InvitationRepo.createMany({ data: createInvitationsData })
+    const insertedInvitations = await InvitationRepo.createMany({
+      data: createInvitationsData
+    })
 
     await ActivityLogRepo.createOne({
       data: {
@@ -210,6 +239,31 @@ class InvitationService {
             ? 'invited a member to this board'
             : `invited ${finalInviteeIds.length} members to this board`
       }
+    })
+
+    const invitationIds = Object.values(insertedInvitations.insertedIds)
+
+    const createdInvitations = await InvitationRepo.findMany({
+      filter: { _id: { $in: invitationIds } }
+    })
+
+    const inviter = await UserRepo.findById({ _id: userContext._id })
+
+    createdInvitations.map((invitation) => {
+      const data = {
+        ...invitation,
+        inviter: {
+          _id: inviter._id,
+          displayName: inviter.displayName,
+          avatar: inviter.avatar
+        },
+        entityInfo: { ...boardAccess.board }
+      }
+
+      emitInvitationCreated({
+        userId: invitation.inviteeId,
+        data
+      })
     })
   }
 
