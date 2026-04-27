@@ -71,12 +71,13 @@ export default function WorkspacePage() {
           onChange={handleSearchChange}
           placeholder='Search workspaces...'
           size='small'
-          sx={{
-            width: 250,
+           sx={{
+            width: 280,
             '& .MuiOutlinedInput-root': {
               height: 38,
               borderRadius: '8px',
-              backgroundColor: '#fff'
+              backgroundColor: '#fff',
+              color: 'black'
             },
             '& .MuiInputBase-input': {
               fontSize: '15px'

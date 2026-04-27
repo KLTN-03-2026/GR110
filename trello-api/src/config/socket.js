@@ -4,6 +4,7 @@ import { CONNECT_REDIS_REALTIME } from '~/config/redisRealtime'
 import { corsOptions } from '~/config/cors'
 import { registerBoardSocket } from '~/sockets/socketHandlers/board.socket'
 import { registerUserSocket } from '~/sockets/socketHandlers/user.socket'
+import { registerWorkspaceSocket } from '~/sockets/socketHandlers/workspace.socket'
 let ioInstance = null
 
 const INIT_SOCKET = async (httpServer) => {
@@ -23,6 +24,7 @@ const INIT_SOCKET = async (httpServer) => {
 
     registerBoardSocket(socket)
     registerUserSocket(socket)
+    registerWorkspaceSocket(socket)
 
     socket.on('disconnect', (reason) => {
       console.log(`Socket disconnected: ${socket.id}, reason: ${reason}`)

@@ -133,40 +133,15 @@ class WorkspaceService {
         session
       })
 
+      const plan = await PlanRepo.findById({
+        _id: new ObjectId('69dc9cc2454ef403fb52c8ba')
+      })
+
       await SubscriptionRepo.createOne({
         data: {
           workspaceId: createdWorkspace.insertedId.toString(),
-          planId: createdWorkspace.insertedId.toString(),
-          planFeatureSnapshot: {
-            capabilities: {
-              workspace: {
-                customRole: false
-              },
-              board: {
-                customRole: false
-              },
-              column: {
-                customColor: false
-              },
-              task: {
-                setDue: false,
-                assignMembers: false
-              }
-            },
-            limits: {
-              maxMembers: 5,
-              maxBoards: 3,
-              maxWorkspaceRoles: 0,
-              maxBoardRoles: 0,
-              maxColumnsPerBoard: 20,
-              maxCardsPerBoard: 100,
-              maxCommentsPerCard: 50,
-              maxChecklistItemsPerCard: 20,
-              maxStorageMb: 512,
-              maxFileSizeMb: 5,
-              maxFilesPerUpload: 5
-            }
-          },
+          planId: plan._id.toString(),
+          planFeatureSnapshot: plan.feature,
           status: 'active',
           startedAt: Date.now()
         },

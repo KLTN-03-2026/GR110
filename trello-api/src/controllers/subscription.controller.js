@@ -59,4 +59,14 @@ export default class SubscriptionController {
       metadata: result
     })
   }
+
+  static selectFreePlan = async (req, res) => {
+    new OkSuccessResponse({
+      metadata: await SubscriptionService.selectFreePlan({
+        workspaceId: req.params.workspaceId,
+        planId: req.params.planId,
+        userContext: req.userContext
+      })
+    }).send(res)
+  }
 }

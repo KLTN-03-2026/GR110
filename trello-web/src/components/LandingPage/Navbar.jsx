@@ -7,8 +7,10 @@ import {
   Container,
   Link
 } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 
 export default function Navbar() {
+  const navigate = useNavigate()
   return (
     <>
       <AppBar
@@ -76,6 +78,7 @@ export default function Navbar() {
 
             <Button
               variant="contained"
+              onClick={() => navigate('/h')}
               sx={{
                 bgcolor: '#172b4d',
                 px: 3,

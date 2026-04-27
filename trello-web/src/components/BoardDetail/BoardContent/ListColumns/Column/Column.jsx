@@ -122,7 +122,6 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
               userSelect: 'none'
             }}
           >
-            {/* SỐ CARD CÓ TRONG BOARD  */}
             <Typography>{column?.cards.length}</Typography>
           </Box>
         </Box>
@@ -166,7 +165,6 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
             value={column?.title}
             onChangedValue={onUpdateColumnTitle}
             data-no-dnd="true"
-            truncateOnDisplay
           />
           <Box>
             <Box

@@ -6,6 +6,7 @@ import {
   BadRequestErrorResponse,
   NotFoundErrorResponse
 } from '~/core/error.response'
+import { emitPayment } from '~/realtime/realtimeEmitters/payment.emitter'
 import PaymentRepo from '~/repo/payment.repo'
 import SubscriptionRepo from '~/repo/subscription.repo'
 import TransactionRepo from '~/repo/transaction.repo'
@@ -40,48 +41,56 @@ class PaypalService {
 
     const accessToken = await generateAccessToken()
 
-    const paypalAmount = convertVndToUsd(totalAmount)
+    const paypalAmount = await convertVndToUsd(totalAmount)
 
     try {
-      const response = await axios.post(
-        `${env.PAYPAL_BASE_URL}/v2/checkout/orders`,
-        {
-          intent: 'CAPTURE',
-          purchase_units: [
-            {
-              reference_id: subscriptionId,
-              custom_id: subscriptionId,
-              invoice_id: `UPWS${subscriptionId}`,
-              description: `UPWS${subscriptionId}`,
-              item: [
-                {
-                  reference_id: subscriptionId,
-                  description: `${subscriptionDetail.workspaceTitle} - ${subscriptionDetail.planTitle}`,
-                  amount: {
-                    currency_code: 'USD',
-                    value: paypalAmount
-                  }
+      const orderPayload = {
+        intent: 'CAPTURE',
+        purchase_units: [
+          {
+            reference_id: subscriptionId,
+            custom_id: subscriptionId,
+            description: `UPWS${subscriptionId}`.slice(0, 127),
+            items: [
+              {
+                name: String(
+                  subscriptionDetail.planTitle || 'Workspace plan'
+                ).slice(0, 127),
+                description:
+                  `${subscriptionDetail.workspaceTitle || 'Workspace'} - ${subscriptionDetail.planTitle || 'Plan'}`.slice(
+                    0,
+                    127
+                  ),
+                quantity: '1',
+                unit_amount: {
+                  currency_code: 'USD',
+                  value: paypalAmount
                 }
-              ],
-              amount: {
-                currency_code: 'USD',
-                value: paypalAmount,
-                breakdown: {
-                  item_total: {
-                    currency_code: 'USD',
-                    value: paypalAmount
-                  }
+              }
+            ],
+            amount: {
+              currency_code: 'USD',
+              value: paypalAmount,
+              breakdown: {
+                item_total: {
+                  currency_code: 'USD',
+                  value: paypalAmount
                 }
               }
             }
-          ],
-          application_context: {
-            brand_name: 'Taskio',
-            user_action: 'PAY_NOW',
-            return_url: `${env.WEBSITE_DOMAIN_DEVELOPMENT}/h/workspaces/${subscription.workspaceId}/billing`,
-            cancel_url: `${env.WEBSITE_DOMAIN_DEVELOPMENT}/h/workspaces/${subscription.workspaceId}/billing`
           }
-        },
+        ],
+        application_context: {
+          brand_name: 'Taskio',
+          user_action: 'PAY_NOW',
+          return_url: `${env.WEBSITE_DOMAIN_DEVELOPMENT}/h/workspaces/${subscription.workspaceId}/billing`,
+          cancel_url: `${env.WEBSITE_DOMAIN_DEVELOPMENT}/h/workspaces/${subscription.workspaceId}/billing`
+        }
+      }
+
+      const response = await axios.post(
+        `${env.PAYPAL_BASE_URL}/v2/checkout/orders`,
+        orderPayload,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -95,7 +104,9 @@ class PaypalService {
       }
     } catch (error) {
       throw new BadRequestErrorResponse(
-        error?.response?.data?.message ||
+        error?.response?.data?.details?.[0]?.description ||
+          error?.response?.data?.details?.[0]?.issue ||
+          error?.response?.data?.message ||
           error?.response?.data?.error_description ||
           'Failed to create PayPal order'
       )
@@ -172,6 +183,11 @@ class PaypalService {
 
     try {
       await session.withTransaction(async () => {
+        emitPayment({
+          workspaceId: subscription.workspaceId.toString(),
+          subscriptionId: subscriptionId.toString(),
+          status: 'checking'
+        })
         if (paypalStatus === 'COMPLETED') {
           await SubscriptionRepo.updateMany({
             filter: {
@@ -258,6 +274,12 @@ class PaypalService {
           },
           session
         })
+      })
+
+      emitPayment({
+        workspaceId: subscription.workspaceId.toString(),
+        subscriptionId: subscriptionId.toString(),
+        status: 'success'
       })
 
       return {

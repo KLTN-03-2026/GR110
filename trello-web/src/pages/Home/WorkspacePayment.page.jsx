@@ -48,32 +48,12 @@ function mapPlanFeatureToUiFeatures(planFeature) {
 }
 
 export default function WorkspacePaymentPage() {
-  const [localStatus, setLocalStatus] = useState('idle')
-  const { dataPayment, selectedGateway, setSelectedGateway } = usePayment()
+  const { dataPayment, selectedGateway, setSelectedGateway, localStatus } = usePayment()
 
   const planFeatures = useMemo(() => {
     return mapPlanFeatureToUiFeatures(dataPayment?.planFeature)
   }, [dataPayment])
 
-  const handleCheckPayment = async () => {
-    if (localStatus !== 'idle') return
-
-    try {
-      setLocalStatus('checking')
-
-      // TODO: call API check payment
-      const paid = false
-
-      if (paid) {
-        setLocalStatus('success')
-        return
-      }
-
-      setLocalStatus('idle')
-    } catch (error) {
-      setLocalStatus('idle')
-    }
-  }
 
   if (!dataPayment) {
     return (
@@ -173,7 +153,6 @@ export default function WorkspacePaymentPage() {
                   selectedGateway={selectedGateway}
                   payment={dataPayment?.payment}
                   localStatus={localStatus}
-                  onCheckPayment={handleCheckPayment}
                 />
               </Stack>
             </Box>

@@ -33,6 +33,20 @@ class BoardRepo {
       .countDocuments(filter)
   }
 
+  static findManyPagination = async ({ filter, options = {} }) => {
+    const { sort, skip, limit } = options
+
+    let query = GET_DB()
+      .collection(boardModel.BOARD_COLLECTION_NAME)
+      .find(filter)
+
+    if (sort) query = query.sort(sort)
+    if (skip) query = query.skip(skip)
+    if (limit) query = query.limit(limit)
+
+    return await query.toArray()
+  }
+
   static getBoards = async ({ filters }) => {
     const page = filters?.page ?? DEFAULT_PAGE
     const itemsPerPage = filters?.itemsPerPage ?? DEFAULT_ITEMS_PER_PAGE

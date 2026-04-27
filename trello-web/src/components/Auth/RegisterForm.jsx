@@ -21,14 +21,24 @@ import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
 import { registerUserAPI } from '~/apis'
 import { toast } from 'react-toastify'
 import Box from '@mui/material/Box'
+import { useSearchParams } from 'react-router-dom'
 
 function RegisterForm() {
+  const [searchParams] = useSearchParams()
+  const emailFromUrl = searchParams.get('email') || ''
+
   const {
     register,
     handleSubmit,
     watch,
     formState: { errors }
-  } = useForm()
+  } = useForm({
+    defaultValues: {
+      email: emailFromUrl,
+      password: '',
+      password_confirmation: ''
+    }
+  })
 
   const navigate = useNavigate()
 
@@ -47,17 +57,17 @@ function RegisterForm() {
     <form onSubmit={handleSubmit(submitRegister)}>
       <Zoom in={true} style={{ transitionDelay: '200ms' }}>
         <MuiCard sx={{
-            minWidth: 480,
-            maxWidth: 480,
-            marginTop: '6em',
-            backgroundColor: 'rgba(20, 20, 20, 0.72)',
-            backdropFilter: 'blur(6px)',
-            WebkitBackdropFilter: 'blur(6px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
-            borderRadius: '15px',
-            padding: '1em'
-          }}>
+          minWidth: 480,
+          maxWidth: 480,
+          marginTop: '6em',
+          backgroundColor: 'rgba(20, 20, 20, 0.72)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
+          borderRadius: '15px',
+          padding: '1em'
+        }}>
           <Box
             sx={{
               margin: '1em',
@@ -67,10 +77,10 @@ function RegisterForm() {
             }}
           >
             <Avatar sx={{ bgcolor: 'primary.main', width: 46, height: 46 }}>
-              <LockIcon sx={{ fontSize: 30 }}/>
+              <LockIcon sx={{ fontSize: 30 }} />
             </Avatar>
             <Avatar sx={{ bgcolor: 'primary.main', width: 46, height: 46 }}>
-              <ViewKanbanIcon sx={{ fontSize: 30 }}/>
+              <ViewKanbanIcon sx={{ fontSize: 30 }} />
             </Avatar>
           </Box>
           <Box

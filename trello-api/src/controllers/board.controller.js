@@ -9,6 +9,8 @@ class BoardController {
     new OkSuccessResponse({
       metadata: await BoardService.fetchBoardByWorkspaceId({
         workspaceId: req.params.workspaceId,
+        page: req.query.page,
+        itemsPerPage: req.query.itemsPerPage,
         userContext: req.userContext
       })
     }).send(res)

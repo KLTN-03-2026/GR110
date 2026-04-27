@@ -122,7 +122,7 @@ function WorkspaceSidebarItem({ workspace }) {
           </Avatar>
         </ListItemIcon>
 
-        <ListItemText primary={truncateText(workspace.title, 15)} />
+        <ListItemText primary={truncateText(workspace.title, 17)} />
         {open ? <ExpandLess /> : <ExpandMore />}
       </ListItemButton>
 

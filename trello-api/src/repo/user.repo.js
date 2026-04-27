@@ -1,3 +1,4 @@
+import { update } from 'lodash'
 import { ObjectId } from 'mongodb'
 import { GET_DB } from '~/config/mongodb'
 import { userModel } from '~/models/user.model'
@@ -33,11 +34,15 @@ class UserRepo {
   }
 
   static updateById = async ({ _id, data }) => {
+    const updateData = {
+      ...data,
+      updatedAt: new Date()
+    }
     const result = await GET_DB()
       .collection(userModel.USER_COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(_id) },
-        { $set: data },
+        { $set: updateData },
         { returnDocument: 'after' }
       )
 
