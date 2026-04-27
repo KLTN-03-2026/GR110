@@ -11,17 +11,26 @@ export function FeatureItem({ iconKey, text, selected = false }) {
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: '28px 1fr',
+        gridTemplateColumns: '30px 1fr',
         gap: 1.25,
-        alignItems: 'start'
+        alignItems: 'start',
+        px: 1,
+        py: 0.75,
+        borderRadius: 2,
+        transition: 'background-color 0.16s ease',
+        '&:hover': {
+          backgroundColor: isDark
+            ? alpha(theme.palette.common.white, 0.035)
+            : alpha(theme.palette.primary.main, 0.035)
+        }
       }}
     >
       <Box
         sx={{
           mt: '1px',
-          width: 28,
-          height: 28,
-          borderRadius: 1.5,
+          width: 30,
+          height: 30,
+          borderRadius: '10px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -46,7 +55,7 @@ export function FeatureItem({ iconKey, text, selected = false }) {
           color: 'text.secondary',
           lineHeight: 1.5,
           fontSize: 14,
-          fontWeight: 500
+          fontWeight: 600
         }}
       >
         {text}

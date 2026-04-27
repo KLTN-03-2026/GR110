@@ -1,6 +1,7 @@
-import { Box, Chip, Stack, Typography } from '@mui/material'
+import { Box, Chip, Divider, Stack, Typography } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded'
 import { PlanPrice } from './PlanPrice'
 import { FeatureItem } from './FeatureItem'
 
@@ -24,7 +25,7 @@ export function PlanCard({ plan, selected, onSelect }) {
         cursor: 'pointer',
         px: { xs: 2.5, md: 3 },
         py: 3,
-        borderRadius: 3,
+        borderRadius: '16px',
         border: '1px solid',
         borderColor: selected
           ? theme.palette.primary.main
@@ -33,8 +34,8 @@ export function PlanCard({ plan, selected, onSelect }) {
             : alpha(theme.palette.common.black, 0.08),
         backgroundColor: selected
           ? isDark
-            ? alpha(theme.palette.primary.main, 0.08)
-            : alpha(theme.palette.primary.main, 0.035)
+            ? alpha(theme.palette.primary.main, 0.1)
+            : alpha(theme.palette.primary.main, 0.04)
           : theme.palette.background.paper,
         boxShadow: selected
           ? isDark
@@ -45,6 +46,7 @@ export function PlanCard({ plan, selected, onSelect }) {
             : `0 8px 20px ${alpha(theme.palette.common.black, 0.05)}`,
         transition: 'all 0.25s ease',
         transform: selected ? 'translateY(-3px)' : 'translateY(0)',
+        minHeight: '100%',
         '&:hover': {
           transform: 'translateY(-4px)',
           borderColor: selected
@@ -69,7 +71,7 @@ export function PlanCard({ plan, selected, onSelect }) {
             top: 14,
             right: 14,
             height: 28,
-            borderRadius: 999,
+            borderRadius: '999px',
             fontWeight: 700,
             color: theme.palette.primary.contrastText,
             backgroundColor: theme.palette.primary.main,
@@ -81,7 +83,27 @@ export function PlanCard({ plan, selected, onSelect }) {
       )}
 
       <Stack spacing={2.5}>
-        <Box sx={{ textAlign: 'center', pt: selected ? 1.25 : 0.5 }}>
+        <Box sx={{ textAlign: 'center', pt: selected ? 1.5 : 0.5 }}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: '16px',
+              mx: 'auto',
+              mb: 1.5,
+              display: 'grid',
+              placeItems: 'center',
+              bgcolor: selected
+                ? alpha(theme.palette.primary.main, isDark ? 0.2 : 0.1)
+                : isDark
+                  ? alpha(theme.palette.common.white, 0.05)
+                  : alpha(theme.palette.primary.main, 0.06),
+              color: selected ? 'primary.main' : 'text.secondary'
+            }}
+          >
+            <WorkspacePremiumRoundedIcon />
+          </Box>
+
           <Typography
             sx={{
               fontSize: 22,
@@ -98,7 +120,8 @@ export function PlanCard({ plan, selected, onSelect }) {
             sx={{
               fontSize: 13,
               color: 'text.secondary',
-              minHeight: 20
+              minHeight: 40,
+              lineHeight: 1.5
             }}
           >
             {plan.description || 'A balanced plan for your workspace needs'}
@@ -126,6 +149,8 @@ export function PlanCard({ plan, selected, onSelect }) {
             selected={selected}
           />
         </Box>
+
+        <Divider />
 
         <Stack spacing={1.35}>
           {plan.features.map((feature, index) => (

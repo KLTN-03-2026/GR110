@@ -132,13 +132,35 @@ class BoardService {
     return result
   }
 
-  static fetchBoardByWorkspaceId = async ({ workspaceId, userContext }) => {
+  static fetchBoardByWorkspaceId = async ({
+    workspaceId,
+    page = 1,
+    itemsPerPage = 10,
+    userContext
+  }) => {
+    const currentPage = Math.max(Number(page) || 1, 1)
+    const limit = Math.max(Number(itemsPerPage) || 10, 1)
+    const skip = (currentPage - 1) * limit
+
+    const filter = {
+      workspaceId,
+      status: { $ne: 'archived' }
+    }
+
     const [boards, count] = await Promise.all([
-      BoardRepo.findMany({
-        filter: { workspaceId }
+      BoardRepo.findManyPagination({
+        filter,
+        options: {
+          sort: { createdAt: -1 },
+          skip,
+          limit
+        }
       }),
-      BoardRepo.count({ filter: { workspaceId: new ObjectId(workspaceId) } })
+      BoardRepo.count({ filter })
     ])
+
+    console.log(boards);
+    
 
     return { boards, count }
   }

@@ -1,12 +1,12 @@
 import { ObjectId } from 'mongodb'
 import { env } from '~/config/environment'
-import { BadRequestErrorResponse, ErrorResponse, NotFoundErrorResponse } from '~/core/error.response'
+import { ErrorResponse, NotFoundErrorResponse } from '~/core/error.response'
 import SubscriptionRepo from '~/repo/subscription.repo'
 import WorkspaceRepo from '~/repo/workspace.repo'
 import PaymentRepo from '../repo/payment.repo'
 import { mongoClientInstance } from '~/config/mongodb'
 import TransactionRepo from '~/repo/transaction.repo'
-import axios from 'axios'
+import { emitPayment } from '~/realtime/realtimeEmitters/payment.emitter'
 
 export default class SubscriptionService {
   static createSubscription = async ({ workspaceId, planId, userContext }) => {
@@ -168,9 +168,16 @@ export default class SubscriptionService {
 
     try {
       await session.withTransaction(async () => {
+
+        emitPayment({
+          workspaceId: subscription.workspaceId.toString(),
+          subscriptionId: subscription._id.toString(),
+          status: 'checking'
+        })
+
         await SubscriptionRepo.updateMany({
           filter: {
-            workspaceId: subscription.workspaceId,
+            workspaceId: subscription.workspaceId.toString(),
             _id: { $ne: new ObjectId(subscriptionId) },
             status: { $in: ['pending', 'trialing', 'active', 'past_due'] }
           },
@@ -233,6 +240,8 @@ export default class SubscriptionService {
         })
       })
 
+      emitPayment({ workspaceId: subscription.workspaceId, subscriptionId: subscription._id.toString(), status: 'success' })
+
       return {
         success: true
       }
@@ -241,4 +250,65 @@ export default class SubscriptionService {
     }
   }
 
+  static selectFreePlan = async ({ workspaceId, planId, userContext }) => {
+    const freePlanId = planId || '69dc9cc2454ef403fb52c8ba'
+
+    const [workspace, plan] = await Promise.all([
+      WorkspaceRepo.findOne({
+        filter: { _id: new ObjectId(workspaceId) }
+      }),
+      WorkspaceRepo.findByPlanId({
+        filter: { _id: new ObjectId(freePlanId) }
+      })
+    ])
+
+    if (!workspace) {
+      throw new NotFoundErrorResponse('Workspace not found')
+    }
+
+    if (!plan) {
+      throw new NotFoundErrorResponse('Plan not found')
+    }
+
+    const startedAt = new Date()
+    const endedAt = new Date(startedAt.getTime() + 30 * 24 * 60 * 60 * 1000)
+
+    await SubscriptionRepo.updateMany({
+      filter: {
+        workspaceId,
+        status: { $in: ['pending', 'trialing', 'active', 'past_due'] }
+      },
+      data: {
+        $set: {
+          status: 'canceled',
+          canceledAt: new Date(),
+          updatedAt: new Date()
+        }
+      }
+    })
+
+    const subscription = await SubscriptionRepo.createOne({
+      data: {
+        workspaceId,
+        planId: freePlanId,
+        planFeatureSnapshot: plan.feature,
+        status: 'active',
+        startedAt,
+        endedAt,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    })
+
+    return {
+      subscription: {
+        id:
+          subscription.insertedId?.toString?.() ||
+          subscription._id?.toString?.(),
+        status: 'active',
+        startedAt,
+        endedAt
+      }
+    }
+  }
 }

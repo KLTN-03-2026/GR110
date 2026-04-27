@@ -6,8 +6,24 @@ import {
   TextField,
   Typography
 } from '@mui/material'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export default function CtaSection() {
+  const [email, setEmail] = useState('')
+    const navigate = useNavigate()
+  
+    const handleSignUp = () => {
+      const trimmedEmail = email.trim()
+  
+      if (!trimmedEmail) {
+        navigate('/auth/register')
+        return
+      }
+  
+      navigate(`/auth/register?email=${encodeURIComponent(trimmedEmail)}`)
+    }
+  
   return (
     <Box sx={{ bgcolor: '#f1f3f7', py: { xs: 7, md: 9 } }}>
       <Container maxWidth="md">
@@ -28,9 +44,11 @@ export default function CtaSection() {
           <TextField
             placeholder="Email"
             size="small"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             sx={{ width: { xs: '100%', sm: 320 }, bgcolor: '#fff' }}
           />
-          <Button variant="contained" size="large">
+          <Button variant="contained" size="large" onClick={handleSignUp}>
             Sign up – it’s free!
           </Button>
         </Stack>

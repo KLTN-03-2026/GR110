@@ -34,5 +34,11 @@ Router.route('/:workspaceId/payment/:planId')
     asyncHandler(SubscriptionController.createSubscription)
   )
 
+Router.route('/:workspaceId/free/:planId')
+  .post(
+    asyncHandler(authMiddleware.isAuthorized),
+    asyncHandler(SubscriptionController.selectFreePlan)
+  )
+
 
 export const subscriptionsRouter = Router

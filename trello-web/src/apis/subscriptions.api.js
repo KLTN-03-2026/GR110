@@ -1,3 +1,4 @@
+import { toast } from 'react-toastify'
 import authorizeAxiosInstance from '~/utils/authorizeAxios'
 import { API_ROOT } from '~/utils/constants'
 
@@ -29,4 +30,10 @@ export const captureOrderPal = async ({ subscriptionId, orderID }) => {
   return response.data.metadata
 }
 
-
+export const selectWorkspaceFreePlan = async ({ workspaceId, planId }) => {
+  const response = await authorizeAxiosInstance.post(
+    `${API_ROOT}/v1/subscriptions/${workspaceId}/free/${planId}`
+  )
+  toast.success('Your workspace has been switched to the Free plan successfully!')
+  return response.data.metadata
+}

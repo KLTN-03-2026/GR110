@@ -7,6 +7,8 @@ import {
   TextField,
   Typography
 } from '@mui/material'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 function HeroMockup() {
   return (
@@ -179,6 +181,20 @@ function HeroMockup() {
 }
 
 export default function HeroSection() {
+  const [email, setEmail] = useState('')
+  const navigate = useNavigate()
+
+  const handleSignUp = () => {
+    const trimmedEmail = email.trim()
+
+    if (!trimmedEmail) {
+      navigate('/auth/register')
+      return
+    }
+
+    navigate(`/auth/register?email=${encodeURIComponent(trimmedEmail)}`)
+  }
+
   return (
     <Box sx={{ bgcolor: '#f5f7fb', py: { xs: 8, md: 10 } }}>
       <Container maxWidth="lg">
@@ -215,6 +231,11 @@ export default function HeroSection() {
                 placeholder="Email"
                 variant="outlined"
                 fullWidth
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') handleSignUp()
+                }}
                 sx={{
                   flex: 1,
                   '& .MuiOutlinedInput-root': {
@@ -242,6 +263,7 @@ export default function HeroSection() {
 
               <Button
                 variant="contained"
+                onClick={handleSignUp}
                 sx={{
                   minWidth: { xs: '100%', sm: 190 },
                   height: 56,

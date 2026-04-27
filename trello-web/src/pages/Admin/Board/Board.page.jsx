@@ -47,12 +47,13 @@ export default function BoardPages() {
           onChange={handleSearchChange}
           placeholder='Search boards...'
           size='small'
-          sx={{
-            width: 250,
+           sx={{
+            width: 280,
             '& .MuiOutlinedInput-root': {
               height: 38,
               borderRadius: '8px',
-              backgroundColor: '#fff'
+              backgroundColor: '#fff',
+              color: 'black'
             },
             '& .MuiInputBase-input': {
               fontSize: '15px'
@@ -61,7 +62,7 @@ export default function BoardPages() {
           InputProps={{
             startAdornment: (
               <InputAdornment position='start'>
-                <SearchIcon sx={{ color: '#9ca3af', fontSize: 20 }} />
+                <SearchIcon sx={{ color: 'black', fontSize: 20 }} />
               </InputAdornment>
             )
           }}

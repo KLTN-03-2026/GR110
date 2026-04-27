@@ -16,10 +16,21 @@ export const fetchBackgroundAPI = async () => {
   return response.data.metadata
 }
 
-export const fetchBoardByWorkspaceIdAPI = async ({ workspaceId }) => {
+export const fetchBoardByWorkspaceIdAPI = async ({
+  workspaceId,
+  page = 1,
+  itemsPerPage = 10
+}) => {
   const response = await authorizeAxiosInstance.get(
-    `${API_ROOT}/v1/boards/workspace/${workspaceId}`
+    `${API_ROOT}/v1/boards/workspace/${workspaceId}`,
+    {
+      params: {
+        page,
+        itemsPerPage
+      }
+    }
   )
+
   return response.data.metadata
 }
 

@@ -25,7 +25,9 @@ const REALTIME_EVENTS = {
   TASK_UPDATED: 'task:updated',
   TASK_DELETED: 'task:deleted',
 
-  INVITE: 'invitation:created'
+  INVITE: 'invitation:created',
+
+  PAYMENT: 'payment:updated'
 }
 
 export { REALTIME_EVENTS }

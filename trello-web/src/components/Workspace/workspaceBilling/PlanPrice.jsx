@@ -29,10 +29,10 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
         }}
       >
         <Typography
-          component='span'
+          component="span"
           sx={{
-            fontSize: '24px !important',
-            fontWeight: 700,
+            fontSize: '14px !important',
+            fontWeight: 800,
             color: selected
               ? theme.palette.primary.main
               : isDark
@@ -42,16 +42,16 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
             flexShrink: 0
           }}
         >
-          ₫
+          {unit}
         </Typography>
 
         <Typography
-          component='span'
+          component="span"
           sx={{
-            fontSize: { xs: '34px !important', md: '38px !important' },
+            fontSize: '36px !important',
             lineHeight: '0.95 !important',
             fontWeight: '900 !important',
-            letterSpacing: '-0.05em',
+            letterSpacing: 0,
             color: 'text.primary',
             whiteSpace: 'nowrap',
             flexShrink: 0,
@@ -62,7 +62,7 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
         </Typography>
 
         <Typography
-          component='span'
+          component="span"
           sx={{
             fontSize: '15px !important',
             fontWeight: 600,
@@ -72,7 +72,7 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
             flexShrink: 0
           }}
         >
-          {unit} / {interval}
+          / {interval}
         </Typography>
       </Box>
     </Box>
