@@ -97,66 +97,45 @@ class BoardRepo {
   }
 
   static getDetail = async ({ _id }) => {
-    try {
-      const [board] = await GET_DB()
+    const db = GET_DB()
+
+    const [board, columns, cards] = await Promise.all([
+      db
         .collection(boardModel.BOARD_COLLECTION_NAME)
-        .aggregate([
-          { $match: { _id: new ObjectId(_id) } },
+        .findOne(
+          { _id: new ObjectId(_id), status: 'active' },
+          { projection: { createdBy: 0, type: 0, createdAt: 0, updatedAt: 0 } }
+        ),
 
-          {
-            $lookup: {
-              from: columnModel.COLUMN_COLLECTION_NAME,
-              let: { boardIdStr: { $toString: '$_id' } },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: [{ $toString: '$boardId' }, '$$boardIdStr'] },
-                        { $eq: ['$status', 'active'] }
-                      ]
-                    }
-                  }
-                }
-              ],
-              as: 'columns'
-            }
-          },
+      db
+        .collection(columnModel.COLUMN_COLLECTION_NAME)
+        .find(
+          { boardId: _id, status: 'active' },
+          { projection: { createdAt: 0, updatedAt: 0 } }
+        )
+        .toArray(),
 
+      db
+        .collection(cardModel.CARD_COLLECTION_NAME)
+        .find(
+          { boardId: _id, status: 'active' },
           {
-            $lookup: {
-              from: cardModel.CARD_COLLECTION_NAME,
-              let: { boardIdStr: { $toString: '$_id' } },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: [{ $toString: '$boardId' }, '$$boardIdStr'] },
-                        { $eq: ['$status', 'active'] }
-                      ]
-                    }
-                  }
-                },
-                {
-                  $project: {
-                    status: 0,
-                    description: 0,
-                    createdAt: 0,
-                    updatedAt: 0,
-                    archivedAt: 0
-                  }
-                }
-              ],
-              as: 'cards'
+            projection: {
+              status: 0,
+              description: 0,
+              createdAt: 0,
+              updatedAt: 0,
+              archivedAt: 0
             }
           }
-        ])
+        )
         .toArray()
+    ])
 
-      return board || null
-    } catch (error) {
-      throw error
+    return {
+      ...board,
+      columns,
+      cards
     }
   }
 
@@ -226,10 +205,7 @@ class BoardRepo {
       .findOneAndUpdate(
         { _id: new ObjectId(_id) },
         { $set: data },
-        {
-          returnDocument: 'after',
-          ...options
-        }
+        { returnDocument: 'after', ...options }
       )
 
     return result
@@ -238,10 +214,15 @@ class BoardRepo {
   static deleteById = async ({ _id, options = {} }) => {
     const result = await GET_DB()
       .collection(boardModel.BOARD_COLLECTION_NAME)
-      .deleteOne(
-        { _id: new ObjectId(_id) },
-        options
-      )
+      .deleteOne({ _id: new ObjectId(_id) }, options)
+
+    return result
+  }
+
+  static deleteMany = async ({ filter, options = {}, session }) => {
+    const result = await GET_DB()
+      .collection(boardModel.BOARD_COLLECTION_NAME)
+      .deleteMany(filter, { ...options, session: session || options.session })
 
     return result
   }

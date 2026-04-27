@@ -1,24 +1,18 @@
 import { ObjectId } from 'mongodb'
 import { mongoClientInstance } from '~/config/mongodb'
-import {
-  ForbiddenErrorResponse,
-  NotFoundErrorResponse
-} from '~/core/error.response'
-import BoardMemberRepo from '~/repo/boardMember.repo'
+import { NotFoundErrorResponse } from '~/core/error.response'
 import CardRepo from '~/repo/card.repo'
 import LabelRepo from '~/repo/label.repo'
 
 class LabelService {
-  static create = async ({ userContext, data }) => {
-    const boardMember = await BoardMemberRepo.findMemberInBoard({
-      userId: userContext._id,
-      boardId: data.boardId
-    })
-
-    if (!boardMember)
-      throw new ForbiddenErrorResponse('You are not a member of this board.')
-
-    const createLabelData = { ...data, createdBy: boardMember._id.toString() }
+  static create = async ({ boardAccess, data }) => {
+    const boardId = boardAccess.board._id.toString()
+    const createLabelData = {
+      boardId,
+      title: data.title,
+      color: data.color,
+      createdBy: boardAccess.boardMember._id.toString()
+    }
 
     const createdLabel = await LabelRepo.createOne({ data: createLabelData })
 
@@ -27,54 +21,47 @@ class LabelService {
     })
   }
 
-  static update = async ({ _id, userContext, data }) => {
+  static update = async ({ _id, boardAccess, data }) => {
+    const boardId = boardAccess.board._id.toString()
     const label = await LabelRepo.findOne({
-      filter: { _id: new ObjectId(_id) }
+      filter: { _id: new ObjectId(_id), boardId }
     })
 
     if (!label) throw new NotFoundErrorResponse('Label not found.')
 
-    const boardMember = await BoardMemberRepo.findMemberInBoard({
-      userId: userContext._id,
-      boardId: label.boardId
-    })
-
-    if (!boardMember)
-      throw new ForbiddenErrorResponse('You are not a member of this board.')
-
     const updatedLabel = await LabelRepo.updateOne({
-      filter: { _id: new ObjectId(_id) },
+      filter: { _id: new ObjectId(_id), boardId },
       data: { $set: { title: data.title, color: data.color } }
     })
 
     return updatedLabel
   }
 
-  static delete = async ({ _id, userContext }) => {
+  static delete = async ({ _id, boardAccess }) => {
+    const boardId = boardAccess.board._id.toString()
     const label = await LabelRepo.findOne({
-      filter: { _id: new ObjectId(_id) }
+      filter: { _id: new ObjectId(_id), boardId }
     })
 
     if (!label) throw new NotFoundErrorResponse('Label not found.')
 
-    const boardMember = await BoardMemberRepo.findMemberInBoard({
-      userId: userContext._id,
-      boardId: label.boardId
-    })
-
-    if (!boardMember)
-      throw new ForbiddenErrorResponse('You are not a member of this board.')
-
     const session = await mongoClientInstance.startSession()
 
-    await session.withTransaction(async () => {
-      await LabelRepo.deleteOne({ filter: { _id: new ObjectId(_id) }, session })
-      await CardRepo.updateMany({
-        filter: { boardId: label.boardId },
-        data: { $pull: { labelIds: label._id.toString() } },
-        session
+    try {
+      await session.withTransaction(async () => {
+        await LabelRepo.deleteOne({
+          filter: { _id: new ObjectId(_id), boardId },
+          session
+        })
+        await CardRepo.updateMany({
+          filter: { boardId },
+          data: { $pull: { labelIds: label._id.toString() } },
+          session
+        })
       })
-    })
+    } finally {
+      await session.endSession()
+    }
 
     return { _id }
   }

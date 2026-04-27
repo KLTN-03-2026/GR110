@@ -121,6 +121,12 @@ class SubscriptionRepo {
       .collection(subscriptionModel.SUBSCRIPTION_COLLECTION_NAME)
       .updateMany(filter, data, { session })
   }
+
+  static deleteMany = async ({ filter, session }) => {
+    return await GET_DB()
+      .collection(subscriptionModel.SUBSCRIPTION_COLLECTION_NAME)
+      .deleteMany(filter, { session })
+  }
 }
 
 export default SubscriptionRepo

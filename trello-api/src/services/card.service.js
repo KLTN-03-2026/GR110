@@ -11,6 +11,7 @@ import { mongoClientInstance } from '~/config/mongodb'
 import CommentRepo from '~/repo/comment.repo'
 import TaskRepo from '~/repo/task.repo'
 import BoardMemberRepo from '~/repo/boardMember.repo'
+import BoardRoleRepo from '~/repo/boardRole.repo'
 import AttachmentRepo from '~/repo/attachment.repo'
 import S3Provider from '~/providers/S3Provider'
 import LabelRepo from '~/repo/label.repo'
@@ -18,12 +19,22 @@ import ActivityLogRepo from '~/repo/activityLog.repo'
 import WorkspaceRepo from '~/repo/workspace.repo'
 import BoardRepo from '~/repo/board.repo'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
+import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
 import {
   emitCardArchived,
   emitCardCreated,
   emitCardRestored,
   emitCardUpdatedBasic
 } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
+
+const CARD_UPDATE_FIELDS = [
+  'title',
+  'description',
+  'startedAt',
+  'dueAt',
+  'isCompleted',
+  'cover'
+]
 
 class CardService {
   static fetchArchived = async ({ boardId }) => {
@@ -34,10 +45,36 @@ class CardService {
     return archivedItems
   }
 
-  static fetchDetail = async ({ _id }) => {
+  static fetchDetail = async ({ _id, userContext }) => {
+    const card = await CardRepo.findOne({
+      filter: { _id: new ObjectId(_id) }
+    })
+
+    if (!card) throw new NotFoundErrorResponse('Card not found.')
+
+    const boardMember = await BoardMemberRepo.findMemberInBoard({
+      userId: userContext._id,
+      boardId: card.boardId
+    })
+
+    if (!boardMember)
+      throw new ForbiddenErrorResponse('You are not a member of this board.')
+
+    const boardRole = await BoardRoleRepo.findOne({
+      filter: {
+        _id: new ObjectId(boardMember.boardRoleId),
+        boardId: card.boardId
+      }
+    })
+
+    if (!boardRole?.permissionCodes?.includes(BOARD_PERMISSIONS.VIEW))
+      throw new ForbiddenErrorResponse(
+        'You do not have permission to view this card.'
+      )
+
     const [cardDetail, comments, checklists, attachments, logs] =
       await Promise.all([
-        CardRepo.findOne({ filter: new ObjectId(_id) }),
+        CardRepo.findOne({ filter: { _id: new ObjectId(_id) } }),
         CommentRepo.getByCardId({ cardId: _id }),
         TaskRepo.getListByCardId({ cardId: _id }),
         AttachmentRepo.findMany({
@@ -49,8 +86,6 @@ class CardService {
           options: { sort: { createdAt: -1 } }
         })
       ])
-
-    if (!cardDetail) throw new NotFoundErrorResponse('Card not found.')
 
     const attachmentsWithUrl = attachments?.map((a) => ({
       ...a,
@@ -134,7 +169,7 @@ class CardService {
         })
 
         emitCardCreated({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           card
         })
 
@@ -161,16 +196,27 @@ class CardService {
 
         if (!card) throw new NotFoundErrorResponse('Card not found.')
 
-        if ('description' in data)
-          data.isHasDescription = !!data.description?.trim()
+        const updateData = CARD_UPDATE_FIELDS.reduce((result, field) => {
+          if (field in data) result[field] = data[field]
+          return result
+        }, {})
+
+        if (!Object.keys(updateData).length)
+          throw new BadRequestErrorResponse('Card update data is required.')
+
+        if ('description' in updateData)
+          updateData.isHasDescription = !!updateData.description?.trim()
 
         const updatedCard = await CardRepo.updateOne({
-          filter: { _id: new ObjectId(_id) },
-          data: { $set: data },
+          filter: {
+            _id: new ObjectId(_id),
+            boardId: boardAccess.board._id.toString()
+          },
+          data: { $set: updateData },
           session
         })
 
-        if ('isCompleted' in data) {
+        if ('isCompleted' in updateData) {
           const message = updatedCard.isCompleted
             ? `marked card "${card.title}" complete`
             : `marked card "${card.title}" incomplete`
@@ -182,7 +228,7 @@ class CardService {
               authorType: 'boardMember',
               entityType: 'card',
               entityId: updatedCard._id.toString(),
-              action: data.isCompleted
+              action: updateData.isCompleted
                 ? 'card.update.markComplete'
                 : 'card.update.markIncomplete',
               content: message
@@ -191,12 +237,14 @@ class CardService {
           })
         }
 
-        if ('dueAt' in data) {
+        if ('dueAt' in updateData) {
           const oldDueAt = card.dueAt ? new Date(card.dueAt).getTime() : null
-          const newDueAt = data.dueAt ? new Date(data.dueAt).getTime() : null
+          const newDueAt = updateData.dueAt
+            ? new Date(updateData.dueAt).getTime()
+            : null
 
           if (oldDueAt !== newDueAt) {
-            const hasDueAt = !!data.dueAt
+            const hasDueAt = !!updateData.dueAt
 
             insertedLogs = await ActivityLogRepo.createOne({
               data: {
@@ -219,7 +267,7 @@ class CardService {
       })
 
       emitCardUpdatedBasic({
-        boardId: boardAccess.board._id,
+        boardId: boardAccess.board._id.toString(),
         card: updatedCard
       })
 
@@ -279,7 +327,7 @@ class CardService {
         })
 
         emitCardArchived({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           card: updatedCard,
           log
         })
@@ -334,7 +382,7 @@ class CardService {
         })
 
         emitCardRestored({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           card: updatedCard,
           log
         })
@@ -660,34 +708,33 @@ class CardService {
     }
   }
 
-  static updateLabel = async ({ _id, userContext, data }) => {
+  static updateLabel = async ({ _id, boardAccess, data }) => {
+    const boardId = boardAccess.board._id.toString()
     const card = await CardRepo.findOne({
-      filter: { _id: new ObjectId(_id) }
+      filter: {
+        _id: new ObjectId(_id),
+        boardId,
+        status: 'active'
+      }
     })
     if (!card) throw new NotFoundErrorResponse('Card not found.')
 
-    const boardMember = await BoardMemberRepo.findMemberInBoard({
-      userId: userContext._id,
-      boardId: card.boardId
-    })
-    if (!boardMember)
-      throw new ForbiddenErrorResponse('You are not a member of this board.')
     const labelId = data.labelId
 
     const label = await LabelRepo.findOne({
-      filter: { _id: new ObjectId(labelId), boardId: card.boardId }
+      filter: { _id: new ObjectId(labelId), boardId }
     })
     if (!label) throw new NotFoundErrorResponse('Label not found.')
 
     let updatedCard = null
     if (card.labelIds.includes(labelId)) {
       updatedCard = await CardRepo.updateOne({
-        filter: { _id: new ObjectId(_id) },
+        filter: { _id: new ObjectId(_id), boardId },
         data: { $pull: { labelIds: labelId } }
       })
     } else {
       updatedCard = await CardRepo.updateOne({
-        filter: { _id: new ObjectId(_id) },
+        filter: { _id: new ObjectId(_id), boardId },
         data: { $push: { labelIds: labelId } }
       })
     }
@@ -709,7 +756,7 @@ class CardService {
         const card = await CardRepo.findOne({
           filter: {
             _id: new ObjectId(_id),
-            boardId: boardAccess.board._id,
+            boardId: boardAccess.board._id.toString(),
             status: 'archived'
           },
           options: { session }

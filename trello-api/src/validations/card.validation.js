@@ -15,17 +15,30 @@ const create = Joi.object({
 })
 
 const update = Joi.object({
-  title: Joi.string().min(3).max(50).trim().strict(),
-  description: Joi.string().optional()
-}).options({ allowUnknown: true })
+  title: Joi.string().min(1).max(500).trim().strict(),
+  description: Joi.string().max(2000).trim().strict().allow(''),
+  startedAt: Joi.date().allow(null),
+  dueAt: Joi.date().allow(null),
+  isCompleted: Joi.boolean(),
+  cover: Joi.object({
+    type: Joi.string().valid('color', 'attachment').required(),
+    value: Joi.string().required().trim().strict(),
+    display: Joi.string().valid('default', 'full').optional()
+  }).allow(null)
+}).unknown(false)
 
 const updateAndDeleteCardParamSchema = Joi.object({
   boardId: idSchema,
   cardId: idSchema
 })
 
+const updateLabel = Joi.object({
+  labelId: idSchema
+}).unknown(false)
+
 export const cardValidation = {
   create,
   update,
+  updateLabel,
   updateAndDeleteCardParamSchema
 }

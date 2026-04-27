@@ -34,6 +34,12 @@ class BoardRoleRepo {
       .deleteOne(filter, { session })
   }
 
+  static deleteMany = async ({ filter, session }) => {
+    return await GET_DB()
+      .collection(boardRoleModel.BOARD_ROLE_COLLECTION_NAME)
+      .deleteMany(filter, { session })
+  }
+
   static count = async ({ filter = {}, options = {} }) => {
     return await GET_DB()
       .collection(boardRoleModel.BOARD_ROLE_COLLECTION_NAME)

@@ -14,7 +14,7 @@ Router.use(asyncHandler(authMiddleware.isAuthorized))
 
 Router.route('/archived/:boardId').get(
   asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
-  asyncHandler(boardMiddleware.checkPermission(null)),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(CardController.fetchArchived)
 )
 
@@ -48,7 +48,7 @@ Router.route('/join/:boardId/:cardId').put(
   asyncHandler(
     validate(cardValidation.updateAndDeleteCardParamSchema, 'params')
   ),
-  asyncHandler(boardMiddleware.checkPermission(null)),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(CardController.joinCard)
 )
 
@@ -57,7 +57,7 @@ Router.route('/leave/:boardId/:cardId').put(
   asyncHandler(
     validate(cardValidation.updateAndDeleteCardParamSchema, 'params')
   ),
-  asyncHandler(boardMiddleware.checkPermission(null)),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(CardController.leaveCard)
 )
 
@@ -88,6 +88,7 @@ Router.route('/labels/:boardId/:cardId').put(
     validate(cardValidation.updateAndDeleteCardParamSchema, 'params')
   ),
   asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.CARD_UPDATE)),
+  asyncHandler(validate(cardValidation.updateLabel)),
   asyncHandler(CardController.updateLabel)
 )
 
@@ -115,6 +116,7 @@ Router.route('/:boardId/:cardId')
     asyncHandler(
       boardMiddleware.checkPermission(BOARD_PERMISSIONS.CARD_UPDATE)
     ),
+    asyncHandler(validate(cardValidation.update)),
     asyncHandler(CardController.updateBasic)
   )
   // done
@@ -128,6 +130,9 @@ Router.route('/:boardId/:cardId')
     asyncHandler(CardController.delete)
   )
 
-Router.route('/:_id').get(asyncHandler(CardController.fetchDetail))
+Router.route('/:_id').get(
+  asyncHandler(validate(createIdParamSchema('_id'), 'params')),
+  asyncHandler(CardController.fetchDetail)
+)
 
 export const cardRoute = Router

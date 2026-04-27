@@ -53,17 +53,12 @@ const checkPermission = (requiredPermission) => {
     const userId = req.userContext?._id?.toString()
     const boardId = req.params?.boardId || req.body?.boardId
 
-    if (!userId) {
-      throw new UnAuthorizedErrorResponse('Unauthorized.')
-    }
+    if (!userId) throw new UnAuthorizedErrorResponse('Unauthorized.')
 
-    if (!boardId) {
-      throw new NotFoundErrorResponse('Board id not found.')
-    }
+    if (!boardId) throw new NotFoundErrorResponse('Board id not found.')
 
-    if (!ObjectId.isValid(boardId)) {
+    if (!ObjectId.isValid(boardId))
       throw new NotFoundErrorResponse('Board id is invalid.')
-    }
 
     const cacheKey = getBoardAccessCacheKey({ boardId, userId })
     const cachedData = parseCacheData(await getCache({ key: cacheKey }))
@@ -72,9 +67,11 @@ const checkPermission = (requiredPermission) => {
       const permissions = new Set(cachedData.permissionCodes || [])
 
       if (requiredPermission && !permissions.has(requiredPermission)) {
-        throw new ForbiddenErrorResponse(
-          'You do not have permission to perform this action.'
-        )
+        {
+          throw new ForbiddenErrorResponse(
+            'You do not have permission to perform this action.'
+          )
+        }
       }
 
       req.boardAccess = cachedData

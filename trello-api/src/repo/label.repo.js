@@ -44,5 +44,11 @@ class LabelRepo {
       .collection(boardLabelModel.BOARD_LABEL_COLLECTION_NAME)
       .deleteOne(filter, { session })
   }
+
+  static deleteMany = async ({ filter, session }) => {
+    return await GET_DB()
+      .collection(boardLabelModel.BOARD_LABEL_COLLECTION_NAME)
+      .deleteMany(filter, { session })
+  }
 }
 export default LabelRepo

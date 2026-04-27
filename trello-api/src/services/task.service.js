@@ -134,7 +134,7 @@ class TaskService {
 
       if (result.card)
         emitCardUpdatedBasic({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           card: result.card
         })
 
@@ -145,7 +145,7 @@ class TaskService {
           filter: { _id: new ObjectId(insertedLog.insertedId) }
         })
         emitTaskCreated({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           task: result.task,
           log: createdLog
         })
@@ -153,7 +153,7 @@ class TaskService {
       }
 
       emitTaskCreated({
-        boardId: boardAccess.board._id,
+        boardId: boardAccess.board._id.toString(),
         task: result.task,
         log: createdLog
       })
@@ -275,12 +275,12 @@ class TaskService {
 
       if ('isCompleted' in data)
         emitCardUpdatedBasic({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           card: result.card
         })
 
       emitTaskUpdated({
-        boardId: boardAccess.board._id,
+        boardId: boardAccess.board._id.toString(),
         card: result.card,
         task: result.task
       })
@@ -391,7 +391,7 @@ class TaskService {
 
       if (result?.card)
         emitCardUpdatedBasic({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           card: result.card
         })
 
@@ -403,7 +403,7 @@ class TaskService {
           options: { session }
         })
         emitTaskDeleted({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           task: result.task,
           log: createdLog
         })
@@ -411,7 +411,7 @@ class TaskService {
       }
 
       emitTaskDeleted({
-        boardId: boardAccess.board._id,
+        boardId: boardAccess.board._id.toString(),
         task: result.task,
         log: createdLog
       })

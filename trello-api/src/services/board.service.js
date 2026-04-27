@@ -14,11 +14,14 @@ import BoardMemberRepo from '~/repo/boardMember.repo'
 import WorkspaceMemberRepo from '~/repo/workspaceMember.repo'
 import { BOARD_MEMBER_STATUS } from '~/constant/enum/boardMember.enum'
 import BoardPermissionRepo from '~/repo/boardPermission.repo'
-import { BOARD_STATUS } from '~/constant/enum/board.enum'
 import { mongoClientInstance } from '~/config/mongodb'
 import ColumnRepo from '~/repo/column.repo'
 import LabelRepo from '~/repo/label.repo'
 import ActivityLogRepo from '~/repo/activityLog.repo'
+import AttachmentRepo from '~/repo/attachment.repo'
+import CommentRepo from '~/repo/comment.repo'
+import TaskRepo from '~/repo/task.repo'
+import InvitationRepo from '~/repo/invitation.repo'
 import {
   invalidateBoardAccessCache,
   invalidateBoardAccessCachesByBoard
@@ -137,7 +140,7 @@ class BoardService {
       BoardRepo.findMany({
         filter: { workspaceId }
       }),
-      BoardRepo.count({ filter: { workspaceId: new ObjectId(workspaceId) } })
+      BoardRepo.count({ filter: { workspaceId } })
     ])
 
     return { boards, count }
@@ -169,11 +172,14 @@ class BoardService {
   static getDetails = async ({ _id }) => {
     const [board, members, labels] = await Promise.all([
       BoardRepo.getDetail({ _id }),
-      BoardMemberRepo.getMembers({
-        filter: { boardId: _id },
+      BoardMemberRepo.getMembersByBoardId({
+        boardId: _id,
         data: { search: '' }
       }),
-      LabelRepo.findMany({ filter: { boardId: _id } })
+      LabelRepo.findMany({
+        filter: { boardId: _id },
+        options: { projection: { _id: 1, title: 1, color: 1 } }
+      })
     ])
 
     if (!board) throw new NotFoundErrorResponse('Board not found.')
@@ -385,36 +391,152 @@ class BoardService {
     }
   }
 
-  static moveCardToDifferentColumn = async ({ boardAccess,data }) => {
-    const session = mongoClientInstance.startSession()
+  static moveCardToDifferentColumn = async ({ boardAccess, data }) => {
+    const session = await mongoClientInstance.startSession()
+    const boardId = boardAccess.board._id.toString()
 
     try {
-      await session.withTransaction(async () => {
+      const result = await session.withTransaction(async () => {
+        const prevColumnId = data.prevColumnId.toString()
+        const nextColumnId = data.nextColumnId.toString()
+        const currentCardId = data.currentCardId.toString()
+
+        if (prevColumnId === nextColumnId)
+          throw new BadRequestErrorResponse(
+            'Previous and next columns must be different.'
+          )
+
+        const prevColumn = await ColumnRepo.findOne({
+          filter: {
+            _id: new ObjectId(prevColumnId),
+            boardId,
+            status: 'active'
+          },
+          options: { session }
+        })
+
+        const nextColumn = await ColumnRepo.findOne({
+          filter: {
+            _id: new ObjectId(nextColumnId),
+            boardId,
+            status: 'active'
+          },
+          options: { session }
+        })
+
+        const currentCard = await CardRepo.findOne({
+          filter: {
+            _id: new ObjectId(currentCardId),
+            boardId,
+            status: 'active'
+          },
+          options: { session }
+        })
+
+        if (!prevColumn)
+          throw new NotFoundErrorResponse('Previous column not found.')
+        if (!nextColumn)
+          throw new NotFoundErrorResponse('Next column not found.')
+        if (!currentCard) throw new NotFoundErrorResponse('Card not found.')
+
+        if (currentCard.columnId.toString() !== prevColumnId)
+          throw new ConflictErrorResponse(
+            'The card does not belong to the previous column.'
+          )
+
+        const prevCardOrderIds = data.prevCardOrderIds.map((id) =>
+          id.toString()
+        )
+        const nextCardOrderIds = data.nextCardOrderIds.map((id) =>
+          id.toString()
+        )
+
+        if (prevCardOrderIds.includes(currentCardId))
+          throw new BadRequestErrorResponse(
+            'Previous column order must not contain the moved card.'
+          )
+
+        if (!nextCardOrderIds.includes(currentCardId))
+          throw new BadRequestErrorResponse(
+            'Next column order must contain the moved card.'
+          )
+
+        const orderedCardIds = [
+          ...new Set([...prevCardOrderIds, ...nextCardOrderIds])
+        ]
+
+        if (
+          orderedCardIds.length !==
+          prevCardOrderIds.length + nextCardOrderIds.length
+        )
+          throw new BadRequestErrorResponse(
+            'Card order contains duplicate cards.'
+          )
+
+        if (orderedCardIds.length) {
+          const cardsInBoard = await CardRepo.findMany({
+            filter: {
+              _id: { $in: orderedCardIds.map((id) => new ObjectId(id)) },
+              boardId,
+              status: 'active'
+            },
+            options: { session }
+          })
+
+          if (cardsInBoard.length !== orderedCardIds.length)
+            throw new BadRequestErrorResponse(
+              'Card order contains cards outside this board.'
+            )
+
+          const prevCardOrderSet = new Set(prevCardOrderIds)
+          const nextCardOrderSet = new Set(nextCardOrderIds)
+
+          const hasCardInWrongColumn = cardsInBoard.some((card) => {
+            const cardId = card._id.toString()
+            const columnId = card.columnId.toString()
+
+            if (cardId === currentCardId) return false
+
+            return (
+              (prevCardOrderSet.has(cardId) && columnId !== prevColumnId) ||
+              (nextCardOrderSet.has(cardId) && columnId !== nextColumnId)
+            )
+          })
+
+          if (hasCardInWrongColumn)
+            throw new BadRequestErrorResponse(
+              'Card order contains cards from another column.'
+            )
+        }
+
         const updatePrevColumn = await ColumnRepo.updateById({
-          _id: data.prevColumnId,
-          data: { cardOrderIds: data.prevCardOrderIds, updatedAt: Date.now() },
+          _id: prevColumnId,
+          data: { cardOrderIds: prevCardOrderIds, updatedAt: new Date() },
           session
         })
 
         const updateNextColumn = await ColumnRepo.updateById({
-          _id: data.nextColumnId,
-          data: { cardOrderIds: data.nextCardOrderIds, updatedAt: Date.now() },
+          _id: nextColumnId,
+          data: { cardOrderIds: nextCardOrderIds, updatedAt: new Date() },
           session
         })
 
-        const updatedCard =await CardRepo.updateOne({
-          filter: { _id: new ObjectId(data.currentCardId) },
-          data: { $set: { columnId: data.nextColumnId } },
+        const updatedCard = await CardRepo.updateOne({
+          filter: { _id: new ObjectId(currentCardId), boardId },
+          data: { $set: { columnId: nextColumnId } },
           session
         })
 
-        emitCardMoved({
-          boardId: boardAccess.board._id,
-          card: updatedCard,
-          prevColumn: updatePrevColumn,
-          nextColumn: updateNextColumn
-        })
+        if (!updatedCard) throw new NotFoundErrorResponse('Card not found.')
 
+        return { updatedCard, updatePrevColumn, updateNextColumn }
+      })
+
+      emitCardMoved({
+        boardId,
+        card: result.updatedCard,
+        prevColumn: result.updatePrevColumn,
+        nextColumn: result.updateNextColumn
       })
     } finally {
       await session.endSession()
@@ -682,9 +804,9 @@ class BoardService {
   }
 
   // ============================== MEMBER ==============================
-  static fetchBoardMember = async ({ _id, data, userContext }) => {
-    const boardMember = await BoardMemberRepo.getMembers({
-      filter: { boardId: _id },
+  static fetchBoardMember = async ({ _id, data }) => {
+    const boardMember = await BoardMemberRepo.getMembersByBoardId({
+      boardId: _id,
       data
     })
 
@@ -948,98 +1070,211 @@ class BoardService {
     }
   }
 
-  static delete = async ({ _id }) => {
-    const session = mongoClientInstance.startSession()
+  static delete = async ({ _id, boardAccess }) => {
+    const boardId = boardAccess.board._id.toString()
+    const fileKeys = new Set()
+
+    if (_id.toString() !== boardId)
+      throw new BadRequestErrorResponse(
+        'Board id does not match access context.'
+      )
+
+    const session = await mongoClientInstance.startSession()
+
     try {
-      session.startTransaction()
-      await BoardMemberRepo.deleteManyByBoardId({ boardId: _id, session })
-      await BoardRoleRepo.deleteManyByBoardId({ boardId: _id, session })
-      const deletedBoard = await BoardRepo.deleteById({ _id })
-      session.commitTransaction()
+      const deletedBoard = await session.withTransaction(async () => {
+        const board = await BoardRepo.findOne({
+          filter: { _id: new ObjectId(boardId), status: 'active' },
+          options: { session }
+        })
+
+        if (!board) throw new NotFoundErrorResponse('Board not found.')
+
+        const cards = await CardRepo.findMany({
+          filter: { boardId },
+          options: { projection: { _id: 1 }, session }
+        })
+
+        const attachments = await AttachmentRepo.findMany({
+          filter: { boardId },
+          options: { projection: { fileKey: 1, fileSize: 1 }, session }
+        })
+
+        const backgrounds = await BackgroundRepo.findMany({
+          filter: { entity: 'board', type: 'board', boardId },
+          options: { projection: { image: 1 }, session }
+        })
+
+        const cardIds = cards.map((card) => card._id.toString())
+        const attachmentSize = attachments.reduce(
+          (sum, item) => sum + (item.fileSize || 0),
+          0
+        )
+
+        attachments
+          .map((item) => item.fileKey)
+          .filter(Boolean)
+          .forEach((key) => fileKeys.add(key))
+
+        backgrounds
+          .map((item) => S3Provider.getKeyFromUrl(item.image))
+          .filter(Boolean)
+          .forEach((key) => fileKeys.add(key))
+
+        if (cardIds.length) {
+          await CommentRepo.deleteMany({
+            filter: { cardId: { $in: cardIds } },
+            session
+          })
+          await TaskRepo.deleteMany({
+            filter: { cardId: { $in: cardIds } },
+            session
+          })
+        }
+
+        await AttachmentRepo.deleteMany({ filter: { boardId }, session })
+        await CardRepo.deleteMany({ filter: { boardId }, session })
+        await ColumnRepo.deleteMany({ filter: { boardId }, session })
+        await LabelRepo.deleteMany({ filter: { boardId }, session })
+        await BoardMemberRepo.deleteManyByBoardId({ boardId, session })
+        await BoardRoleRepo.deleteManyByBoardId({ boardId, session })
+        await InvitationRepo.deleteMany({
+          filter: { entity: 'board', entityId: boardId },
+          session
+        })
+        await BackgroundRepo.deleteMany({
+          filter: { entity: 'board', type: 'board', boardId },
+          session
+        })
+        await ActivityLogRepo.deleteMany({ filter: { boardId }, session })
+
+        if (attachmentSize > 0) {
+          await WorkspaceRepo.updateOne({
+            filter: { _id: new ObjectId(board.workspaceId) },
+            data: {
+              $inc: { storageUsed: -attachmentSize },
+              $set: { updatedAt: new Date() }
+            },
+            session
+          })
+        }
+
+        return await BoardRepo.deleteById({
+          _id: boardId,
+          options: { session }
+        })
+      })
+
+      await invalidateBoardAccessCachesByBoard({ boardId })
+
+      if (fileKeys.size) await S3Provider.deleteMany([...fileKeys])
+
       return deletedBoard
-    } catch (error) {
-      throw error
+    } finally {
+      await session.endSession()
     }
   }
 
-  static createBackground = async ({ boardId, file }) => {
+  static createBackground = async ({ boardAccess, file }) => {
+    if (!file)
+      throw new BadRequestErrorResponse('Background image is required.')
+
     const session = await mongoClientInstance.startSession()
+    let upload = null
+
     try {
-      session.startTransaction()
+      upload = await S3Provider.upload(file)
 
-      const board = await BoardRepo.findById({
-        _id: boardId
+      const background = await session.withTransaction(async () => {
+        const boardId = boardAccess.board._id.toString()
+        const board = await BoardRepo.findOne({
+          filter: { _id: new ObjectId(boardId), status: 'active' },
+          options: { session }
+        })
+
+        if (!board) throw new NotFoundErrorResponse('Board Not Found')
+
+        const newBackground = {
+          entity: 'board',
+          title: board.title,
+          image: S3Provider.getUrl(upload.fileKey),
+          status: 'active',
+          type: 'board',
+          boardId,
+          isDelete: false
+        }
+
+        const createdBackground = await BackgroundRepo.createOne({
+          data: newBackground,
+          session
+        })
+
+        return await BackgroundRepo.findOne({
+          filter: { _id: createdBackground.insertedId },
+          options: { session }
+        })
       })
-
-      if (!board) throw new NotFoundErrorResponse('Board Not Found')
-
-      const upload = await S3Provider.upload(file)
-
-      const newBackground = {
-        entity: 'board',
-        title: board.title,
-        image: S3Provider.getUrl(upload.fileKey),
-        status: 'active',
-        type: 'board',
-        boardId: boardId,
-        isDelete: false
-      }
-
-      const background = BackgroundRepo.createOne({
-        data: newBackground,
-        session
-      })
-
-      await session.commitTransaction()
 
       return background
     } catch (error) {
-      await session.abortTransaction()
+      if (upload?.fileKey) await S3Provider.delete(upload.fileKey)
       throw error
+    } finally {
+      await session.endSession()
     }
   }
 
-  static deleteBackground = async ({ boardId, backgroundId }) => {
-    const session = mongoClientInstance.startSession()
+  static deleteBackground = async ({ boardAccess, backgroundId }) => {
+    const session = await mongoClientInstance.startSession()
+    let fileKey = null
 
     try {
-      session.startTransaction()
+      const boardUpdated = await session.withTransaction(async () => {
+        const boardId = boardAccess.board._id.toString()
+        const board = await BoardRepo.findOne({
+          filter: { _id: new ObjectId(boardId), status: 'active' },
+          options: { session }
+        })
 
-      const board = await BoardRepo.findById({
-        _id: boardId
-      })
+        if (!board) throw new NotFoundErrorResponse('Board Not Found')
 
-      if (!board) throw new NotFoundErrorResponse('Board Not Found')
-
-      const background = BackgroundRepo.findById({
-        _id: backgroundId
-      })
-
-      if (!background) throw new NotFoundErrorResponse('Background Not Found')
-
-      const key = S3Provider.getKeyFromUrl(background.image)
-      if (key) {
-        await S3Provider.delete(key)
-      }
-
-      await BackgroundRepo.deleteById({
-        _id: backgroundId
-      })
-
-      const boardupdated = await BoardRepo.updateById({
-        _id: boardId,
-        data: {
-          cover: {
-            type: 'color',
-            value: 'blue'
+        const background = await BackgroundRepo.findOne({
+          filter: {
+            _id: new ObjectId(backgroundId),
+            entity: 'board',
+            type: 'board',
+            boardId
           },
-          updatedAt: new Date()
-        }
+          options: { session }
+        })
+
+        if (!background) throw new NotFoundErrorResponse('Background Not Found')
+
+        fileKey = S3Provider.getKeyFromUrl(background.image)
+
+        await BackgroundRepo.deleteById({
+          _id: backgroundId,
+          session
+        })
+
+        return await BoardRepo.updateById({
+          _id: boardId,
+          data: {
+            cover: {
+              type: 'color',
+              value: 'blue'
+            },
+            updatedAt: new Date()
+          },
+          options: { session }
+        })
       })
 
-      return boardupdated
-    } catch (error) {
-      throw error
+      if (fileKey) await S3Provider.delete(fileKey)
+
+      return boardUpdated
+    } finally {
+      await session.endSession()
     }
   }
 }

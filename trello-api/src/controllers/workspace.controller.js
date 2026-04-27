@@ -18,7 +18,6 @@ class WorkspaceController {
     new OkSuccessResponse({
       metadata: await WorkspaceService.update({
         _id: req.params.workspaceId,
-        userContext: req.userContext,
         data: req.body
       })
     }).send(res)
@@ -27,8 +26,7 @@ class WorkspaceController {
   static delete = async (req, res) => {
     new OkSuccessResponse({
       metadata: await WorkspaceService.delete({
-        _id: req.params.workspaceId,
-        userContext: req.userContext
+        _id: req.params.workspaceId
       })
     }).send(res)
   }
@@ -44,8 +42,7 @@ class WorkspaceController {
   static fetchWorkspaceInfo = async (req, res) => {
     new OkSuccessResponse({
       metadata: await WorkspaceService.fetchWorkspaceInfo({
-        _id: req.params.workspaceId,
-        userContext: req.userContext
+        _id: req.params.workspaceId
       })
     }).send(res)
   }
@@ -54,8 +51,7 @@ class WorkspaceController {
     new OkSuccessResponse({
       metadata: await WorkspaceService.fetchWorkspaceMember({
         _id: req.params.workspaceId,
-        data: req.query,
-        userContext: req.userContext
+        data: req.query
       })
     }).send(res)
   }
@@ -63,8 +59,7 @@ class WorkspaceController {
   static fetchWorkspaceRole = async (req, res) => {
     new OkSuccessResponse({
       metadata: await WorkspaceService.fetchWorkspaceRole({
-        _id: req.params.workspaceId,
-        userContext: req.userContext
+        _id: req.params.workspaceId
       })
     }).send(res)
   }
@@ -85,19 +80,19 @@ class WorkspaceController {
   }
 
   static updateRole = async (req, res) => {
-    new CreatedSuccessResponse({
+    new OkSuccessResponse({
       metadata: await WorkspaceService.updateRole({
-        userContext: req.userContext,
+        workspaceId: req.params.workspaceId,
         data: req.body
       })
     }).send(res)
   }
 
   static deleteRole = async (req, res) => {
-    new CreatedSuccessResponse({
+    new OkSuccessResponse({
       metadata: await WorkspaceService.deleteRole({
         _id: req.params.roleId,
-        userContext: req.userContext
+        workspaceId: req.params.workspaceId
       })
     }).send(res)
   }
@@ -106,14 +101,14 @@ class WorkspaceController {
     new CreatedSuccessResponse({
       metadata: await WorkspaceService.updateMemberRole({
         _id: req.params.memberId,
-        userContext: req.userContext,
+        workspaceId: req.params.workspaceId,
         data: req.body
       })
     }).send(res)
   }
 
   static leaveWorkspace = async (req, res) => {
-    new CreatedSuccessResponse({
+    new OkSuccessResponse({
       metadata: await WorkspaceService.leaveWorkspace({
         _id: req.params.memberId,
         userContext: req.userContext
@@ -122,22 +117,21 @@ class WorkspaceController {
   }
 
   static removeMember = async (req, res) => {
-    new CreatedSuccessResponse({
+    new OkSuccessResponse({
       metadata: await WorkspaceService.removeMember({
         _id: req.params.memberId,
+        workspaceId: req.params.workspaceId,
         userContext: req.userContext
       })
     }).send(res)
   }
 
-  static fetchPlans = async(req, res) => {
+  static fetchPlans = async (req, res) => {
     new OkSuccessResponse({
       metadata: await WorkspaceService.fetchPlans({
-        userContext: req.userContext,
         workspaceId: req.params.workspaceId
       })
     }).send(res)
   }
-
 }
 export default WorkspaceController

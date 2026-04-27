@@ -10,6 +10,12 @@ class BackgroundRepo {
     return result
   }
 
+  static findOne = async ({ filter, options = {} }) => {
+    return await GET_DB()
+      .collection(backgroundModel.BACKGROUND_COLLECTION_NAME)
+      .findOne(filter, options)
+  }
+
   static findMany = async ({ filter, options = {} }) => {
     return await GET_DB()
       .collection(backgroundModel.BACKGROUND_COLLECTION_NAME)
@@ -74,12 +80,18 @@ class BackgroundRepo {
       .toArray()
   }
 
-  static deleteById = async ({ _id }) => {
+  static deleteById = async ({ _id, session }) => {
     const result = await GET_DB()
       .collection(backgroundModel.BACKGROUND_COLLECTION_NAME)
-      .deleteOne({ _id: new ObjectId(_id) })
+      .deleteOne({ _id: new ObjectId(_id) }, { session })
 
     return result
+  }
+
+  static deleteMany = async ({ filter, session }) => {
+    return await GET_DB()
+      .collection(backgroundModel.BACKGROUND_COLLECTION_NAME)
+      .deleteMany(filter, { session })
   }
 }
 

@@ -35,7 +35,7 @@ class CommentService {
         const card = await CardRepo.findOne({
           filter: {
             _id: new ObjectId(data.cardId),
-            boardId: boardAccess.board._id,
+            boardId: boardAccess.board._id.toString(),
             status: 'active'
           },
           options: { session }
@@ -96,14 +96,14 @@ class CommentService {
       })
 
       emitCommentCreated({
-        boardId: boardAccess.board._id,
+        boardId: boardAccess.board._id.toString(),
         card: result.card,
         comment: commentDetail,
         log
       })
 
       emitCardUpdatedBasic({
-        boardId: boardAccess.board._id,
+        boardId: boardAccess.board._id.toString(),
         card: result.card
       })
 
@@ -191,12 +191,12 @@ class CommentService {
         })
 
         emitCardUpdatedBasic({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           card: updatedCard
         })
 
         emitCommentDeleted({
-          boardId: boardAccess.board._id,
+          boardId: boardAccess.board._id.toString(),
           card: updatedCard,
           comment: { _id },
           log

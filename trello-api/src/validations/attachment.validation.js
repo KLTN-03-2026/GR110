@@ -4,4 +4,9 @@ const updateAndDeleteAttachmentParamSchema = Joi.object({
   boardId: idSchema,
   attachmentId: idSchema
 })
-export const attachmentValidation = { updateAndDeleteAttachmentParamSchema }
+
+const update = Joi.object({
+  fileName: Joi.string().required().trim().strict()
+}).unknown(false)
+
+export const attachmentValidation = { update, updateAndDeleteAttachmentParamSchema }

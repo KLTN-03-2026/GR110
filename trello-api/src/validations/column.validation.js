@@ -1,6 +1,7 @@
 import Joi from 'joi'
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 import { idSchema } from './common.validation'
+import { COLUMN_COLOR } from '~/constant/enum/column.enum'
 
 const create = Joi.object({
   boardId: Joi.string()
@@ -27,9 +28,10 @@ const create = Joi.object({
 })
 
 const update = Joi.object({
-  title: Joi.string().min(3).max(50).trim().strict(),
+  title: Joi.string().min(1).max(500).trim().strict(),
+  color: Joi.string().valid(...COLUMN_COLOR),
   cardOrderIds: Joi.array().items(idSchema)
-}).options({ allowUnknown: true })
+}).unknown(false)
 
 const updateAndDeleteColumnParamSchema = Joi.object({
   boardId: idSchema,

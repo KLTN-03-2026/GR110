@@ -6,6 +6,17 @@ const updateAndDeleteWorkspaceMemberParamSchema = Joi.object({
   memberId: idSchema
 })
 
+const updateAndDeleteWorkspaceRoleParamSchema = Joi.object({
+  workspaceId: idSchema,
+  roleId: idSchema
+})
+
+const updateWorkspaceMemberRoleSchema = Joi.object({
+  roleId: idSchema
+}).unknown(false)
+
 export const workspaceMemberValidation = {
-  updateAndDeleteWorkspaceMemberParamSchema
+  updateAndDeleteWorkspaceMemberParamSchema,
+  updateAndDeleteWorkspaceRoleParamSchema,
+  updateWorkspaceMemberRoleSchema
 }

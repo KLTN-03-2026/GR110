@@ -15,7 +15,10 @@ class CardController {
 
   static fetchDetail = async (req, res) => {
     new OkSuccessResponse({
-      metadata: await CardService.fetchDetail({ _id: req.params._id })
+      metadata: await CardService.fetchDetail({
+        _id: req.params._id,
+        userContext: req.userContext
+      })
     }).send(res)
   }
 
@@ -101,7 +104,7 @@ class CardController {
     new OkSuccessResponse({
       metadata: await CardService.updateLabel({
         _id: req.params.cardId,
-        userContext: req.userContext,
+        boardAccess: req.boardAccess,
         data: req.body
       })
     }).send(res)

@@ -114,6 +114,16 @@ class InvitationService {
         'All selected users already have pending invitations.'
       )
 
+    if (countMembers + finalInviteeIds.length > features.limits.maxMembers) {
+      const remainingSlots = Math.max(
+        features.limits.maxMembers - countMembers,
+        0
+      )
+      throw new ForbiddenErrorResponse(
+        `This workspace can invite ${remainingSlots} more member(s) with the current plan.`
+      )
+    }
+
     const createInvitationsData = finalInviteeIds.map((inviteeId) => ({
       inviterId: userContext._id.toString(),
       inviteeId,

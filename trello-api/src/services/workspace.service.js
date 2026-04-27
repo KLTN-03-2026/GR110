@@ -12,8 +12,28 @@ import WorkspacePermissionRepo from '~/repo/workspacePermission.repo'
 import WorkspaceRoleRepo from '~/repo/workspaceRole.repo'
 import { mongoClientInstance } from '~/config/mongodb'
 import BoardRepo from '~/repo/board.repo'
+import BoardMemberRepo from '~/repo/boardMember.repo'
+import BoardRoleRepo from '~/repo/boardRole.repo'
+import ColumnRepo from '~/repo/column.repo'
+import CardRepo from '~/repo/card.repo'
+import LabelRepo from '~/repo/label.repo'
+import CommentRepo from '~/repo/comment.repo'
+import AttachmentRepo from '~/repo/attachment.repo'
+import TaskRepo from '~/repo/task.repo'
+import ActivityLogRepo from '~/repo/activityLog.repo'
+import InvitationRepo from '~/repo/invitation.repo'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
 import PlanRepo from '~/repo/adminPlan.repo'
+import { WORKSPACE_PERMISSIONS } from '~/constant/workspacePermission.constant'
+import {
+  invalidateWorkspaceAccessCache,
+  invalidateWorkspaceAccessCachesByWorkspace
+} from '~/helpers/workspacePermission.cache'
+import {
+  invalidateBoardAccessCachesByBoard,
+  invalidateBoardAccessCachesByUser
+} from '~/helpers/boardPermission.cache'
+import S3Provider from '~/providers/S3Provider'
 
 const generateWorkspaceAdminRole = ({ workspaceId }) => {
   return {
@@ -48,6 +68,12 @@ const generateWorkspaceViewerRole = ({ workspaceId }) => {
 }
 
 class WorkspaceService {
+  static fetchWorkspacePermission = async () => {
+    const workspacePermissions = await WorkspacePermissionRepo.findMany({})
+
+    return workspacePermissions
+  }
+
   static fetchByUser = async ({ userContext }) => {
     const workspaces = await WorkspaceRepo.fetchByUser({
       userId: userContext._id
@@ -58,7 +84,7 @@ class WorkspaceService {
     return workspaces
   }
 
-  static fetchWorkspaceInfo = async ({ _id, userContext }) => {
+  static fetchWorkspaceInfo = async ({ _id }) => {
     const workspace = await WorkspaceRepo.findOne({
       filter: { _id: new ObjectId(_id) }
     })
@@ -68,27 +94,29 @@ class WorkspaceService {
     return workspace
   }
 
-  static fetchWorkspaceMember = async ({ _id, data, userContext }) => {
+  static fetchWorkspaceMember = async ({ _id, data }) => {
+    const filter = { workspaceId: _id }
+
+    // if (data?.status === 'all') {
+    //   delete filter.status
+    // } else {
+    //   filter.status = data?.status || 'active'
+    // }
+
     const workspaceMember = await WorkspaceMemberRepo.getMembers({
-      filter: { workspaceId: _id },
+      filter,
       data
     })
 
     return workspaceMember
   }
 
-  static fetchWorkspaceRole = async ({ _id, userContext }) => {
+  static fetchWorkspaceRole = async ({ _id }) => {
     const workspaceRoles = await WorkspaceRoleRepo.findMany({
       filter: { workspaceId: _id.toString() }
     })
 
     return workspaceRoles
-  }
-
-  static fetchWorkspacePermission = async () => {
-    const workspacePermissions = await WorkspacePermissionRepo.findMany({})
-
-    return workspacePermissions
   }
 
   static create = async ({ userContext, data, session = null }) => {
@@ -133,40 +161,18 @@ class WorkspaceService {
         session
       })
 
+      const plan = await PlanRepo.findOne({
+        filter: { title: 'Free', isDeleted: false },
+        options: { session }
+      })
+
+      if (!plan) throw new NotFoundErrorResponse('Default Free plan not found')
+
       await SubscriptionRepo.createOne({
         data: {
           workspaceId: createdWorkspace.insertedId.toString(),
-          planId: createdWorkspace.insertedId.toString(),
-          planFeatureSnapshot: {
-            capabilities: {
-              workspace: {
-                customRole: false
-              },
-              board: {
-                customRole: false
-              },
-              column: {
-                customColor: false
-              },
-              task: {
-                setDue: false,
-                assignMembers: false
-              }
-            },
-            limits: {
-              maxMembers: 5,
-              maxBoards: 3,
-              maxWorkspaceRoles: 0,
-              maxBoardRoles: 0,
-              maxColumnsPerBoard: 20,
-              maxCardsPerBoard: 100,
-              maxCommentsPerCard: 50,
-              maxChecklistItemsPerCard: 20,
-              maxStorageMb: 512,
-              maxFileSizeMb: 5,
-              maxFilesPerUpload: 5
-            }
-          },
+          planId: plan._id.toString(),
+          planFeatureSnapshot: plan.feature,
           status: 'active',
           startedAt: Date.now()
         },
@@ -190,51 +196,166 @@ class WorkspaceService {
     })
   }
 
-  static update = async ({ _id, userContext, data }) => {
+  static update = async ({ _id, data }) => {
     const workspaceId = new ObjectId(_id)
 
+    const allowedFields = ['title', 'description']
+
+    const updateData = {}
+
+    for (const field of allowedFields) {
+      if (field in data) {
+        updateData[field] = data[field]
+      }
+    }
+
+    if (Object.keys(updateData).length === 0)
+      throw new BadRequestErrorResponse('No valid fields provided for update.')
+
     const updatedWorkspace = await WorkspaceRepo.updateOne({
-      filter: { _id: workspaceId },
-      data: { $set: { ...data } }
+      filter: { _id: workspaceId, status: 'active' },
+      data: { $set: { ...updateData, updatedAt: Date.now() } }
     })
 
     if (updatedWorkspace.matchedCount === 0)
       throw new NotFoundErrorResponse('Workspace not found')
+
+    await invalidateWorkspaceAccessCachesByWorkspace({ workspaceId: _id })
 
     return await WorkspaceRepo.findOne({
       filter: { _id: workspaceId }
     })
   }
 
-  static delete = async ({ _id, userContext }) => {
+  static delete = async ({ _id }) => {
     const session = await mongoClientInstance.startSession()
-    await session.withTransaction(async () => {
-      const deletedWorkspace = await WorkspaceRepo.deleteOne({
-        filter: { _id: new ObjectId(_id) },
-        session
+    const workspaceId = _id.toString()
+    let deletedBoardIds = []
+    let fileKeys = []
+
+    try {
+      await session.withTransaction(async () => {
+        const workspace = await WorkspaceRepo.findOne({
+          filter: { _id: new ObjectId(workspaceId) },
+          options: { session }
+        })
+
+        if (!workspace) throw new NotFoundErrorResponse('Workspace not found.')
+
+        const boards = await BoardRepo.findMany({
+          filter: { workspaceId },
+          options: { projection: { _id: 1 }, session }
+        })
+
+        deletedBoardIds = boards.map((board) => board._id.toString())
+
+        if (deletedBoardIds.length > 0) {
+          const cards = await CardRepo.findMany({
+            filter: { boardId: { $in: deletedBoardIds } },
+            options: { projection: { _id: 1 }, session }
+          })
+
+          const cardIds = cards.map((card) => card._id.toString())
+
+          if (cardIds.length > 0) {
+            const attachments = await AttachmentRepo.findMany({
+              filter: { boardId: { $in: deletedBoardIds } },
+              options: { projection: { fileKey: 1 }, session }
+            })
+
+            fileKeys =
+              attachments?.map((item) => item.fileKey).filter(Boolean) ?? []
+
+            await CommentRepo.deleteMany({
+              filter: { cardId: { $in: cardIds } },
+              session
+            })
+            await AttachmentRepo.deleteMany({
+              filter: { boardId: { $in: deletedBoardIds } },
+              session
+            })
+            await TaskRepo.deleteMany({
+              filter: { cardId: { $in: cardIds } },
+              session
+            })
+          }
+
+          await CardRepo.deleteMany({
+            filter: { boardId: { $in: deletedBoardIds } },
+            session
+          })
+          await ColumnRepo.deleteMany({
+            filter: { boardId: { $in: deletedBoardIds } },
+            session
+          })
+          await LabelRepo.deleteMany({
+            filter: { boardId: { $in: deletedBoardIds } },
+            session
+          })
+          await ActivityLogRepo.deleteMany({
+            filter: { boardId: { $in: deletedBoardIds } },
+            session
+          })
+          await BoardMemberRepo.deleteMany({
+            filter: { boardId: { $in: deletedBoardIds } },
+            session
+          })
+          await BoardRoleRepo.deleteMany({
+            filter: { boardId: { $in: deletedBoardIds } },
+            session
+          })
+          await InvitationRepo.deleteMany({
+            filter: {
+              entity: 'board',
+              entityId: { $in: deletedBoardIds }
+            },
+            session
+          })
+          await BoardRepo.deleteMany({
+            filter: { workspaceId },
+            session
+          })
+        }
+
+        await WorkspaceRoleRepo.deleteMany({
+          filter: { workspaceId },
+          session
+        })
+        await WorkspaceMemberRepo.deleteMany({
+          filter: { workspaceId },
+          session
+        })
+        await SubscriptionRepo.deleteMany({
+          filter: { workspaceId },
+          session
+        })
+        await InvitationRepo.deleteMany({
+          filter: { entity: 'workspace', entityId: workspaceId },
+          session
+        })
+
+        const deletedWorkspace = await WorkspaceRepo.deleteOne({
+          filter: { _id: new ObjectId(workspaceId) },
+          session
+        })
+
+        if (deletedWorkspace.deletedCount === 0)
+          throw new NotFoundErrorResponse('Workspace not found.')
       })
+    } finally {
+      await session.endSession()
+    }
 
-      if (deletedWorkspace.deletedCount === 0) throw new NotFoundErrorResponse()
+    await Promise.all([
+      invalidateWorkspaceAccessCachesByWorkspace({ workspaceId }),
+      ...deletedBoardIds.map((boardId) =>
+        invalidateBoardAccessCachesByBoard({ boardId })
+      )
+    ])
 
-      await WorkspaceRoleRepo.deleteMany({
-        filter: { workspaceId: _id },
-        session
-      })
-      await WorkspaceMemberRepo.deleteMany({
-        filter: { workspaceId: _id },
-        session
-      })
+    if (fileKeys.length > 0) await S3Provider.deleteMany(fileKeys)
 
-      await BoardRepo.updateMany({
-        filter: { workspaceId: _id },
-        data: { $set: { status: 'archived' } },
-        session
-      })
-
-      throw new NotFoundErrorResponse('he')
-    })
-
-    return
+    return { message: 'Workspace deleted successfully.' }
   }
 
   static createRole = async ({ workspaceAccess, data }) => {
@@ -266,7 +387,27 @@ class WorkspaceService {
         `Your current subscription plan allows a maximum of ${features.limits.maxWorkspaceRoles} custom roles.`
       )
 
-    const createdRole = await WorkspaceRoleRepo.createOne({ data })
+    let permissionCodes = data.permissionCodes || []
+    if (!Array.isArray(permissionCodes)) {
+      throw new BadRequestErrorResponse('Permission codes must be an array.')
+    }
+
+    if (permissionCodes.length > 0) {
+      this._validatePermissionCodes(permissionCodes)
+    }
+
+    if (!permissionCodes.includes(WORKSPACE_PERMISSIONS.VIEW)) {
+      permissionCodes = [WORKSPACE_PERMISSIONS.VIEW, ...permissionCodes]
+    }
+
+    const createdRole = await WorkspaceRoleRepo.createOne({
+      data: {
+        ...data,
+        permissionCodes,
+        workspaceId: workspaceAccess.workspace._id.toString(),
+        isDefault: false
+      }
+    })
 
     const role = await WorkspaceRoleRepo.findOne({
       filter: { _id: new ObjectId(createdRole.insertedId) }
@@ -275,22 +416,110 @@ class WorkspaceService {
     return role
   }
 
-  static updateRole = async ({ userContext, data }) => {
-    const updatePromises = data.map((role) => {
-      const { _id, ...rest } = role
+  static updateRole = async ({ workspaceId, data }) => {
+    if (!Array.isArray(data) || data.length === 0)
+      throw new BadRequestErrorResponse('Role update data is required.')
 
-      return WorkspaceRoleRepo.updateOne({
-        filter: { _id: new ObjectId(_id) },
-        data: { $set: { ...rest } }
+    const results = []
+    const session = await mongoClientInstance.startSession()
+
+    try {
+      await session.withTransaction(async () => {
+        for (const role of data) {
+          const {
+            _id,
+            key, // eslint-disable-line no-unused-vars
+            isDefault, // eslint-disable-line no-unused-vars
+            workspaceId: _workspaceId, // eslint-disable-line no-unused-vars
+            ...rest
+          } = role
+
+          if (!_id) throw new BadRequestErrorResponse('Role id is required.')
+
+          if (Object.keys(rest).length === 0)
+            throw new BadRequestErrorResponse(
+              'At least one role field must be provided for update.'
+            )
+
+          const currentRole = await WorkspaceRoleRepo.findOne({
+            filter: {
+              _id: new ObjectId(_id),
+              workspaceId
+            },
+            options: { session }
+          })
+
+          if (!currentRole) throw new NotFoundErrorResponse('Role not found.')
+
+          if (currentRole.isDefault)
+            throw new ForbiddenErrorResponse('Default roles cannot be updated.')
+
+          if (rest.permissionCodes) {
+            this._validatePermissionCodes(rest.permissionCodes)
+            if (!rest.permissionCodes.includes(WORKSPACE_PERMISSIONS.VIEW)) {
+              rest.permissionCodes = [
+                WORKSPACE_PERMISSIONS.VIEW,
+                ...rest.permissionCodes
+              ]
+            }
+          }
+
+          const updatedRole = await WorkspaceRoleRepo.updateOne({
+            filter: {
+              _id: new ObjectId(_id),
+              workspaceId,
+              isDefault: false
+            },
+            data: { $set: { ...rest, updatedAt: Date.now() } },
+            session
+          })
+
+          results.push(updatedRole)
+        }
       })
-    })
+    } finally {
+      await session.endSession()
+    }
 
-    return await Promise.all(updatePromises)
+    await invalidateWorkspaceAccessCachesByWorkspace({ workspaceId })
+
+    return results
   }
 
-  static deleteRole = async ({ _id, userContext }) => {
+  static deleteRole = async ({ _id, workspaceId }) => {
+    const roleId = new ObjectId(_id)
+
+    const role = await WorkspaceRoleRepo.findOne({
+      filter: {
+        _id: roleId,
+        workspaceId
+      }
+    })
+
+    if (!role) throw new NotFoundErrorResponse('Role not found.')
+
+    if (role.isDefault)
+      throw new ForbiddenErrorResponse('Default roles cannot be deleted.')
+
+    const memberUsingRole = await WorkspaceMemberRepo.findOne({
+      filter: {
+        workspaceId,
+        workspaceRoleId: role._id.toString(),
+        status: 'active'
+      }
+    })
+
+    if (memberUsingRole)
+      throw new ConflictErrorResponse(
+        'Cannot delete this role because it is currently assigned to active members.'
+      )
+
     const deletedRole = await WorkspaceRoleRepo.deleteOne({
-      filter: { _id: new ObjectId(_id) }
+      filter: {
+        _id: roleId,
+        workspaceId,
+        isDefault: false
+      }
     })
 
     if (deletedRole.deletedCount === 0)
@@ -301,54 +530,88 @@ class WorkspaceService {
     return {}
   }
 
-  static updateMemberRole = async ({ _id, userContext, data }) => {
+  static updateMemberRole = async ({ _id, workspaceId, data }) => {
     const memberId = new ObjectId(_id)
     const newRoleId = new ObjectId(data.roleId)
+    const session = await mongoClientInstance.startSession()
+    let updatedMember = null
+    let targetUserId = null
 
-    const member = await WorkspaceMemberRepo.findOne({
-      filter: { _id: memberId }
-    })
+    try {
+      updatedMember = await session.withTransaction(async () => {
+        const member = await WorkspaceMemberRepo.findOne({
+          filter: { _id: memberId, workspaceId },
+          options: { session }
+        })
 
-    if (!member) throw new NotFoundErrorResponse('Member not found.')
+        if (!member) throw new NotFoundErrorResponse('Member not found.')
 
-    if (member.status !== 'active')
-      throw new ConflictErrorResponse(
-        'This action can only be performed on an active member.'
-      )
+        if (member.status !== 'active')
+          throw new ConflictErrorResponse(
+            'This action can only be performed on an active member.'
+          )
 
-    const [newRole, currentRole] = await Promise.all([
-      WorkspaceRoleRepo.findOne({
-        filter: { _id: newRoleId, workspaceId: member.workspaceId }
-      }),
-      WorkspaceRoleRepo.findOne({
-        filter: { _id: new ObjectId(member.workspaceRoleId) }
+        targetUserId = member.userId.toString()
+
+        if (member.workspaceRoleId.toString() === newRoleId.toString())
+          throw new ConflictErrorResponse('Member already has this role.')
+
+        const newRole = await WorkspaceRoleRepo.findOne({
+          filter: { _id: newRoleId, workspaceId: member.workspaceId },
+          options: { session }
+        })
+
+        const currentRole = await WorkspaceRoleRepo.findOne({
+          filter: {
+            _id: new ObjectId(member.workspaceRoleId),
+            workspaceId: member.workspaceId
+          },
+          options: { session }
+        })
+
+        if (!newRole) throw new NotFoundErrorResponse('New role not found.')
+        if (!currentRole)
+          throw new NotFoundErrorResponse('Current role not found.')
+
+        const isCurrentAdmin = currentRole?.key === 'workspace_admin'
+        const isNewRoleAdmin = newRole?.key === 'workspace_admin'
+
+        if (isCurrentAdmin && !isNewRoleAdmin)
+          await ensureWorkspaceHasAtLeastOneAdmin({
+            member,
+            adminRole: currentRole,
+            session
+          })
+
+        return await WorkspaceMemberRepo.updateOne({
+          filter: { _id: memberId, workspaceId, status: 'active' },
+          data: {
+            $set: {
+              workspaceRoleId: newRole._id.toString(),
+              updatedAt: Date.now()
+            }
+          },
+          session
+        })
       })
-    ])
+    } finally {
+      await session.endSession()
+    }
 
-    if (!newRole) throw new NotFoundErrorResponse('New role not found.')
-    if (!currentRole) throw new NotFoundErrorResponse('Current role not found.')
-
-    const isCurrentAdmin = currentRole?.key === 'workspace_admin'
-    const isNewRoleAdmin = newRole?.key === 'workspace_admin'
-
-    if (isCurrentAdmin && !isNewRoleAdmin)
-      await ensureWorkspaceHasAtLeastOneAdmin({
-        member,
-        adminRole: currentRole
+    if (targetUserId)
+      await invalidateWorkspaceAccessCache({
+        workspaceId,
+        userId: targetUserId
       })
-
-    const updatedMember = await WorkspaceMemberRepo.updateOne({
-      filter: { _id: memberId },
-      data: { $set: { workspaceRoleId: newRole._id.toString() } }
-    })
 
     return updatedMember
   }
 
-  static removeMember = async ({ _id, userContext }) => {
+  static removeMember = async ({ _id, workspaceId, userContext }) => {
     return await this.updateWorkspaceMemberStatus({
       _id,
       userContext,
+      workspaceId,
       action: 'removed'
     })
   }
@@ -361,69 +624,165 @@ class WorkspaceService {
     })
   }
 
-  static updateWorkspaceMemberStatus = async ({ _id, userContext, action }) => {
+  static updateWorkspaceMemberStatus = async ({
+    _id,
+    workspaceId,
+    userContext,
+    action
+  }) => {
     const allowedActions = ['removed', 'left']
 
     if (!allowedActions.includes(action))
       throw new BadRequestErrorResponse('Invalid action.')
 
-    const member = await WorkspaceMemberRepo.findOne({
-      filter: { _id: new ObjectId(_id) }
-    })
+    const memberId = new ObjectId(_id)
 
-    if (!member) throw new NotFoundErrorResponse('Member not found.')
-
-    if (member.status !== 'active')
-      throw new ConflictErrorResponse(
-        'This action can only be performed on an active member.'
-      )
-
-    if (
-      action === 'left' &&
-      member.userId.toString() !== userContext._id.toString()
-    ) {
-      throw new ForbiddenErrorResponse(
-        'You cannot leave this workspace for another member.'
-      )
+    const memberFilter = {
+      _id: memberId,
+      status: 'active'
     }
 
-    const currentRole = await WorkspaceRoleRepo.findOne({
-      filter: { _id: new ObjectId(member.workspaceRoleId) }
-    })
+    if (action === 'removed') {
+      memberFilter.workspaceId = workspaceId
+    }
 
-    if (!currentRole) throw new NotFoundErrorResponse('Current role not found.')
+    const session = await mongoClientInstance.startSession()
+    let updatedMember = null
+    let targetUserId = null
+    let targetWorkspaceId = null
 
-    if (currentRole?.key === 'workspace_admin')
-      await ensureWorkspaceHasAtLeastOneAdmin({
-        member,
-        adminRole: currentRole
+    try {
+      updatedMember = await session.withTransaction(async () => {
+        const member = await WorkspaceMemberRepo.findOne({
+          filter: memberFilter,
+          options: { session }
+        })
+
+        if (!member) throw new NotFoundErrorResponse('Member not found.')
+
+        targetUserId = member.userId.toString()
+        targetWorkspaceId = member.workspaceId.toString()
+
+        if (
+          action === 'removed' &&
+          member.userId.toString() === userContext._id.toString()
+        )
+          throw new ConflictErrorResponse('Please use leave workspace instead.')
+
+        if (
+          action === 'left' &&
+          member.userId.toString() !== userContext._id.toString()
+        )
+          throw new ForbiddenErrorResponse(
+            'You cannot leave this workspace for another member.'
+          )
+
+        const currentRole = await WorkspaceRoleRepo.findOne({
+          filter: {
+            _id: new ObjectId(member.workspaceRoleId),
+            workspaceId: member.workspaceId
+          },
+          options: { session }
+        })
+
+        if (!currentRole)
+          throw new NotFoundErrorResponse('Current role not found.')
+
+        if (currentRole.key === 'workspace_admin')
+          await ensureWorkspaceHasAtLeastOneAdmin({
+            member,
+            adminRole: currentRole,
+            session
+          })
+
+        await BoardMemberRepo.updateMany({
+          filter: {
+            workspaceMemberId: member._id.toString(),
+            status: 'active'
+          },
+          data: {
+            $set: {
+              status: 'removed',
+              updatedAt: Date.now()
+            }
+          },
+          session
+        })
+
+        return await WorkspaceMemberRepo.updateOne({
+          filter: {
+            _id: memberId,
+            workspaceId: member.workspaceId,
+            status: 'active'
+          },
+          data: {
+            $set: {
+              status: action,
+              updatedAt: Date.now()
+            }
+          },
+          session
+        })
       })
+    } finally {
+      await session.endSession()
+    }
 
-    const updatedMember = await WorkspaceMemberRepo.updateOne({
-      filter: { _id: new ObjectId(_id) },
-      data: { $set: { status: action } }
-    })
+    if (targetWorkspaceId && targetUserId) {
+      await invalidateWorkspaceAccessCache({
+        workspaceId: targetWorkspaceId,
+        userId: targetUserId
+      })
+      await invalidateBoardAccessCachesByUser({
+        userId: targetUserId
+      })
+    }
 
     return updatedMember
   }
 
-  static fetchPlans = async ({ userContext, workspaceId }) => {
+  static fetchPlans = async ({ workspaceId }) => {
     const plans = await WorkspaceRepo.fetchByPlan(workspaceId)
     return plans
   }
 
+  static _validatePermissionCodes = (permissionCodes) => {
+    const validPermissions = Object.values(WORKSPACE_PERMISSIONS)
+
+    if (!Array.isArray(permissionCodes) || permissionCodes.length === 0) {
+      throw new BadRequestErrorResponse(
+        'Permission codes must be a non-empty array.'
+      )
+    }
+
+    const invalidCodes = permissionCodes.filter(
+      (code) => !validPermissions.includes(code)
+    )
+
+    if (invalidCodes.length > 0) {
+      throw new BadRequestErrorResponse(
+        `Invalid permission codes: ${invalidCodes.join(', ')}`
+      )
+    }
+  }
 }
 
-const ensureWorkspaceHasAtLeastOneAdmin = async ({ member, adminRole }) => {
-  const totalAdmins = await WorkspaceMemberRepo.count({
+const ensureWorkspaceHasAtLeastOneAdmin = async ({
+  member,
+  adminRole,
+  session
+}) => {
+  const anotherAdmin = await WorkspaceMemberRepo.findOne({
     filter: {
       workspaceId: member.workspaceId,
       workspaceRoleId: adminRole._id.toString(),
-      status: 'active'
-    }
+      status: 'active',
+      _id: { $ne: member._id }
+    },
+    options: { session }
   })
 
-  if (totalAdmins <= 1)
+  if (!anotherAdmin)
     throw new ConflictErrorResponse('Workspace must have at least one admin.')
 }
 
