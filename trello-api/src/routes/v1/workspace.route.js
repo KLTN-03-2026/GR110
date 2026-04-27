@@ -7,6 +7,7 @@ import { WORKSPACE_PERMISSIONS } from '~/constant/workspacePermission.constant'
 import validate from '~/utils/validate'
 import { createIdParamSchema } from '~/validations/common.validation'
 import { workspaceMemberValidation } from '~/validations/workspaceMember.validation'
+import { workspaceValidation } from '~/validations/workspace.validation'
 
 const Router = express.Router()
 
@@ -17,6 +18,7 @@ Router.route('/')
   )
   .post(
     asyncHandler(authMiddleware.isAuthorized),
+    asyncHandler(validate(workspaceValidation.createWorkspaceSchema, 'body')),
     asyncHandler(WorkspaceController.create)
   )
 
@@ -28,17 +30,30 @@ Router.route('/permissions').get(
 Router.route('/roles/:workspaceId').get(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+  asyncHandler(workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.VIEW)),
   asyncHandler(WorkspaceController.fetchWorkspaceRole)
+)
+
+Router.route('/roles/:workspaceId').post(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+  asyncHandler(validate(workspaceValidation.createRoleSchema, 'body')),
+  asyncHandler(
+    workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.ROLE_CREATE)
+  ),
+  asyncHandler(WorkspaceController.createRole)
 )
 
 Router.route('/members/:workspaceId').get(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+  asyncHandler(workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.VIEW)),
   asyncHandler(WorkspaceController.fetchWorkspaceMember)
 )
 
 Router.route('/members/leave/:memberId').delete(
   asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createIdParamSchema('memberId'), 'params')),
   asyncHandler(WorkspaceController.leaveWorkspace)
 )
 
@@ -50,6 +65,9 @@ Router.route('/members/:workspaceId/:memberId')
         workspaceMemberValidation.updateAndDeleteWorkspaceMemberParamSchema,
         'params'
       )
+    ),
+    asyncHandler(
+      validate(workspaceMemberValidation.updateWorkspaceMemberRoleSchema, 'body')
     ),
     asyncHandler(
       workspaceMiddleware.checkPermission(
@@ -72,17 +90,10 @@ Router.route('/members/:workspaceId/:memberId')
     asyncHandler(WorkspaceController.removeMember)
   )
 
-Router.route('/roles').post(
-  asyncHandler(authMiddleware.isAuthorized),
-  asyncHandler(
-    workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.ROLE_CREATE)
-  ),
-  asyncHandler(WorkspaceController.createRole)
-)
-
 Router.route('/roles/:workspaceId').put(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+  asyncHandler(validate(workspaceValidation.updateRolesSchema, 'body')),
   asyncHandler(
     workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.ROLE_UPDATE)
   ),
@@ -92,16 +103,23 @@ Router.route('/roles/:workspaceId').put(
 Router.route('/roles/:workspaceId/:roleId').delete(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(
+    validate(
+      workspaceMemberValidation.updateAndDeleteWorkspaceRoleParamSchema,
+      'params'
+    )
+  ),
+  asyncHandler(
     workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.ROLE_DELETE)
   ),
   asyncHandler(WorkspaceController.deleteRole)
 )
 
-Router.route('/plans/:workspaceId')
-  .get(
-    asyncHandler(authMiddleware.isAuthorized),
-    asyncHandler(WorkspaceController.fetchPlans)
-  )
+Router.route('/plans/:workspaceId').get(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+  asyncHandler(workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.VIEW)),
+  asyncHandler(WorkspaceController.fetchPlans)
+)
 
 Router.route('/:workspaceId')
   .get(
@@ -115,6 +133,7 @@ Router.route('/:workspaceId')
   .put(
     asyncHandler(authMiddleware.isAuthorized),
     asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+    asyncHandler(validate(workspaceValidation.updateWorkspaceSchema, 'body')),
     asyncHandler(
       workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.UPDATE)
     ),
@@ -128,6 +147,5 @@ Router.route('/:workspaceId')
     ),
     asyncHandler(WorkspaceController.delete)
   )
-
 
 export const workspaceRoute = Router

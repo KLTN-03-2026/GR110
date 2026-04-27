@@ -2,6 +2,7 @@ import ColumnRepo from '~/repo/column.repo'
 import BoardRepo from '~/repo/board.repo'
 import CardRepo from '~/repo/card.repo'
 import {
+  BadRequestErrorResponse,
   ForbiddenErrorResponse,
   NotFoundErrorResponse
 } from '~/core/error.response'
@@ -20,6 +21,9 @@ import {
   emitColumnRestored,
   emitColumnUpdated
 } from '~/realtime/realtimeEmitters/columnRealtime.emitter'
+
+const COLUMN_UPDATE_FIELDS = ['title', 'color', 'cardOrderIds']
+
 class ColumnService {
   static fetchArchived = async ({ boardId }) => {
     const archivedItems = await ColumnRepo.findMany({
@@ -103,14 +107,22 @@ class ColumnService {
     const column = await ColumnRepo.findOne({
       filter: {
         _id: new ObjectId(_id),
-        boardId: boardAccess.board._id,
+        boardId: boardAccess.board._id.toString(),
         status: 'active'
       }
     })
 
     if (!column) throw new NotFoundErrorResponse('Column not found.')
 
-    if ('color' in data && data.color !== 'default') {
+    const updateData = COLUMN_UPDATE_FIELDS.reduce((result, field) => {
+      if (field in data) result[field] = data[field]
+      return result
+    }, {})
+
+    if (!Object.keys(updateData).length)
+      throw new BadRequestErrorResponse('Column update data is required.')
+
+    if ('color' in updateData && updateData.color !== 'default') {
       const subscription = await getActiveSubscriptionCached({
         workspaceId: boardAccess.board.workspaceId
       })
@@ -128,7 +140,7 @@ class ColumnService {
         )
     }
 
-    const updateData = { ...data, updatedAt: new Date() }
+    updateData.updatedAt = new Date()
 
     const updatedColumn = await ColumnRepo.updateById({ _id, data: updateData })
 
@@ -148,7 +160,7 @@ class ColumnService {
         const column = await ColumnRepo.findOne({
           filter: {
             _id: new ObjectId(_id),
-            boardId: boardAccess.board._id,
+            boardId: boardAccess.board._id.toString(),
             status: 'active'
           },
           options: { session }
@@ -197,7 +209,7 @@ class ColumnService {
         const column = await ColumnRepo.findOne({
           filter: {
             _id: new ObjectId(_id),
-            boardId: boardAccess.board._id,
+            boardId: boardAccess.board._id.toString(),
             status: 'archived'
           },
           options: { session }

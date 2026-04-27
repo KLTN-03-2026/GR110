@@ -18,6 +18,8 @@ const Router = express.Router()
 
 Router.route('/workspace/:workspaceId').get(
   asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+  asyncHandler(workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.VIEW)),
   asyncHandler(BoardController.fetchBoardByWorkspaceId)
 )
 
@@ -46,8 +48,10 @@ Router.route('/permissions').get(
   asyncHandler(BoardController.fetchBoardPermission)
 )
 
-Router.route('/roles/:_id').get(
+Router.route('/roles/:boardId').get(
   asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(BoardController.fetchBoardRole)
 )
 
@@ -68,6 +72,8 @@ Router.route('/:boardId')
   )
   .delete(
     asyncHandler(authMiddleware.isAuthorized),
+    asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
+    asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.DELETE)),
     asyncHandler(BoardController.delete)
   )
 
@@ -82,12 +88,14 @@ Router.route('/supports/moving_card/:boardId').put(
 Router.route('/members/:boardId').get(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(BoardController.fetchBoardMember)
 )
 
 Router.route('/activity/:boardId').get(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(BoardController.fetchBoardActivity)
 )
 
@@ -99,7 +107,7 @@ Router.route('/members/leave/:boardId/:memberId').delete(
       'params'
     )
   ),
-  asyncHandler(boardMiddleware.checkPermission(null)),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(BoardController.leaveBoard)
 )
 
@@ -153,11 +161,15 @@ Router.route('/roles/:boardId/:roleId').delete(
 
 Router.route('/custom-background/:boardId').post(
   asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.UPDATE)),
   asyncHandler(multerUploadMiddleware.uploadSingleImage),
   asyncHandler(BoardController.createBackground)
 )
 Router.route('/custom-background/:boardId/:backgroundId').delete(
   asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(boardValidation.customBackgroundParams, 'params')),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.UPDATE)),
   asyncHandler(BoardController.deleteBackground)
 )
 

@@ -11,6 +11,7 @@ const Router = express.Router()
 Router.use(asyncHandler(authMiddleware.isAuthorized))
 
 Router.route('/').post(
+  asyncHandler(validate(labelValidation.create)),
   asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.LABEL_CREATE)),
   asyncHandler(LabelController.create)
 )
@@ -20,6 +21,7 @@ Router.route('/:boardId/:labelId').put(
     validate(labelValidation.updateAndDeleteLabelParamSchema, 'params')
   ),
   asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.LABEL_UPDATE)),
+  asyncHandler(validate(labelValidation.update)),
   asyncHandler(LabelController.update)
 )
 

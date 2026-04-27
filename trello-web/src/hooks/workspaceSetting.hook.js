@@ -89,9 +89,19 @@ export const useWorkspaceSetting = () => {
   }
 
   const handleUpdateRole = async () => {
-    setIsUpdating(true)
+    const payload = roles
+      .filter((role) => !role.isDefault)
+      .map((role) => ({
+        _id: role._id,
+        name: role.name,
+        permissionCodes: role.permissionCodes
+      }))
+
+    if (!payload || payload.length == 0) return
+
     try {
-      await updateWorkspaceRoleAPI({ workspaceId, payload: roles })
+      setIsUpdating(true)
+      await updateWorkspaceRoleAPI({ workspaceId, payload })
     } finally {
       setIsUpdating(false)
     }

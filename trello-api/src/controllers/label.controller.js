@@ -5,7 +5,7 @@ class LabelController {
   static create = async (req, res) => {
     new OkSuccessResponse({
       metadata: await LabelService.create({
-        userContext: req.userContext,
+        boardAccess: req.boardAccess,
         data: req.body
       })
     }).send(res)
@@ -15,7 +15,7 @@ class LabelController {
     new OkSuccessResponse({
       metadata: await LabelService.update({
         _id: req.params.labelId,
-        userContext: req.userContext,
+        boardAccess: req.boardAccess,
         data: req.body
       })
     }).send(res)
@@ -25,7 +25,7 @@ class LabelController {
     new OkSuccessResponse({
       metadata: await LabelService.delete({
         _id: req.params.labelId,
-        userContext: req.userContext
+        boardAccess: req.boardAccess
       })
     }).send(res)
   }

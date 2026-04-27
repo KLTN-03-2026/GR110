@@ -110,17 +110,23 @@ class ColumnRepo {
       .collection(columnModel.COLUMN_COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(card.columnId) },
-        { $pull: { columnOrderIds: new ObjectId(card._id) } },
+        { $pull: { cardOrderIds: new ObjectId(card._id) } },
         { returnDocument: 'after', session }
       )
     return result
   }
 
-  static deleteById = async ({ _id }) => {
+  static deleteById = async ({ _id, session }) => {
     const result = await GET_DB()
       .collection(columnModel.COLUMN_COLLECTION_NAME)
-      .deleteOne({ _id: new ObjectId(_id) })
+      .deleteOne({ _id: new ObjectId(_id) }, { session })
     return result
+  }
+
+  static deleteMany = async ({ filter, session }) => {
+    return await GET_DB()
+      .collection(columnModel.COLUMN_COLLECTION_NAME)
+      .deleteMany(filter, { session })
   }
 
   static count = async ({ filter = {}, options = {} }) => {

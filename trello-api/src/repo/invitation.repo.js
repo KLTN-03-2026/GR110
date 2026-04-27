@@ -153,5 +153,11 @@ class InvitationRepo {
       .collection(invitationModel.INVITATION_COLLECTION_NAME)
       .findOneAndUpdate(filter, data, { returnDocument: 'after', session })
   }
+
+  static deleteMany = async ({ filter, session }) => {
+    return await GET_DB()
+      .collection(invitationModel.INVITATION_COLLECTION_NAME)
+      .deleteMany(filter, { session })
+  }
 }
 export default InvitationRepo

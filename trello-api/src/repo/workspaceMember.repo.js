@@ -3,10 +3,10 @@ import { userModel } from '~/models/user.model'
 import { workspaceMemberModel } from '~/models/workspaceMember.model'
 
 class WorkspaceMemberRepo {
-  static count = async ({ filter }) => {
+  static count = async ({ filter, options = {} }) => {
     return await GET_DB()
       .collection(workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME)
-      .countDocuments(filter)
+      .countDocuments(filter, options)
   }
 
   static createOne = async ({ data, session }) => {
@@ -134,7 +134,5 @@ class WorkspaceMemberRepo {
       .collection(workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME)
       .deleteMany(filter, { session })
   }
-
-  
 }
 export default WorkspaceMemberRepo

@@ -15,8 +15,15 @@ const invalidateBoardAccessCachesByBoard = async ({ boardId }) => {
   })
 }
 
+const invalidateBoardAccessCachesByUser = async ({ userId }) => {
+  return await deleteCachesByPattern({
+    pattern: `board_access:*:${userId}`
+  })
+}
+
 export {
   getBoardAccessCacheKey,
   invalidateBoardAccessCache,
-  invalidateBoardAccessCachesByBoard
+  invalidateBoardAccessCachesByBoard,
+  invalidateBoardAccessCachesByUser
 }

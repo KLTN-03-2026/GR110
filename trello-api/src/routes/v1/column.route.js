@@ -22,7 +22,7 @@ Router.route('/').post(
 
 Router.route('/archived/:boardId').get(
   asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
-  asyncHandler(boardMiddleware.checkPermission(null)),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(ColumnController.fetchArchived)
 )
 

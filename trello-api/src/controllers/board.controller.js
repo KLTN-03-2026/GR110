@@ -19,7 +19,7 @@ class BoardController {
   static getBackground = async (req, res) => {
     new OkSuccessResponse({
       metadata: await BoardService.getBackground({
-        userContext: req.userContext,
+        userContext: req.userContext
       })
     }).send(res)
   }
@@ -116,7 +116,7 @@ class BoardController {
   static fetchBoardRole = async (req, res) => {
     new OkSuccessResponse({
       metadata: await BoardService.fetchBoardRole({
-        _id: req.params._id,
+        _id: req.params.boardId,
         userContext: req.userContext
       })
     }).send(res)
@@ -155,9 +155,10 @@ class BoardController {
 
   static delete = async (req, res) => {
     new OkSuccessResponse({
-      message: 'Delete board successfully',
+      message: 'Delete board successfully.',
       metadata: await BoardService.delete({
-        _id: req.params.boardId
+        _id: req.params.boardId,
+        boardAccess: req.boardAccess
       })
     }).send(res)
   }
@@ -180,24 +181,22 @@ class BoardController {
     }).send(res)
   }
 
-  //BACKGROUNG CUSTOM
-  static createBackground = async(req, res) => {
+  static createBackground = async (req, res) => {
     new CreatedSuccessResponse({
       metadata: await BoardService.createBackground({
-        boardId: req.params.boardId,
+        boardAccess: req.boardAccess,
         file: req.file
       })
     }).send(res)
   }
 
-  static deleteBackground = async(req, res) => {
-    
+  static deleteBackground = async (req, res) => {
     new OkSuccessResponse({
       message: 'Delete background successfully',
       metadata: await BoardService.deleteBackground({
-        boardId: req.params.boardId,
+        boardAccess: req.boardAccess,
         backgroundId: req.params.backgroundId,
-        userContext: req.userContext,
+        userContext: req.userContext
       })
     }).send(res)
   }

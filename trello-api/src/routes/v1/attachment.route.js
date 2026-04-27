@@ -42,6 +42,7 @@ Router.route('/:boardId/:attachmentId').put(
   asyncHandler(
     boardMiddleware.checkPermission(BOARD_PERMISSIONS.CARD_ATTACHMENT_CREATE)
   ),
+  asyncHandler(validate(attachmentValidation.update)),
   asyncHandler(AttachmentController.update)
 )
 
@@ -52,7 +53,7 @@ Router.route('/:boardId/:attachmentId').delete(
       'params'
     )
   ),
-  asyncHandler(boardMiddleware.checkPermission(null)),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(AttachmentController.delete)
 )
 

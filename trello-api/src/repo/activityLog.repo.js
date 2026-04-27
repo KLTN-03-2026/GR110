@@ -21,5 +21,11 @@ class ActivityLogRepo {
       .collection(activityLogModel.ACTIVITY_LOG_COLLECTION_NAME)
       .insertOne(validData, { session })
   }
+
+  static deleteMany = async ({ filter, session }) => {
+    return await GET_DB()
+      .collection(activityLogModel.ACTIVITY_LOG_COLLECTION_NAME)
+      .deleteMany(filter, { session })
+  }
 }
 export default ActivityLogRepo

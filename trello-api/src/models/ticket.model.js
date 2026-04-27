@@ -14,10 +14,12 @@ const TICKET_COLLECTION_SCHEMA = Joi.object({
     .required()
     .pattern(EMAIL_RULE)
     .message(EMAIL_RULE_MESSAGE),
-  
+
   title: Joi.string().required(),
 
-  type: Joi.string().valid(...TICKET_TYPE).required(),
+  type: Joi.string()
+    .valid(...TICKET_TYPE)
+    .required(),
 
   content: Joi.string().required(),
 

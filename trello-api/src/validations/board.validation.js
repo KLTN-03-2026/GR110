@@ -1,7 +1,7 @@
 import Joi from 'joi'
 import { visibility } from '~/constant/enum/board.enum'
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
-import { optionalIdSchema } from './common.validation'
+import { idSchema, optionalIdSchema } from './common.validation'
 
 const create = Joi.object({
   title: Joi.string().required().min(1).max(200).trim().strict().messages({
@@ -107,8 +107,14 @@ const moveCardToDifferentColumn = Joi.object({
   nextCardOrderIds: Joi.array().required().items(optionalIdSchema)
 })
 
+const customBackgroundParams = Joi.object({
+  boardId: idSchema,
+  backgroundId: idSchema
+})
+
 export const boardValidation = {
   create,
   update,
-  moveCardToDifferentColumn
+  moveCardToDifferentColumn,
+  customBackgroundParams
 }

@@ -18,6 +18,12 @@ class PlanRepo {
       .toArray()
   }
 
+  static findOne = async ({ filter, options = {} }) => {
+    return await GET_DB()
+      .collection(planModel.PLAN_COLLECTION_NAME)
+      .findOne(filter, options)
+  }
+
   static findById = async ({ _id }) => {
     const result = await GET_DB()
       .collection(planModel.PLAN_COLLECTION_NAME)
@@ -38,10 +44,10 @@ class PlanRepo {
       .findOneAndUpdate(
         { _id: new ObjectId(_id) },
         {
-            $set: {
+          $set: {
             ...data,
             updatedAt: new Date()
-            }
+          }
         },
         { returnDocument: 'after' }
       )

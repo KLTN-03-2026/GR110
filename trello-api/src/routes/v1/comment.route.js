@@ -22,7 +22,7 @@ Router.route('/:boardId').post(
 
 Router.route('/:boardId/:commentId').delete(
   asyncHandler(validate(commentValidation.deleteCommentParamSchema, 'params')),
-  asyncHandler(boardMiddleware.checkPermission(null)),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
   asyncHandler(CommentController.delete)
 )
 

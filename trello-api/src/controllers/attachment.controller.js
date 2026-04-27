@@ -16,7 +16,7 @@ class AttachmentController {
     new OkSuccessResponse({
       metadata: await AttachmentService.download({
         _id: req.params.attachmentId,
-        userContext: req.userContext
+        boardAccess: req.boardAccess
       })
     }).send(res)
   }
@@ -25,7 +25,7 @@ class AttachmentController {
     new OkSuccessResponse({
       metadata: await AttachmentService.update({
         _id: req.params.attachmentId,
-        userContext: req.userContext,
+        boardAccess: req.boardAccess,
         data: req.body
       })
     }).send(res)

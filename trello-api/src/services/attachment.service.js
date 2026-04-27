@@ -5,7 +5,6 @@ import {
   NotFoundErrorResponse
 } from '~/core/error.response'
 import S3Provider from '~/providers/S3Provider'
-import BoardMemberRepo from '~/repo/boardMember.repo'
 import CardRepo from '~/repo/card.repo'
 import WorkspaceRepo from '~/repo/workspace.repo'
 import BoardRepo from '~/repo/board.repo'
@@ -175,7 +174,7 @@ class AttachmentService {
       })
 
       emitCardUpdatedBasic({
-        boardId: boardAccess.board._id,
+        boardId: boardAccess.board._id.toString(),
         card: updatedCard
       })
 
@@ -190,26 +189,27 @@ class AttachmentService {
     }
   }
 
-  static update = async ({ _id, userContext, data }) => {
+  static update = async ({ _id, boardAccess, data }) => {
     const attachment = await AttachmentRepo.findOne({
-      filter: { _id: new ObjectId(_id) }
+      filter: {
+        _id: new ObjectId(_id),
+        boardId: boardAccess.board._id.toString()
+      }
     })
     if (!attachment) throw new NotFoundErrorResponse('Attachment not found.')
 
-    const boardMember = await BoardMemberRepo.findMemberInBoard({
-      userId: userContext._id,
-      boardId: attachment.boardId
-    })
-
-    if (!boardMember)
-      throw new ForbiddenErrorResponse('You are not a member of this board.')
+    const fileName = data?.fileName?.trim()
+    if (!fileName) throw new BadRequestErrorResponse('File name is required.')
 
     const updatedAttachment = await AttachmentRepo.updateOne({
-      filter: { _id: new ObjectId(_id) },
-      data: { $set: { fileName: data?.fileName } }
+      filter: {
+        _id: new ObjectId(_id),
+        boardId: boardAccess.board._id.toString()
+      },
+      data: { $set: { fileName } }
     })
 
-     emitAttachmentUpdated({
+    emitAttachmentUpdated({
       boardId: attachment.boardId,
       card: attachment.cardId,
       attachment: updatedAttachment
@@ -221,19 +221,14 @@ class AttachmentService {
     }
   }
 
-  static download = async ({ _id, userContext }) => {
+  static download = async ({ _id, boardAccess }) => {
     const attachment = await AttachmentRepo.findOne({
-      filter: { _id: new ObjectId(_id) }
+      filter: {
+        _id: new ObjectId(_id),
+        boardId: boardAccess.board._id.toString()
+      }
     })
     if (!attachment) throw new NotFoundErrorResponse('Attachment not found.')
-
-    const boardMember = await BoardMemberRepo.findMemberInBoard({
-      userId: userContext._id,
-      boardId: attachment.boardId
-    })
-
-    if (!boardMember)
-      throw new ForbiddenErrorResponse('You are not a member of this board.')
 
     const downloadUrl = await S3Provider.getSignedDownloadUrl({
       key: attachment.fileKey,
@@ -337,8 +332,8 @@ class AttachmentService {
           options: { session }
         })
 
-         emitCardUpdatedBasic({
-          boardId: boardAccess.board._id,
+        emitCardUpdatedBasic({
+          boardId: boardAccess.board._id.toString(),
           card: updatedCard
         })
 

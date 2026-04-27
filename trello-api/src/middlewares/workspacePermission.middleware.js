@@ -1,15 +1,15 @@
 import { ObjectId } from 'mongodb'
 import {
   ForbiddenErrorResponse,
-  NotFoundErrorResponse
+  NotFoundErrorResponse,
+  UnAuthorizedErrorResponse
 } from '~/core/error.response'
 import { getCache, setCache } from '~/helpers/cache'
 import WorkspaceRepo from '~/repo/workspace.repo'
 import WorkspaceMemberRepo from '~/repo/workspaceMember.repo'
 import WorkspaceRoleRepo from '~/repo/workspaceRole.repo'
 
-// const WORKSPACE_ACCESS_CACHE_TTL = 120
-const WORKSPACE_ACCESS_CACHE_TTL = 1
+const WORKSPACE_ACCESS_CACHE_TTL = 120
 
 const getWorkspaceAccessCacheKey = ({ workspaceId, userId }) =>
   `workspace_access:${workspaceId}:${userId}`
@@ -30,7 +30,12 @@ const checkPermission = (requiredPermission) => {
     const userId = req.userContext?._id?.toString()
     const workspaceId = req.params?.workspaceId || req.body?.workspaceId
 
+    if (!userId) throw new UnAuthorizedErrorResponse('Unauthorized.')
+
     if (!workspaceId) throw new NotFoundErrorResponse('Workspace id not found.')
+
+    if (!ObjectId.isValid(workspaceId))
+      throw new NotFoundErrorResponse('Workspace id is invalid.')
 
     const cacheKey = getWorkspaceAccessCacheKey({ workspaceId, userId })
 
@@ -68,11 +73,10 @@ const checkPermission = (requiredPermission) => {
       }
     })
 
-    if (!workspaceMember) {
+    if (!workspaceMember)
       throw new ForbiddenErrorResponse(
         'You are not a member of this workspace.'
       )
-    }
 
     const workspaceRole = await WorkspaceRoleRepo.findOne({
       filter: {
@@ -81,18 +85,16 @@ const checkPermission = (requiredPermission) => {
       }
     })
 
-    if (!workspaceRole) {
+    if (!workspaceRole)
       throw new ForbiddenErrorResponse('Workspace role not found.')
-    }
 
     const permissionCodes = workspaceRole.permissionCodes || []
     const permissions = new Set(permissionCodes)
 
-    if (requiredPermission && !permissions.has(requiredPermission)) {
+    if (requiredPermission && !permissions.has(requiredPermission))
       throw new ForbiddenErrorResponse(
         'You do not have permission to perform this action.'
       )
-    }
 
     const workspaceAccessCacheData = {
       workspace: {

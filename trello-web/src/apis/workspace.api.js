@@ -32,7 +32,7 @@ export const fetchWorkspaceRoleAPI = async ({ _id }) => {
 
 export const createWorkspaceRoleAPI = async ({ payload }) => {
   const response = await authorizeAxiosInstance.post(
-    `${API_ROOT}/v1/workspaces/roles`,
+    `${API_ROOT}/v1/workspaces/roles/${payload.workspaceId}`,
     payload
   )
   return response.data.metadata
@@ -85,6 +85,3 @@ export const fetchWorkspacePlan = async (workspaceId) => {
   )
   return response.data.metadata
 }
-
-
-
