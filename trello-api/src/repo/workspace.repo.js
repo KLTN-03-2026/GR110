@@ -3,6 +3,7 @@ import { GET_DB } from '~/config/mongodb'
 import { workspaceMemberModel } from '~/models/workspaceMember.model'
 import { planModel } from '~/models/plan.model'
 import { subscriptionModel } from '~/models/subscription.model'
+import { ObjectId } from 'mongodb'
 
 class WorkspaceRepo {
   static findOne = async ({ filter, options = {} }) => {
@@ -25,10 +26,14 @@ class WorkspaceRepo {
       .insertOne(validData, { session })
   }
 
-  static updateOne = async ({ filter, data, session }) => {
+  static updateOne = async ({ filter, data, session, projection }) => {
     return await GET_DB()
       .collection(workspaceModel.WORKSPACE_COLLECTION_NAME)
-      .updateOne(filter, data, { session })
+      .findOneAndUpdate(filter, data, {
+        returnDocument: 'after',
+        session,
+        projection
+      })
   }
 
   static deleteOne = async ({ filter, session }) => {

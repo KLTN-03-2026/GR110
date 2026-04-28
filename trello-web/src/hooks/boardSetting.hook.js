@@ -6,7 +6,7 @@ import {
   deleteStatusBoardAPI,
   fetchBoardPermissionAPI,
   fetchBoardRoleAPI,
-  updateBoardRoleAPI,
+  updateBoardRoleAPI
 } from '~/apis/board.api'
 import { useNavigate } from 'react-router-dom'
 import { useSelector } from 'react-redux'
@@ -93,9 +93,19 @@ export const useBoardSetting = () => {
   }
 
   const handleUpdateRole = async () => {
-    setIsUpdating(true)
+    const payload = roles
+      .filter((role) => !role.isDefault)
+      .map((role) => ({
+        _id: role._id,
+        name: role.name,
+        permissionCodes: role.permissionCodes
+      }))
+
+    if (!payload || payload.length == 0) return
     try {
-      const resData = await updateBoardRoleAPI({ boardId, payload: roles })
+      setIsUpdating(true)
+
+      const resData = await updateBoardRoleAPI({ boardId, payload })
       setAlert({
         open: true,
         severity: 'success',

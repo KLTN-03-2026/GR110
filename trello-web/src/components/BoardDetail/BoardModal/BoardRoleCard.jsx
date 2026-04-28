@@ -137,28 +137,30 @@ function BoardRoleCard({ role, data, handler }) {
             gap: 1
           }}
         >
-          <Button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleOpenConfirmDialog({ roleId: role._id })
-            }}
-            size="small"
-            color="error"
-            variant="outlined"
-            startIcon={<DeleteOutlineIcon sx={{ fontSize: 16 }} />}
-            sx={{
-              height: 32,
-              minWidth: 'auto',
-              px: 1.25,
-              fontSize: 12,
-              fontWeight: 600,
-              textTransform: 'none',
-              borderRadius: 1.5,
-              whiteSpace: 'nowrap'
-            }}
-          >
-            Delete
-          </Button>
+          {!role?.isDefault && (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleOpenConfirmDialog({ roleId: role._id })
+              }}
+              size="small"
+              color="error"
+              variant="outlined"
+              startIcon={<DeleteOutlineIcon sx={{ fontSize: 16 }} />}
+              sx={{
+                height: 32,
+                minWidth: 'auto',
+                px: 1.25,
+                fontSize: 12,
+                fontWeight: 600,
+                textTransform: 'none',
+                borderRadius: 1.5,
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Delete
+            </Button>
+          )}
 
           <Chip
             icon={<ShieldOutlinedIcon sx={{ fontSize: 16 }} />}
@@ -280,32 +282,33 @@ function BoardRoleCard({ role, data, handler }) {
                           arrow
                         >
                           <Box sx={{ mt: 0.25, flexShrink: 0 }}>
-                            {has ? (
-                              <CheckCircleOutlineIcon
-                                sx={{ fontSize: 16, color: 'success.main' }}
-                                onClick={() => {
-                                  handleChangeRolePermissions({
-                                    roleId: role._id,
-                                    permissionCode: p.permissionCode,
-                                    action: 'remove'
-                                  })
-                                }}
-                              />
-                            ) : (
-                              <RemoveCircleOutlineIcon
-                                sx={{
-                                  fontSize: 16,
-                                  color: 'text.disabled'
-                                }}
-                                onClick={() => {
-                                  handleChangeRolePermissions({
-                                    roleId: role._id,
-                                    permissionCode: p.permissionCode,
-                                    action: 'add'
-                                  })
-                                }}
-                              />
-                            )}
+                            {!role?.isDefault &&
+                              (has ? (
+                                <CheckCircleOutlineIcon
+                                  sx={{ fontSize: 16, color: 'success.main' }}
+                                  onClick={() => {
+                                    handleChangeRolePermissions({
+                                      roleId: role._id,
+                                      permissionCode: p.permissionCode,
+                                      action: 'remove'
+                                    })
+                                  }}
+                                />
+                              ) : (
+                                <RemoveCircleOutlineIcon
+                                  sx={{
+                                    fontSize: 16,
+                                    color: 'text.disabled'
+                                  }}
+                                  onClick={() => {
+                                    handleChangeRolePermissions({
+                                      roleId: role._id,
+                                      permissionCode: p.permissionCode,
+                                      action: 'add'
+                                    })
+                                  }}
+                                />
+                              ))}
                           </Box>
                         </Tooltip>
                         <Box>

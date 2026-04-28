@@ -72,20 +72,18 @@ class CardService {
         'You do not have permission to view this card.'
       )
 
-    const [cardDetail, comments, checklists, attachments, logs] =
-      await Promise.all([
-        CardRepo.findOne({ filter: { _id: new ObjectId(_id) } }),
-        CommentRepo.getByCardId({ cardId: _id }),
-        TaskRepo.getListByCardId({ cardId: _id }),
-        AttachmentRepo.findMany({
-          filter: { cardId: _id },
-          options: { sort: { createdAt: -1 } }
-        }),
-        ActivityLogRepo.findMany({
-          filter: { entityType: 'card', entityId: _id },
-          options: { sort: { createdAt: -1 } }
-        })
-      ])
+    const [comments, checklists, attachments, logs] = await Promise.all([
+      CommentRepo.getByCardId({ cardId: _id }),
+      TaskRepo.getListByCardId({ cardId: _id }),
+      AttachmentRepo.findMany({
+        filter: { cardId: _id },
+        options: { sort: { createdAt: -1 } }
+      }),
+      ActivityLogRepo.findMany({
+        filter: { entityType: 'card', entityId: _id },
+        options: { sort: { createdAt: -1 } }
+      })
+    ])
 
     const attachmentsWithUrl = attachments?.map((a) => ({
       ...a,
@@ -93,7 +91,7 @@ class CardService {
     }))
 
     return {
-      cardDetail,
+      cardDetail: card,
       comments,
       checklists,
       attachments: attachmentsWithUrl,
@@ -709,42 +707,58 @@ class CardService {
   }
 
   static updateLabel = async ({ _id, boardAccess, data }) => {
-    const boardId = boardAccess.board._id.toString()
-    const card = await CardRepo.findOne({
-      filter: {
-        _id: new ObjectId(_id),
-        boardId,
-        status: 'active'
-      }
-    })
-    if (!card) throw new NotFoundErrorResponse('Card not found.')
+    const session = await mongoClientInstance.startSession()
 
-    const labelId = data.labelId
+    try {
+      return await session.withTransaction(async () => {
+        const boardId = boardAccess.board._id.toString()
+        const card = await CardRepo.findOne({
+          filter: {
+            _id: new ObjectId(_id),
+            boardId,
+            status: 'active'
+          },
+          options: { session }
+        })
+        if (!card) throw new NotFoundErrorResponse('Card not found.')
 
-    const label = await LabelRepo.findOne({
-      filter: { _id: new ObjectId(labelId), boardId }
-    })
-    if (!label) throw new NotFoundErrorResponse('Label not found.')
+        const labelId = new ObjectId(data.labelId)
 
-    let updatedCard = null
-    if (card.labelIds.includes(labelId)) {
-      updatedCard = await CardRepo.updateOne({
-        filter: { _id: new ObjectId(_id), boardId },
-        data: { $pull: { labelIds: labelId } }
+        const label = await LabelRepo.findOne({
+          filter: { _id: labelId, boardId },
+          options: { session }
+        })
+        if (!label) throw new NotFoundErrorResponse('Label not found.')
+
+        const isLabelAssigned = card.labelIds?.some(
+          (id) => id.toString() === labelId.toString()
+        )
+
+        let updatedCard = null
+        if (isLabelAssigned) {
+          updatedCard = await CardRepo.updateOne({
+            filter: { _id: new ObjectId(_id), boardId },
+            data: { $pull: { labelIds: labelId } },
+            session
+          })
+        } else {
+          updatedCard = await CardRepo.updateOne({
+            filter: { _id: new ObjectId(_id), boardId },
+            data: { $push: { labelIds: labelId } },
+            session
+          })
+        }
+
+        emitCardUpdatedBasic({
+          boardId: card.boardId,
+          card: updatedCard
+        })
+
+        return updatedCard
       })
-    } else {
-      updatedCard = await CardRepo.updateOne({
-        filter: { _id: new ObjectId(_id), boardId },
-        data: { $push: { labelIds: labelId } }
-      })
+    } finally {
+      await session.endSession()
     }
-
-    emitCardUpdatedBasic({
-      boardId: card.boardId,
-      card: updatedCard
-    })
-
-    return updatedCard
   }
 
   static delete = async ({ _id, boardAccess }) => {

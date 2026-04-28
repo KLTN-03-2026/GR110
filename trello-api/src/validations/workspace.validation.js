@@ -106,8 +106,6 @@ const updateRoleSchema = Joi.object({
       'array.includesRequiredUnknowns': 'Invalid permission code found.'
     })
 })
-  .or('name', 'permissionCodes')
-  .unknown(false)
 
 const updateRolesSchema = Joi.array()
   .items(updateRoleSchema.required())

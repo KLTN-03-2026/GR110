@@ -3,7 +3,9 @@ export const groupPermission = ({ permissions, prefix }) => {
   permissions.forEach((p) => {
     const parts = p.permissionCode.split('.')
     let groupKey
-    if (parts.length > 3) {
+    if (parts.length === 2) {
+      groupKey = parts[0]
+    } else if (parts.length > 3) {
       groupKey = parts.slice(0, 3).join('.')
     } else {
       groupKey = parts.slice(0, 2).join('.')

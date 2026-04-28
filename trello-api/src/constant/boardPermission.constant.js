@@ -1,7 +1,7 @@
 export const BOARD_PERMISSIONS = {
   VIEW: 'board.view', // done
   UPDATE: 'board.update', // done
-  DELETE: 'board.delete',
+  DELETE: 'board.delete', // done
 
   MEMBER_INVITE: 'board.member.invite', // done
   MEMBER_REMOVE: 'board.member.remove', // done
@@ -19,7 +19,7 @@ export const BOARD_PERMISSIONS = {
   COLUMN_UPDATE: 'board.column.update', // done
   COLUMN_ARCHIVE: 'board.column.archive', // done
   COLUMN_RESTORE: 'board.column.restore', //
-  COLUMN_DELETE: 'board.column.delete', //
+  COLUMN_DELETE: 'board.column.delete', // done
 
   CARD_CREATE: 'board.card.create', // done
   CARD_UPDATE: 'board.card.update', // done

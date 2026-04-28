@@ -14,6 +14,7 @@ Router.use(asyncHandler(authMiddleware.isAuthorized))
 
 Router.route('/:boardId').post(
   asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
+  asyncHandler(validate(commentValidation.create)),
   asyncHandler(
     boardMiddleware.checkPermission(BOARD_PERMISSIONS.CARD_COMMENT_CREATE)
   ),

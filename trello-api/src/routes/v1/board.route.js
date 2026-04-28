@@ -9,7 +9,11 @@ import { workspaceMiddleware } from '~/middlewares/workspacePermission.middlewar
 import { WORKSPACE_PERMISSIONS } from '~/constant/workspacePermission.constant'
 import { boardMiddleware } from '~/middlewares/boardPermission.middleware'
 import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
-import { deleteBoardRoleParamSchema } from '~/validations/boardRole.validation'
+import {
+  createBoardRoleSchema,
+  deleteBoardRoleParamSchema,
+  updateBoardRolesSchema
+} from '~/validations/boardRole.validation'
 import { boardMemberValidation } from '~/validations/boardMember.validation'
 import { multerUploadMiddleware } from '~/middlewares/multerUpload.middleware'
 import AIController from '~/controllers/ai.controller'
@@ -33,7 +37,6 @@ Router.route('/backgrounds').get(
   asyncHandler(BoardController.getBackground)
 )
 
-// done
 Router.route('/').post(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(boardValidation.create)),
@@ -62,7 +65,6 @@ Router.route('/:boardId')
     asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
     asyncHandler(BoardController.getDetails)
   )
-  // done
   .put(
     asyncHandler(authMiddleware.isAuthorized),
     asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
@@ -107,7 +109,7 @@ Router.route('/members/leave/:boardId/:memberId').delete(
       'params'
     )
   ),
-  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
+  asyncHandler(boardMiddleware.checkPermission(null)),
   asyncHandler(BoardController.leaveBoard)
 )
 
@@ -119,6 +121,9 @@ Router.route('/members/:boardId/:memberId')
         boardMemberValidation.updateAndDeleteBoardMemberParamSchema,
         'params'
       )
+    ),
+    asyncHandler(
+      validate(boardMemberValidation.updateBoardMemberRoleSchema, 'body')
     ),
     asyncHandler(
       boardMiddleware.checkPermission(BOARD_PERMISSIONS.MEMBER_CHANGE_ROLE)
@@ -141,6 +146,7 @@ Router.route('/members/:boardId/:memberId')
 
 Router.route('/roles').post(
   asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createBoardRoleSchema, 'body')),
   asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.ROLE_CREATE)),
   asyncHandler(BoardController.createRole)
 )
@@ -148,6 +154,7 @@ Router.route('/roles').post(
 Router.route('/roles/:boardId').put(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
+  asyncHandler(validate(updateBoardRolesSchema, 'body')),
   asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.ROLE_UPDATE)),
   asyncHandler(BoardController.updateRole)
 )
@@ -166,6 +173,7 @@ Router.route('/custom-background/:boardId').post(
   asyncHandler(multerUploadMiddleware.uploadSingleImage),
   asyncHandler(BoardController.createBackground)
 )
+
 Router.route('/custom-background/:boardId/:backgroundId').delete(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(boardValidation.customBackgroundParams, 'params')),

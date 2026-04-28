@@ -31,6 +31,7 @@ import BackgroundRepo from '~/repo/adminBackground.repo'
 import S3Provider from '~/providers/S3Provider'
 import { emitBoardUpdated } from '~/realtime/realtimeEmitters/boardRealtime.emitter'
 import { emitCardMoved } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
+import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
 
 const DEFAULT_BOARD_LABELS = [
   { title: '', color: 'green' },
@@ -138,7 +139,7 @@ class BoardService {
   static fetchBoardByWorkspaceId = async ({
     workspaceId,
     page = 1,
-    itemsPerPage = 10,
+    itemsPerPage = 10
   }) => {
     const currentPage = Math.max(Number(page) || 1, 1)
     const limit = Math.max(Number(itemsPerPage) || 10, 1)
@@ -160,7 +161,6 @@ class BoardService {
       }),
 
       BoardRepo.count({ filter: { workspaceId } })
-
     ])
 
     return { boards, count }
@@ -177,7 +177,7 @@ class BoardService {
     return boards
   }
 
-  static getBackground = async ({ userContext }) => {
+  static getBackground = async () => {
     return await BackgroundRepo.findMany({
       filter: {
         isDelete: false,
@@ -575,14 +575,19 @@ class BoardService {
 
   // ============================== ROLE & PERMISSION ==============================
   static fetchBoardPermission = async () => {
-    const boardPermissions = await BoardPermissionRepo.findMany({})
+    const boardPermissions = await BoardPermissionRepo.findMany({
+      options: { projection: { _id: 1, permissionCode: 1, description: 1 } }
+    })
 
     return boardPermissions
   }
 
   static fetchBoardRole = async ({ _id }) => {
     const boardRoles = await BoardRoleRepo.findMany({
-      filter: { boardId: _id.toString() }
+      filter: { boardId: _id.toString() },
+      options: {
+        projection: { key: 0, createdAt: 0, updatedAt: 0, workspaceId: 0 }
+      }
     })
 
     return boardRoles
@@ -614,7 +619,7 @@ class BoardService {
             boardId: boardAccess.board._id.toString(),
             isDefault: false
           },
-          session
+          options: { session }
         })
 
         if (countRoles >= features?.limits?.maxBoardRoles)
@@ -622,7 +627,19 @@ class BoardService {
             `Your current subscription plan allows a maximum of ${features.limits.maxBoardRoles} custom roles.`
           )
 
-        const createdRole = await BoardRoleRepo.createOne({ data, session })
+        const permissionCodes = this._normalizeBoardPermissionCodes(
+          data.permissionCodes || []
+        )
+
+        const createdRole = await BoardRoleRepo.createOne({
+          data: {
+            name: data.name,
+            permissionCodes,
+            boardId: boardAccess.board._id.toString(),
+            isDefault: false
+          },
+          session
+        })
 
         const role = await BoardRoleRepo.findOne({
           filter: { _id: new ObjectId(createdRole.insertedId) },
@@ -654,13 +671,19 @@ class BoardService {
   static updateRole = async ({ boardAccess, data }) => {
     const session = await mongoClientInstance.startSession()
     let updatedRoles = null
+    console.log('data::::', data)
     try {
       updatedRoles = await session.withTransaction(async () => {
         if (!Array.isArray(data) || !data.length) {
           throw new BadRequestErrorResponse('Role update data is required.')
         }
 
-        const roleIds = data.map((item) => item._id?.toString())
+        const roleIds = data.map((item) => item._id.toString())
+
+        if (new Set(roleIds).size !== roleIds.length)
+          throw new BadRequestErrorResponse(
+            'Duplicate role ids are not allowed.'
+          )
 
         const existedRoles = await BoardRoleRepo.findMany({
           filter: {
@@ -683,36 +706,41 @@ class BoardService {
         const updateResults = []
 
         for (const item of data) {
-          const { _id, isDefault, ...rest } = item
+          const { _id } = item
           const oldRole = oldRoleMap.get(_id.toString())
 
           if (!oldRole) continue
-          if (oldRole.isDefault) continue
 
-          const updateData = {
-            ...rest,
-            updatedAt: new Date()
+          const updateData = {}
+
+          if (item.name !== undefined) updateData.name = item.name
+          if (item.permissionCodes !== undefined) {
+            updateData.permissionCodes = this._normalizeBoardPermissionCodes(
+              item.permissionCodes
+            )
           }
 
           const hasChanged =
-            JSON.stringify({
-              name: oldRole.name || '',
-              description: oldRole.description || '',
-              permissionCodes: oldRole.permissionCodes || []
-            }) !==
-            JSON.stringify({
-              name: updateData.name ?? oldRole.name ?? '',
-              description: updateData.description ?? oldRole.description ?? '',
-              permissionCodes:
-                updateData.permissionCodes ?? oldRole.permissionCodes ?? []
-            })
+            (updateData.name !== undefined &&
+              updateData.name !== (oldRole.name || '')) ||
+            (updateData.permissionCodes !== undefined &&
+              !sameStringSet(
+                updateData.permissionCodes,
+                oldRole.permissionCodes || []
+              ))
 
           if (!hasChanged) continue
+
+          if (oldRole.isDefault)
+            throw new ForbiddenErrorResponse('Default roles cannot be updated.')
+
+          updateData.updatedAt = new Date()
 
           const updatedRole = await BoardRoleRepo.updateOne({
             filter: {
               _id: new ObjectId(_id),
-              boardId: boardAccess.board._id.toString()
+              boardId: boardAccess.board._id.toString(),
+              isDefault: false
             },
             data: { $set: updateData },
             session
@@ -721,7 +749,7 @@ class BoardService {
           updateResults.push(updatedRole)
 
           const oldName = oldRole?.name || ''
-          const newName = rest?.name || oldName
+          const newName = updateData.name || oldName
 
           await ActivityLogRepo.createOne({
             data: {
@@ -1297,15 +1325,48 @@ class BoardService {
       await session.endSession()
     }
   }
+
+  static _normalizeBoardPermissionCodes = (permissionCodes = []) => {
+    if (!Array.isArray(permissionCodes))
+      throw new BadRequestErrorResponse('Permission codes must be an array.')
+
+    const uniqueCodes = [...new Set(permissionCodes)]
+    const validCodes = Object.values(BOARD_PERMISSIONS)
+    const invalidCodes = uniqueCodes.filter(
+      (code) => !validCodes.includes(code)
+    )
+
+    if (invalidCodes.length > 0)
+      throw new BadRequestErrorResponse(
+        `Invalid board permission codes: ${invalidCodes.join(', ')}`
+      )
+
+    if (!uniqueCodes.includes(BOARD_PERMISSIONS.VIEW))
+      return [BOARD_PERMISSIONS.VIEW, ...uniqueCodes]
+
+    return uniqueCodes
+  }
 }
 
-const ensureBoardHasAtLeastOneAdmin = async ({ member, adminRole }) => {
+const sameStringSet = (left = [], right = []) => {
+  if (left.length !== right.length) return false
+
+  const rightSet = new Set(right)
+  return left.every((item) => rightSet.has(item))
+}
+
+const ensureBoardHasAtLeastOneAdmin = async ({
+  member,
+  adminRole,
+  session
+}) => {
   const totalAdmins = await BoardMemberRepo.countDocuments({
     filter: {
       boardId: member.boardId,
       boardRoleId: adminRole._id.toString(),
       status: 'active'
-    }
+    },
+    options: { session }
   })
 
   if (totalAdmins <= 1)

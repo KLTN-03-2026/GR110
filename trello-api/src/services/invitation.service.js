@@ -144,7 +144,7 @@ class InvitationService {
 
     const inviter = await UserRepo.findById({ _id: userContext._id })
 
-    createdInvitations.map((invitation) => {
+    createdInvitations.forEach((invitation) => {
       const data = {
         ...invitation,
         inviter: {
@@ -259,7 +259,7 @@ class InvitationService {
 
     const inviter = await UserRepo.findById({ _id: userContext._id })
 
-    createdInvitations.map((invitation) => {
+    createdInvitations.forEach((invitation) => {
       const data = {
         ...invitation,
         inviter: {

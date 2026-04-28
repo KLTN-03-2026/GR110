@@ -3,13 +3,10 @@ import Stack from '@mui/material/Stack'
 import Divider from '@mui/material/Divider'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { styled, alpha } from '@mui/material/styles'
-
-import SpaceDashboardIcon from '@mui/icons-material/SpaceDashboard'
 import HomeIcon from '@mui/icons-material/Home'
 import AddIcon from '@mui/icons-material/Add'
-
 import WorkspaceSidebarItem from './WorkspaceSidebarItem'
+import { styled, alpha } from '@mui/material/styles'
 
 const SidebarRootItem = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -49,20 +46,19 @@ const ItemLeft = styled(Box)(() => ({
 }))
 
 function SideBar({ workspaces, handleOpenCreateWorkspaceModal }) {
-
   return (
-    <Grid xs={12} sm={3} md={2}>
+    <Grid
+      xs={12}
+      sm={3}
+      md={2}
+      sx={{
+        height: 'calc(100vh - 125px)',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       <Stack spacing={1.2}>
         <SidebarRootItem className="active">
-          <ItemLeft>
-            <SpaceDashboardIcon fontSize="small" />
-            <Typography fontSize={15} fontWeight={600}>
-              Boards
-            </Typography>
-          </ItemLeft>
-        </SidebarRootItem>
-
-        <SidebarRootItem>
           <ItemLeft>
             <HomeIcon fontSize="small" />
             <Typography fontSize={15} fontWeight={600}>
@@ -74,7 +70,14 @@ function SideBar({ workspaces, handleOpenCreateWorkspaceModal }) {
 
       <Divider sx={{ my: 1.5 }} />
 
-      <Stack spacing={1}>
+      <Stack
+        spacing={1}
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflow: 'auto'
+        }}
+      >
         {workspaces.length === 0 && (
           <SidebarRootItem onClick={handleOpenCreateWorkspaceModal}>
             <ItemLeft>
@@ -89,10 +92,11 @@ function SideBar({ workspaces, handleOpenCreateWorkspaceModal }) {
             </ItemLeft>
           </SidebarRootItem>
         )}
-
-        {workspaces?.map((w) => (
-          <WorkspaceSidebarItem key={w._id} workspace={w} />
-        ))}
+        <Box>
+          {workspaces?.map((w) => (
+            <WorkspaceSidebarItem key={w._id} workspace={w} />
+          ))}
+        </Box>
       </Stack>
     </Grid>
   )
