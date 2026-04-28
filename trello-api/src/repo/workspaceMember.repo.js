@@ -134,5 +134,11 @@ class WorkspaceMemberRepo {
       .collection(workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME)
       .deleteMany(filter, { session })
   }
+
+  static countDocuments = async ({ filter = {} }) => {
+    return await GET_DB()
+      .collection(workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME)
+      .countDocuments(filter)
+  }
 }
 export default WorkspaceMemberRepo

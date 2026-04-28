@@ -65,6 +65,72 @@ class WorkspaceRepo {
           $match: {
             members: { $ne: [] }
           }
+        },
+        {
+          $lookup: {
+            from: subscriptionModel.SUBSCRIPTION_COLLECTION_NAME,
+            let: { workspaceId: { $toString: '$_id' } },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$workspaceId', '$$workspaceId'] },
+                      { $eq: ['$status', 'active'] }
+                    ]
+                  }
+                }
+              },
+              { $sort: { startedAt: -1, createdAt: -1 } },
+              { $limit: 1 }
+            ],
+            as: 'subscription'
+          }
+        },
+        {
+          $unwind: {
+            path: '$subscription',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $lookup: {
+            from: planModel.PLAN_COLLECTION_NAME,
+            let: { planId: '$subscription.planId' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: [{ $toString: '$_id' }, '$$planId']
+                  }
+                }
+              },
+              {
+                $project: {
+                  title: 1
+                }
+              }
+            ],
+            as: 'plan'
+          }
+        },
+        {
+          $unwind: {
+            path: '$plan',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+        {
+          $addFields: {
+            subID: '$subscription._id',
+            planName: '$plan.title'
+          }
+        },
+        {
+          $project: {
+            subscription: 0,
+            plan: 0
+          }
         }
       ])
       .toArray()

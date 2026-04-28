@@ -42,5 +42,55 @@ class AttachmentRepo {
       .collection(attachmentModel.CARD_ATTACHMENT_NAME)
       .deleteMany(filter, { session })
   }
+
+  static sumFileSizeByWorkspaceId = async ({ workspaceId }) => {
+    const result = await GET_DB()
+      .collection(attachmentModel.CARD_ATTACHMENT_NAME)
+      .aggregate([
+         {
+          $addFields: {
+            cardObjectId: { $toObjectId: '$cardId' }
+          }
+        },
+        {
+          $lookup: {
+            from: 'cards',
+            localField: 'cardObjectId',
+            foreignField: '_id',
+            as: 'card'
+          }
+        },
+        { $unwind: '$card' },
+        {
+          $addFields: {
+            boardObjectId: { $toObjectId: '$card.boardId' }
+          }
+        },
+        {
+          $lookup: {
+            from: 'boards',
+            localField: 'boardObjectId',
+            foreignField: '_id',
+            as: 'board'
+          }
+        },
+        { $unwind: '$board' },
+        {
+          $match: {
+            'board.workspaceId': workspaceId,
+            fileSize: { $gt: 0 }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: '$fileSize' }
+          }
+        }
+      ])
+      .toArray()
+
+    return result[0]?.total || 0
+  }
 }
 export default AttachmentRepo

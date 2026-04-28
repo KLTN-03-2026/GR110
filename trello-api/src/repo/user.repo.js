@@ -1,4 +1,3 @@
-import { update } from 'lodash'
 import { ObjectId } from 'mongodb'
 import { GET_DB } from '~/config/mongodb'
 import { userModel } from '~/models/user.model'

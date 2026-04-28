@@ -80,7 +80,7 @@ class WorkspaceService {
     })
 
     if (!workspaces || !workspaces.length) return []
-
+    
     return workspaces
   }
 
@@ -744,6 +744,235 @@ class WorkspaceService {
   static fetchPlans = async ({ workspaceId }) => {
     const plans = await WorkspaceRepo.fetchByPlan(workspaceId)
     return plans
+  }
+
+  static buildQuota = ({ key, label, used = 0, limit = 0, unit = '', mode = 'workspace' }) => {
+    const safeUsed = Number(used || 0)
+    const safeLimit = Number(limit || 0)
+    const percent = safeLimit > 0
+      ? Number(Math.min((safeUsed / safeLimit) * 100, 100).toFixed(2))
+      : 0
+
+    return {
+      key,
+      label,
+      mode,
+      used: safeUsed,
+      limit: safeLimit,
+      remaining: Math.max(safeLimit - safeUsed, 0),
+      percent,
+      unit
+    }
+  }
+
+  static fetchQuota = async ({ workspaceId, userContext }) => {
+    if (!workspaceId || !ObjectId.isValid(workspaceId)) {
+      throw new BadRequestErrorResponse('Invalid workspace id')
+    }
+
+    const workspace = await WorkspaceRepo.findOne({
+      filter: {
+        _id: new ObjectId(workspaceId)
+      }
+    })
+
+    if (!workspace) {
+      throw new NotFoundErrorResponse('Workspace not found')
+    }
+
+    const workspaceMember = await WorkspaceMemberRepo.findOne({
+      filter: {
+        workspaceId: workspaceId,
+        userId: userContext._id
+      }
+    })
+
+    if (!workspaceMember) {
+      throw new ForbiddenErrorResponse('You do not have access to this workspace')
+    }
+
+    let subscription = await SubscriptionRepo.findOne({
+      filter: {
+        workspaceId: workspaceId,
+        status: 'active'
+      }
+    })
+
+    let planFeatureSnapshot = subscription?.planFeatureSnapshot
+
+    if (!subscription) {
+      const freePlan = await PlanRepo.findOne({
+        filter: {
+          _id: new ObjectId('69dc9cc2454ef403fb52c8ba'),
+          isDeleted: false,
+          status: 'active'
+        }
+      })
+
+      if (!freePlan) throw new NotFoundErrorResponse('Default Free plan not found')
+
+      planFeatureSnapshot = freePlan.feature
+      subscription = {
+        _id: null,
+        workspaceId,
+        planId: freePlan._id.toString(),
+        status: 'free',
+        startedAt: null,
+        endedAt: null,
+        planFeatureSnapshot
+      }
+    }
+
+    const limits = planFeatureSnapshot?.limits || {}
+
+    const [
+      membersUsed,
+      boardsUsed,
+      workspaceRolesUsed,
+      storageUsedBytes,
+      maxBoardRolesUsed,
+      maxColumnsPerBoardUsed,
+      maxCardsPerBoardUsed,
+      maxCommentsPerCardUsed,
+      maxChecklistItemsPerCardUsed
+    ] = await Promise.all([
+      WorkspaceMemberRepo.countDocuments({
+        filter: { workspaceId, status: 'active' }
+      }),
+
+      BoardRepo.countDocuments({
+        filter: { workspaceId, status: 'active' }
+      }),
+
+      WorkspaceRoleRepo.count({
+        filter: { workspaceId }
+      }),
+
+      AttachmentRepo.sumFileSizeByWorkspaceId({
+        workspaceId
+      }),
+
+      BoardRoleRepo.getMaxBoardRolesPerBoard({
+        workspaceId
+      }),
+
+      ColumnRepo.getMaxColumnsPerBoard({
+        workspaceId
+      }),
+
+      CardRepo.getMaxCardsPerBoard({
+        workspaceId
+      }),
+
+      CommentRepo.getMaxCommentsPerCard({
+        workspaceId
+      }),
+
+      TaskRepo.getMaxTasksPerCard({
+        workspaceId
+      })
+    ])
+
+    const storageUsedMb = Number(((storageUsedBytes || 0) / 1024 / 1024).toFixed(2))
+
+    return {
+      subscription: {
+        _id: subscription._id,
+        workspaceId: subscription.workspaceId,
+        planId: subscription.planId,
+        status: subscription.status,
+        startedAt: subscription.startedAt,
+        endedAt: subscription.endedAt,
+        planFeatureSnapshot
+      },
+      quota: {
+        workspace: [
+          this.buildQuota({
+            key: 'maxMembers',
+            label: 'Workspace members',
+            used: membersUsed,
+            limit: limits.maxMembers,
+            mode: 'workspace'
+          }),
+          this.buildQuota({
+            key: 'maxBoards',
+            label: 'Boards',
+            used: boardsUsed,
+            limit: limits.maxBoards,
+            mode: 'workspace'
+          }),
+          this.buildQuota({
+            key: 'maxWorkspaceRoles',
+            label: 'Workspace roles',
+            used: workspaceRolesUsed,
+            limit: limits.maxWorkspaceRoles,
+            mode: 'workspace'
+          }),
+          this.buildQuota({
+            key: 'maxStorageMb',
+            label: 'Storage',
+            used: storageUsedMb,
+            limit: limits.maxStorageMb,
+            unit: 'MB',
+            mode: 'workspace'
+          })
+        ],
+        board: [
+          this.buildQuota({
+            key: 'maxBoardRoles',
+            label: 'Highest board roles usage',
+            used: maxBoardRolesUsed,
+            limit: limits.maxBoardRoles,
+            mode: 'board'
+          }),
+          this.buildQuota({
+            key: 'maxColumnsPerBoard',
+            label: 'Highest columns in a board',
+            used: maxColumnsPerBoardUsed,
+            limit: limits.maxColumnsPerBoard,
+            mode: 'board'
+          }),
+          this.buildQuota({
+            key: 'maxCardsPerBoard',
+            label: 'Highest cards in a board',
+            used: maxCardsPerBoardUsed,
+            limit: limits.maxCardsPerBoard,
+            mode: 'board'
+          })
+        ],
+        card: [
+          this.buildQuota({
+            key: 'maxCommentsPerCard',
+            label: 'Highest comments in a card',
+            used: maxCommentsPerCardUsed,
+            limit: limits.maxCommentsPerCard,
+            mode: 'card'
+          }),
+          this.buildQuota({
+            key: 'maxChecklistItemsPerCard',
+            label: 'Highest checklist items in a card',
+            used: maxChecklistItemsPerCardUsed,
+            limit: limits.maxChecklistItemsPerCard,
+            mode: 'card'
+          })
+        ],
+        rules: [
+          {
+            key: 'maxFileSizeMb',
+            label: 'Max file size',
+            limit: Number(limits.maxFileSizeMb || 0),
+            unit: 'MB',
+            mode: 'rule'
+          },
+          {
+            key: 'maxFilesPerUpload',
+            label: 'Files per upload',
+            limit: Number(limits.maxFilesPerUpload || 0),
+            mode: 'rule'
+          }
+        ]
+      }
+    }
   }
 
   static _validatePermissionCodes = (permissionCodes) => {

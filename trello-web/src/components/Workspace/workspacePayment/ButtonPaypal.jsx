@@ -15,8 +15,6 @@ export default function PaypalCheckout(payment) {
     >
       <PayPalButtons
         createOrder={async () => {
-          console.log(subscriptionId);
-          
           const data = await createOrderPal({ subscriptionId, payment })
           return data.orderId
         }}

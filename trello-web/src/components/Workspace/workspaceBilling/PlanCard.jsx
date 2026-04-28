@@ -23,8 +23,8 @@ export function PlanCard({ plan, selected, onSelect }) {
       sx={{
         position: 'relative',
         cursor: 'pointer',
-        px: { xs: 2.5, md: 3 },
-        py: 3,
+        px: { xs: 2, md: 2.25 },
+        py: 2.25,
         borderRadius: '16px',
         border: '1px solid',
         borderColor: selected
@@ -68,9 +68,9 @@ export function PlanCard({ plan, selected, onSelect }) {
           size='small'
           sx={{
             position: 'absolute',
-            top: 14,
-            right: 14,
-            height: 28,
+            top: 12,
+            right: 12,
+            height: 26,
             borderRadius: '999px',
             fontWeight: 700,
             color: theme.palette.primary.contrastText,
@@ -82,15 +82,18 @@ export function PlanCard({ plan, selected, onSelect }) {
         />
       )}
 
-      <Stack spacing={2.5}>
-        <Box sx={{ textAlign: 'center', pt: selected ? 1.5 : 0.5 }}>
+      <Stack spacing={1.75}>
+        <Stack
+          direction='row'
+          spacing={1.5}
+          alignItems='flex-start'
+          sx={{ pr: selected ? 9 : 0 }}
+        >
           <Box
             sx={{
-              width: 48,
-              height: 48,
-              borderRadius: '16px',
-              mx: 'auto',
-              mb: 1.5,
+              width: 42,
+              height: 42,
+              borderRadius: '14px',
               display: 'grid',
               placeItems: 'center',
               bgcolor: selected
@@ -101,38 +104,43 @@ export function PlanCard({ plan, selected, onSelect }) {
               color: selected ? 'primary.main' : 'text.secondary'
             }}
           >
-            <WorkspacePremiumRoundedIcon />
+            <WorkspacePremiumRoundedIcon fontSize='small' />
           </Box>
 
-          <Typography
-            sx={{
-              fontSize: 22,
-              fontWeight: 800,
-              color: 'text.primary',
-              lineHeight: 1.2,
-              mb: 0.75
-            }}
-          >
-            {plan.title}
-          </Typography>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              sx={{
+                fontSize: 18,
+                fontWeight: 800,
+                color: 'text.primary',
+                lineHeight: 1.2,
+                mb: 0.5
+              }}
+            >
+              {plan.title}
+            </Typography>
 
-          <Typography
-            sx={{
-              fontSize: 13,
-              color: 'text.secondary',
-              minHeight: 40,
-              lineHeight: 1.5
-            }}
-          >
-            {plan.description || 'A balanced plan for your workspace needs'}
-          </Typography>
-        </Box>
+            <Typography
+              sx={{
+                fontSize: 12.5,
+                color: 'text.secondary',
+                lineHeight: 1.45,
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden'
+              }}
+            >
+              {plan.description || 'A balanced plan for your workspace needs'}
+            </Typography>
+          </Box>
+        </Stack>
 
         <Box
           sx={{
-            borderRadius: 2.5,
-            px: 2,
-            py: 1.75,
+            borderRadius: 2,
+            px: 1.75,
+            py: 1.25,
             backgroundColor: isDark
               ? alpha(theme.palette.common.white, 0.04)
               : alpha(theme.palette.primary.main, 0.03),
@@ -152,7 +160,7 @@ export function PlanCard({ plan, selected, onSelect }) {
 
         <Divider />
 
-        <Stack spacing={1.35}>
+        <Stack spacing={0.65}>
           {plan.features.map((feature, index) => (
             <FeatureItem
               key={`${plan.id}-${feature.iconKey}-${index}`}

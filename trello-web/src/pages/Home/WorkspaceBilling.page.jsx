@@ -14,10 +14,16 @@ import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import useBillingPage from '~/hooks/workspaceBilling.hook'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { createWorkspacePayment } from '~/apis/subscriptions.api'
+import {
+  createWorkspacePayment,
+  selectWorkspaceFreePlan
+} from '~/apis/subscriptions.api'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
 import ViewKanbanOutlinedIcon from '@mui/icons-material/ViewKanbanOutlined'
+import { useDispatch } from 'react-redux'
+import { fetchWorkspacesAPI } from '~/redux/workspace/workspacesSlice'
+import ConfirmDialog from '~/components/Workspace/workspaceBilling/ConfirmDialog'
 
 const dotPatternSx = {
   position: 'absolute',
@@ -28,19 +34,32 @@ const dotPatternSx = {
   pointerEvents: 'none'
 }
 
+const PLAN_FREE = '69dc9cc2454ef403fb52c8ba'
+
 export default function WorkspaceBillingPage() {
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
   const { plans } = useBillingPage()
   const [selectedPlan, setSelectedPlan] = useState('')
+  const [currentPlanId, setCurrentPlanId] = useState('')
+  const [openFreePlanConfirm, setOpenFreePlanConfirm] = useState(false)
+  const [isSelectingFreePlan, setIsSelectingFreePlan] = useState(false)
 
+  const dispatch = useDispatch()
   const navigate = useNavigate()
   const { workspaceId } = useParams()
 
   useEffect(() => {
-    if (!plans.length || selectedPlan) return
-    const PLAN_FREE = '69dc9cc2454ef403fb52c8ba'
+    if (!plans.length) return
+
     const currentPlan = plans.find((p) => p.isCurrentPlan)
+
+    if (currentPlan && !currentPlanId) {
+      setCurrentPlanId(currentPlan.id)
+    }
+
+    if (selectedPlan) return
+
     if (currentPlan) {
       setSelectedPlan(currentPlan.id)
       return
@@ -51,11 +70,21 @@ export default function WorkspaceBillingPage() {
       return
     }
     setSelectedPlan(plans[0].id)
-  }, [plans, selectedPlan])
+  }, [plans, selectedPlan, currentPlanId])
 
   const activePlan = plans.find((p) => p.id === selectedPlan)
+  const isActivePlanCurrent = activePlan?.id === currentPlanId
+  const isDowngradeToFree =
+    activePlan?.id === PLAN_FREE && currentPlanId && currentPlanId !== PLAN_FREE
 
   const handleSelectPlan = async () => {
+    if (!activePlan) return
+
+    if (isDowngradeToFree) {
+      setOpenFreePlanConfirm(true)
+      return
+    }
+
     const res = await createWorkspacePayment({
       workspaceId,
       planId: activePlan.id
@@ -64,6 +93,29 @@ export default function WorkspaceBillingPage() {
     navigate(`/h/workspaces/${workspaceId}/payment/${res.subscription.id}`, {
       state: res
     })
+  }
+
+  const handleCloseFreePlanConfirm = () => {
+    if (isSelectingFreePlan) return
+    setOpenFreePlanConfirm(false)
+  }
+
+  const handleConfirmFreePlan = async () => {
+    try {
+      setIsSelectingFreePlan(true)
+
+      await selectWorkspaceFreePlan({
+        workspaceId,
+        planId: PLAN_FREE
+      })
+
+      setCurrentPlanId(PLAN_FREE)
+      setSelectedPlan(PLAN_FREE)
+      setOpenFreePlanConfirm(false)
+      dispatch(fetchWorkspacesAPI())
+    } finally {
+      setIsSelectingFreePlan(false)
+    }
   }
 
   return (
@@ -149,15 +201,15 @@ export default function WorkspaceBillingPage() {
           {activePlan && (
             <Chip
               icon={<CheckCircleRoundedIcon sx={{ fontSize: 15 }} />}
-              label={activePlan.isCurrentPlan ? 'Current plan' : 'Plan selected'}
+              label={isActivePlanCurrent ? 'Current plan' : 'Plan selected'}
               sx={{
                 height: 32,
-                color: activePlan.isCurrentPlan ? '#bbf7d0' : '#fde68a',
+                color: isActivePlanCurrent ? '#bbf7d0' : '#fde68a',
                 fontWeight: 700,
                 bgcolor: 'rgba(255,255,255,0.10)',
                 border: '1px solid rgba(255,255,255,0.16)',
                 '& .MuiChip-icon': {
-                  color: activePlan.isCurrentPlan ? '#86efac' : '#fde68a'
+                  color: isActivePlanCurrent ? '#86efac' : '#fde68a'
                 }
               }}
             />
@@ -212,7 +264,7 @@ export default function WorkspaceBillingPage() {
                 {activePlan && (
                   <Chip
                     label={
-                      activePlan.isCurrentPlan
+                      isActivePlanCurrent
                         ? `Current: ${activePlan.title}`
                         : `Selected: ${activePlan.title}`
                     }
@@ -220,14 +272,14 @@ export default function WorkspaceBillingPage() {
                     sx={{
                       height: 30,
                       fontWeight: 700,
-                      color: activePlan.isCurrentPlan
+                      color: isActivePlanCurrent
                         ? 'success.main'
                         : 'primary.main',
-                      bgcolor: activePlan.isCurrentPlan
+                      bgcolor: isActivePlanCurrent
                         ? alpha(theme.palette.success.main, isDark ? 0.14 : 0.08)
                         : alpha(theme.palette.primary.main, isDark ? 0.15 : 0.08),
                       border: `1px solid ${alpha(
-                        activePlan.isCurrentPlan
+                        isActivePlanCurrent
                           ? theme.palette.success.main
                           : theme.palette.primary.main,
                         0.2
@@ -263,7 +315,7 @@ export default function WorkspaceBillingPage() {
               <Button
                 variant="contained"
                 onClick={() => handleSelectPlan()}
-                disabled={activePlan?.isCurrentPlan}
+                disabled={isActivePlanCurrent}
                 startIcon={<RocketLaunchRoundedIcon />}
                 sx={{
                   minWidth: 300,
@@ -287,7 +339,7 @@ export default function WorkspaceBillingPage() {
                   }
                 }}
               >
-                {activePlan?.isCurrentPlan
+                {isActivePlanCurrent
                   ? `Current plan: ${activePlan.title}`
                   : `Select plan${activePlan ? `: ${activePlan.title}` : ''}`}
               </Button>
@@ -314,6 +366,18 @@ export default function WorkspaceBillingPage() {
           </Box>
         </Container>
       </Box>
+
+      <ConfirmDialog
+        open={openFreePlanConfirm}
+        title="Switch to Free plan?"
+        description="Your workspace will be moved back to the Free plan. Premium limits and paid capabilities will no longer be available after confirming."
+        confirmText="Switch to Free"
+        cancelText="Keep current plan"
+        confirmColor="warning"
+        loading={isSelectingFreePlan}
+        onClose={handleCloseFreePlanConfirm}
+        onConfirm={handleConfirmFreePlan}
+      />
     </>
   )
 }

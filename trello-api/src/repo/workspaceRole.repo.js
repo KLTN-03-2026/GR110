@@ -45,5 +45,7 @@ class WorkspaceRoleRepo {
       .collection(workspaceRoleModel.WORKSPACE_ROLE_COLLECTION_NAME)
       .countDocuments(filter, options)
   }
+
+  
 }
 export default WorkspaceRoleRepo
