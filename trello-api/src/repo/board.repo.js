@@ -240,5 +240,11 @@ class BoardRepo {
 
     return result
   }
+
+   static countDocuments = async ({ filter = {} }) => {
+    return await GET_DB()
+      .collection(boardModel.BOARD_COLLECTION_NAME)
+      .countDocuments(filter)
+  }
 }
 export default BoardRepo

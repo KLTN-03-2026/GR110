@@ -59,6 +59,61 @@ class CommentRepo {
       .collection(cardCommentModel.CARD_COMMENT_COLLECTION_NAME)
       .countDocuments(filter, options)
   }
+
+  static getMaxCommentsPerCard = async ({ workspaceId }) => {
+    const result = await GET_DB()
+      .collection(cardCommentModel.CARD_COMMENT_COLLECTION_NAME)
+      .aggregate([
+        {
+          $addFields: {
+            cardObjectId: { $toObjectId: '$cardId' }
+          }
+        },
+        {
+          $lookup: {
+            from: 'cards',
+            localField: 'cardObjectId',
+            foreignField: '_id',
+            as: 'card'
+          }
+        },
+        { $unwind: '$card' },
+        {
+          $addFields: {
+            boardObjectId: { $toObjectId: '$card.boardId' }
+          }
+        },
+        {
+          $lookup: {
+            from: 'boards',
+            localField: 'boardObjectId',
+            foreignField: '_id',
+            as: 'board'
+          }
+        },
+        { $unwind: '$board' },
+        {
+          $match: {
+            'board.workspaceId': workspaceId
+          }
+        },
+        {
+          $group: {
+            _id: '$cardObjectId',
+            total: { $sum: 1 }
+          }
+        },
+        {
+          $sort: { total: -1 }
+        },
+        {
+          $limit: 1
+        }
+      ])
+      .toArray()
+
+    return result[0]?.total || 0
+  }
 }
 export default CommentRepo
 

@@ -49,7 +49,6 @@ const ItemLeft = styled(Box)(() => ({
 }))
 
 function SideBar({ workspaces, handleOpenCreateWorkspaceModal }) {
-  
 
   return (
     <Grid xs={12} sm={3} md={2}>

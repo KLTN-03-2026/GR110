@@ -6,11 +6,24 @@ import IconButton from '@mui/material/IconButton'
 import CloseIcon from '@mui/icons-material/Close'
 import Fade from '@mui/material/Fade'
 import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import Divider from '@mui/material/Divider'
+import CircularProgress from '@mui/material/CircularProgress'
+import InputAdornment from '@mui/material/InputAdornment'
+import WorkspacesRoundedIcon from '@mui/icons-material/WorkspacesRounded'
+import AbcRoundedIcon from '@mui/icons-material/AbcRounded'
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
+import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded'
+import ViewKanbanOutlinedIcon from '@mui/icons-material/ViewKanbanOutlined'
+import { alpha, useTheme } from '@mui/material/styles'
 import modalConfig from '~/config/modalConfig'
 import { useCreateWorkspaceForm } from '~/hooks/createWorkspaceForm.hook'
 
 function CreateWorkspaceModal({ isOpen, loading, onClose, onSubmit }) {
   const { register, handleSubmit, errors } = useCreateWorkspaceForm({ isOpen })
+  const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
 
   return (
     <Modal open={isOpen} {...modalConfig} onClose={onClose}>
@@ -30,55 +43,73 @@ function CreateWorkspaceModal({ isOpen, loading, onClose, onSubmit }) {
             onSubmit={handleSubmit(onSubmit)}
             onClick={(e) => e.stopPropagation()}
             sx={{
-              display: 'flex',
-              width: { xs: '95vw', sm: 1000 },
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.05fr) 420px' },
+              width: { xs: '94vw', sm: 620, md: 980 },
               maxHeight: '90vh',
-              borderRadius: 2,
+              borderRadius: '24px',
               overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.6)'
+              bgcolor: 'background.paper',
+              boxShadow: isDark
+                ? '0 32px 80px rgba(0,0,0,0.55)'
+                : '0 32px 80px rgba(15,23,42,0.22)'
             }}
           >
-            {/* Left panel */}
             <Box
               sx={{
-                flex: 1,
                 bgcolor: 'background.paper',
-                p: { xs: 3, sm: 5 },
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 3,
                 overflowY: 'auto'
               }}
             >
-              <Box>
-                <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 700, color: 'text.primary' }}
-                >
-                  Let's build a Workspace
-                </Typography>
-                <Typography
-                  sx={{ color: 'text.secondary', fontSize: 14, mt: 1 }}
-                >
-                  Boost your productivity by making it easier for everyone to
-                  access boards in one location.
-                </Typography>
+              <Box
+                sx={{
+                  px: { xs: 2.5, sm: 3 },
+                  py: 2.5,
+                  borderBottom: `1px solid ${theme.palette.divider}`
+                }}
+              >
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                  <Box
+                    sx={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: '14px',
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: 'primary.contrastText',
+                      bgcolor: 'primary.main',
+                      boxShadow: `0 10px 24px ${alpha(
+                        theme.palette.primary.main,
+                        0.28
+                      )}`
+                    }}
+                  >
+                    <WorkspacesRoundedIcon />
+                  </Box>
+
+                  <Box sx={{ minWidth: 0, pr: 4 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.25 }}
+                    >
+                      Create workspace
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: 'text.secondary', mt: 0.25 }}
+                    >
+                      Bring boards, members, and roles together in one place.
+                    </Typography>
+                  </Box>
+                </Stack>
               </Box>
 
-              {/* Title */}
-              <Box>
-                <Typography
-                  sx={{
-                    color: 'text.primary',
-                    fontWeight: 700,
-                    fontSize: 13,
-                    mb: 0.75
-                  }}
-                >
-                  Workspace title
-                </Typography>
+              <Stack spacing={2.5} sx={{ p: { xs: 2.5, sm: 3 } }}>
                 <TextField
                   fullWidth
+                  label="Workspace title"
                   placeholder="Taco's Co."
                   {...register('title', {
                     required: 'Workspace title is required'
@@ -94,227 +125,281 @@ function CreateWorkspaceModal({ isOpen, loading, onClose, onSubmit }) {
                       mx: 0
                     }
                   }}
-                />
-              </Box>
-
-              {/* Description */}
-              <Box>
-                <Typography
-                  sx={{
-                    color: 'text.primary',
-                    fontWeight: 700,
-                    fontSize: 13,
-                    mb: 0.75
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AbcRoundedIcon fontSize="small" />
+                      </InputAdornment>
+                    )
                   }}
-                >
-                  Workspace description{' '}
-                  <Box
-                    component="span"
-                    sx={{ color: 'text.secondary', fontWeight: 400 }}
-                  >
-                    Optional
-                  </Box>
-                </Typography>
+                />
+
                 <TextField
                   fullWidth
+                  label="Workspace description"
                   multiline
-                  rows={5}
+                  minRows={4}
                   placeholder="Our team organizes everything here."
                   {...register('description')}
+                  helperText="Optional. Add a short note so members know what this workspace is for."
+                  FormHelperTextProps={{
+                    sx: {
+                      color: 'text.secondary',
+                      mx: 0
+                    }
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment
+                        position="start"
+                        sx={{ alignSelf: 'flex-start', mt: 1.5 }}
+                      >
+                        <DescriptionOutlinedIcon fontSize="small" />
+                      </InputAdornment>
+                    )
+                  }}
                 />
-                <Typography
-                  sx={{ color: 'text.secondary', fontSize: 12, mt: 0.75 }}
-                >
-                  Get your members on board with a few words about your
-                  Workspace.
-                </Typography>
-              </Box>
 
-              <Button
-                disabled={loading}
-                type="submit"
-                fullWidth
-                variant="contained"
-                sx={{
-                  bgcolor: '#579dff',
-                  color: '#fff',
-                  fontWeight: 700,
-                  textTransform: 'none',
-                  borderRadius: 1,
-                  py: 1,
-                  '&:hover': { bgcolor: '#4a8fe0' }
-                }}
-              >
-                Continue
-              </Button>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: '16px',
+                    bgcolor: alpha(theme.palette.primary.main, isDark ? 0.14 : 0.06),
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.14)}`
+                  }}
+                >
+                  <Stack direction="row" spacing={1.25} alignItems="flex-start">
+                    <AutoAwesomeRoundedIcon
+                      sx={{ color: 'primary.main', fontSize: 20, mt: 0.2 }}
+                    />
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      A workspace can contain multiple boards and keeps team
+                      permissions organized.
+                    </Typography>
+                  </Stack>
+                </Box>
+
+                <Divider />
+
+                <Stack
+                  direction={{ xs: 'column-reverse', sm: 'row' }}
+                  spacing={1.25}
+                  justifyContent="flex-end"
+                >
+                  <Button
+                    onClick={onClose}
+                    color="inherit"
+                    sx={{
+                      px: 2.5,
+                      borderRadius: '999px',
+                      fontWeight: 600
+                    }}
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    disabled={loading}
+                    type="submit"
+                    variant="contained"
+                    startIcon={
+                      loading ? (
+                        <CircularProgress size={16} color="inherit" />
+                      ) : null
+                    }
+                    sx={{
+                      minWidth: 150,
+                      px: 3,
+                      borderRadius: '999px',
+                      fontWeight: 700,
+                      boxShadow: `0 8px 22px ${alpha(
+                        theme.palette.primary.main,
+                        0.28
+                      )}`
+                    }}
+                  >
+                    {loading ? 'Creating...' : 'Create workspace'}
+                  </Button>
+                </Stack>
+              </Stack>
             </Box>
 
-            {/* Right panel */}
             <Box
               sx={{
-                width: { xs: 0, sm: 450 },
-                display: { xs: 'none', sm: 'flex' },
-                bgcolor: '#e6f4f8',
+                display: { xs: 'none', md: 'flex' },
+                position: 'relative',
+                overflow: 'hidden',
+                minHeight: 520,
+                p: 3,
                 alignItems: 'center',
                 justifyContent: 'center',
-                position: 'relative'
+                color: 'white',
+                background:
+                  'linear-gradient(145deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%)'
               }}
             >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundImage:
+                    'radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1px)',
+                  backgroundSize: '22px 22px'
+                }}
+              />
+
               <IconButton
                 onClick={onClose}
                 size="small"
-                sx={{ position: 'absolute', top: 12, right: 12, color: '#555' }}
+                sx={{
+                  position: 'absolute',
+                  top: 16,
+                  right: 16,
+                  zIndex: 2,
+                  color: 'rgba(255,255,255,0.78)',
+                  bgcolor: 'rgba(255,255,255,0.10)',
+                  '&:hover': {
+                    bgcolor: 'rgba(255,255,255,0.18)',
+                    color: 'white'
+                  }
+                }}
               >
                 <CloseIcon fontSize="small" />
               </IconButton>
 
-              {[
-                { top: '18%', right: '28%', size: 22 },
-                { bottom: '22%', left: '18%', size: 14 },
-                { bottom: '18%', right: '22%', size: 18 },
-                { top: '38%', left: '10%', size: 10 }
-              ].map((s, i) => (
-                <Box
-                  key={i}
-                  sx={{
-                    position: 'absolute',
-                    ...s,
-                    width: s.size,
-                    height: s.size,
-                    '&::before, &::after': {
-                      content: '""',
-                      position: 'absolute',
-                      bgcolor: '#4fc4cf',
-                      borderRadius: 4
-                    },
-                    '&::before': {
-                      width: '100%',
-                      height: '20%',
-                      top: '40%',
-                      left: 0
-                    },
-                    '&::after': {
-                      width: '20%',
-                      height: '100%',
-                      left: '40%',
-                      top: 0
-                    }
-                  }}
-                />
-              ))}
-
-              <Box
+              <Stack
+                spacing={2.5}
                 sx={{
-                  width: 260,
-                  height: 190,
-                  borderRadius: 2,
-                  background:
-                    'linear-gradient(135deg, #3bb8c4 0%, #5dd87a 100%)',
-                  boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
-                  p: 1.5,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1
+                  position: 'relative',
+                  zIndex: 1,
+                  width: '100%',
+                  maxWidth: 310
                 }}
               >
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: 24,
+                      lineHeight: 1.2,
+                      fontWeight: 800,
+                      letterSpacing: 0
+                    }}
+                  >
+                    Organize work faster
+                  </Typography>
+                  <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.72)' }}>
+                    Create a shared space for boards, people, and project
+                    permissions.
+                  </Typography>
+                </Box>
+
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    mb: 0.5
+                    borderRadius: '18px',
+                    bgcolor: 'rgba(255,255,255,0.12)',
+                    border: '1px solid rgba(255,255,255,0.16)',
+                    backdropFilter: 'blur(10px)',
+                    p: 1.5,
+                    boxShadow: '0 22px 54px rgba(0,0,0,0.24)'
                   }}
                 >
                   <Box
                     sx={{
-                      width: 40,
-                      height: 8,
-                      bgcolor: 'rgba(255,255,255,0.5)',
-                      borderRadius: 1
+                      borderRadius: '14px',
+                      bgcolor: 'rgba(255,255,255,0.94)',
+                      color: '#0f172a',
+                      p: 1.5
                     }}
-                  />
-                  <Box
-                    sx={{
-                      ml: 'auto',
-                      width: 20,
-                      height: 20,
-                      bgcolor: 'rgba(255,255,255,0.3)',
-                      borderRadius: 0.5
-                    }}
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1, flex: 1 }}>
-                  {[
-                    { cards: 3, badgeColor: '#e53935' },
-                    { cards: 2, badgeColor: '#fb8c00' },
-                    { cards: 2, badgeColor: null }
-                  ].map((col, ci) => (
+                  >
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+                      <ViewKanbanOutlinedIcon sx={{ fontSize: 20, color: '#2563eb' }} />
+                      <Typography sx={{ fontWeight: 800 }}>Team workspace</Typography>
+                    </Stack>
+
                     <Box
-                      key={ci}
                       sx={{
-                        flex: 1,
-                        bgcolor: 'rgba(255,255,255,0.85)',
-                        borderRadius: 1,
-                        p: 0.75,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 0.5
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+                        gap: 1
                       }}
                     >
-                      <Box
-                        sx={{
-                          height: 6,
-                          bgcolor: '#ccc',
-                          borderRadius: 0.5,
-                          mb: 0.25
-                        }}
-                      />
-                      {Array.from({ length: col.cards }).map((_, ri) => (
+                      {[
+                        { title: 'Plan', cards: 3, color: '#2563eb' },
+                        { title: 'Build', cards: 2, color: '#7c3aed' },
+                        { title: 'Ship', cards: 2, color: '#16a34a' }
+                      ].map((column) => (
                         <Box
-                          key={ri}
+                          key={column.title}
                           sx={{
-                            height: 22,
-                            bgcolor: '#e8e8e8',
-                            borderRadius: 0.5,
-                            p: 0.5,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 0.25
+                            minHeight: 142,
+                            borderRadius: '10px',
+                            bgcolor: '#f1f5f9',
+                            p: 1
                           }}
                         >
                           <Box
                             sx={{
-                              height: 4,
-                              bgcolor: '#bbb',
-                              borderRadius: 0.5,
-                              width: '80%'
+                              height: 7,
+                              width: '72%',
+                              borderRadius: 999,
+                              bgcolor: column.color,
+                              mb: 1
                             }}
                           />
-                          <Box
-                            sx={{
-                              height: 3,
-                              bgcolor: '#d0d0d0',
-                              borderRadius: 0.5,
-                              width: '60%'
-                            }}
-                          />
-                          {col.badgeColor && ri === col.cards - 1 && (
-                            <Box
-                              sx={{
-                                width: 10,
-                                height: 10,
-                                bgcolor: col.badgeColor,
-                                borderRadius: 0.5,
-                                mt: 'auto'
-                              }}
-                            />
-                          )}
+                          <Typography sx={{ fontSize: 11, fontWeight: 800, mb: 1 }}>
+                            {column.title}
+                          </Typography>
+                          <Stack spacing={0.75}>
+                            {Array.from({ length: column.cards }).map((_, index) => (
+                              <Box
+                                key={index}
+                                sx={{
+                                  height: 26,
+                                  borderRadius: '8px',
+                                  bgcolor: 'white',
+                                  border: '1px solid #e2e8f0',
+                                  p: 0.6
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    width: index % 2 ? '70%' : '86%',
+                                    height: 4,
+                                    borderRadius: 999,
+                                    bgcolor: '#cbd5e1',
+                                    mb: 0.45
+                                  }}
+                                />
+                                <Box
+                                  sx={{
+                                    width: '48%',
+                                    height: 3,
+                                    borderRadius: 999,
+                                    bgcolor: '#e2e8f0'
+                                  }}
+                                />
+                              </Box>
+                            ))}
+                          </Stack>
                         </Box>
                       ))}
                     </Box>
-                  ))}
+                  </Box>
                 </Box>
-              </Box>
+
+                <Stack spacing={1.25}>
+                  {['Shared boards', 'Workspace roles', 'Member management'].map(
+                    (item) => (
+                      <Stack key={item} direction="row" spacing={1} alignItems="center">
+                        <CheckCircleRoundedIcon sx={{ fontSize: 18, color: '#86efac' }} />
+                        <Typography sx={{ fontWeight: 700, color: 'rgba(255,255,255,0.86)' }}>
+                          {item}
+                        </Typography>
+                      </Stack>
+                    )
+                  )}
+                </Stack>
+              </Stack>
             </Box>
           </Box>
         </Box>

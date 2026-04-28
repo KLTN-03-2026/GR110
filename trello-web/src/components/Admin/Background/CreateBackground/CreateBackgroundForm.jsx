@@ -171,7 +171,7 @@ export default function CreateBackgroundForm() {
                   sx={selectSx}
                 >
                   <MenuItem value='board'>Board</MenuItem>
-                  <MenuItem value='column'>Column</MenuItem>
+                  <MenuItem value='card'>Card</MenuItem>
                 </Select>
               </FormControl>
             )}

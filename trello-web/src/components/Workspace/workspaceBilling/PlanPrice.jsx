@@ -19,7 +19,7 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
   const isDark = theme.palette.mode === 'dark'
 
   return (
-    <Box sx={{ mb: 0.5 }}>
+    <Box>
       <Box
         sx={{
           display: 'flex',
@@ -48,7 +48,7 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
         <Typography
           component="span"
           sx={{
-            fontSize: '36px !important',
+            fontSize: '30px !important',
             lineHeight: '0.95 !important',
             fontWeight: '900 !important',
             letterSpacing: 0,
@@ -64,7 +64,7 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
         <Typography
           component="span"
           sx={{
-            fontSize: '15px !important',
+            fontSize: '13px !important',
             fontWeight: 600,
             color: 'text.secondary',
             lineHeight: 1.1,

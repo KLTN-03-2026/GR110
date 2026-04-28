@@ -133,5 +133,14 @@ class WorkspaceController {
       })
     }).send(res)
   }
+
+  static fetchQuota = async (req, res) => {
+    new OkSuccessResponse({
+      metadata: await WorkspaceService.fetchQuota({
+        workspaceId: req.params.workspaceId,
+        userContext: req.userContext
+      })
+    }).send(res)
+  }
 }
 export default WorkspaceController

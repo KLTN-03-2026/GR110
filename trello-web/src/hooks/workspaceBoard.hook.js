@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { aiGenerateBoardAPI, createNewBoardsAPI } from '~/apis'
 import { fetchBoardByWorkspaceIdAPI } from '~/apis/board.api'
+import { fetchWorkspaceQuota } from '~/apis/workspace.api'
 
 const BOARD_ITEMS_PER_PAGE = 10
 

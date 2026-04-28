@@ -121,6 +121,12 @@ Router.route('/plans/:workspaceId').get(
   asyncHandler(WorkspaceController.fetchPlans)
 )
 
+Router.route('/quota/:workspaceId').get(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+  asyncHandler(WorkspaceController.fetchQuota)
+)
+
 Router.route('/:workspaceId')
   .get(
     asyncHandler(authMiddleware.isAuthorized),

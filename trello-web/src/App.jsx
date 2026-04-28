@@ -36,6 +36,7 @@ import WorkspacePaymentPage from './pages/Home/WorkspacePayment.page'
 import PaymentPage from './pages/Admin/Payment/Payment.page'
 import TicketPage from './pages/Tickets/Tickets.page'
 import AdminTicketPage from './pages/Admin/Ticket/Ticket.page'
+import { WorkspaceQuotaPage } from './pages/Home/WorkspaceQuota.page'
 /**
  * Giải pháp Clean Code trong việc xác định các route nào cần đăng nhập tài khoản xong thì mới cho truy cập
  * Sử dụng <Outlet /> của react-router-dom để hiển thị các Child Route (xem cách sử dụng trong App() bên dưới)
@@ -112,6 +113,11 @@ function App() {
             <Route
               path=":workspaceId/billing"
               element={<WorkspaceBillingPage />}
+            />
+
+            <Route
+              path=":workspaceId/quota"
+              element={<WorkspaceQuotaPage />}
             />
 
             <Route

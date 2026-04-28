@@ -116,6 +116,9 @@ class PaypalService {
   static captureOrderPaypal = async (event) => {
     const capture = event?.resource
 
+    console.log(capture);
+    
+
     if (!capture) {
       throw new BadRequestErrorResponse('PayPal webhook resource not found')
     }

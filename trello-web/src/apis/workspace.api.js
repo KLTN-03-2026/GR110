@@ -85,3 +85,10 @@ export const fetchWorkspacePlan = async (workspaceId) => {
   )
   return response.data.metadata
 }
+
+export const fetchWorkspaceQuota = async (workspaceId) => {
+  const response = await authorizeAxiosInstance.get(
+    `${API_ROOT}/v1/workspaces/quota/${workspaceId}`
+  )
+  return response.data.metadata
+}
