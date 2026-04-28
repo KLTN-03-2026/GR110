@@ -18,9 +18,7 @@ class BoardController {
 
   static getBackground = async (req, res) => {
     new OkSuccessResponse({
-      metadata: await BoardService.getBackground({
-        userContext: req.userContext
-      })
+      metadata: await BoardService.getBackground()
     }).send(res)
   }
 
@@ -116,8 +114,7 @@ class BoardController {
   static fetchBoardRole = async (req, res) => {
     new OkSuccessResponse({
       metadata: await BoardService.fetchBoardRole({
-        _id: req.params.boardId,
-        userContext: req.userContext
+        _id: req.params.boardId
       })
     }).send(res)
   }

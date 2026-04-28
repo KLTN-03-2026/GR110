@@ -5,7 +5,17 @@ import BoardMemberTable from '../BoardMemberTable'
 import { useBoardMember } from '~/hooks/boardMember.hook'
 import InviteUserBoardModal from '../../BoardMember/InviteUserBoardModal'
 function TabMember() {
-  const { members, roles, search, handleChangeMemberRole, handleInputSearchChange, handleOpenInviteModal, handleRemoveMember,handleLeaveBoard, inviteModal } = useBoardMember()
+  const {
+    members,
+    roles,
+    search,
+    handleChangeMemberRole,
+    handleInputSearchChange,
+    handleOpenInviteModal,
+    handleRemoveMember,
+    handleLeaveBoard,
+    inviteModal
+  } = useBoardMember()
 
   return (
     <>
@@ -56,13 +66,18 @@ function TabMember() {
         value={search}
         onChange={handleInputSearchChange}
         sx={{
-          mb: 2, mt: 2
+          mb: 2,
+          mt: 2
         }}
       />
-      <BoardMemberTable members={members} roles={roles} handleChangeMemberRole={handleChangeMemberRole}  handleRemoveMember={handleRemoveMember}
+      <BoardMemberTable
+        members={members}
+        roles={roles}
+        handleChangeMemberRole={handleChangeMemberRole}
+        handleRemoveMember={handleRemoveMember}
         handleLeaveWorkspace={handleLeaveBoard}
       />
-      <InviteUserBoardModal {...inviteModal}/>
+      <InviteUserBoardModal {...inviteModal} />
     </>
   )
 }

@@ -3,7 +3,7 @@ import { CARD_STATUS } from '~/constant/enum/card.enum'
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 
 const CARD_COVER_SCHEMA = Joi.object({
-  type: Joi.string().valid('color', 'image').required(),
+  type: Joi.string().valid('color', 'attachment').required(),
   value: Joi.string().required().trim().strict()
 }).default(null)
 

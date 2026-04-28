@@ -5,4 +5,12 @@ const updateAndDeleteBoardMemberParamSchema = Joi.object({
   boardId: idSchema,
   memberId: idSchema
 })
-export const boardMemberValidation = { updateAndDeleteBoardMemberParamSchema }
+
+const updateBoardMemberRoleSchema = Joi.object({
+  roleId: idSchema
+}).unknown(false)
+
+export const boardMemberValidation = {
+  updateAndDeleteBoardMemberParamSchema,
+  updateBoardMemberRoleSchema
+}

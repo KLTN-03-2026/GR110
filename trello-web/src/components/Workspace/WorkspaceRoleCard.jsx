@@ -233,34 +233,42 @@ function WorkspaceRoleCard({ role, data, handler }) {
             flexShrink: 0
           }}
         >
-          <Button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleOpenConfirmDialog({ roleId: role._id })
-            }}
-            size="small"
-            color="error"
-            variant="outlined"
-            startIcon={<DeleteOutlineIcon sx={{ fontSize: 16 }} />}
-            sx={{
-              height: 34,
-              minWidth: 'auto',
-              px: 1.35,
-              fontSize: 12,
-              fontWeight: 700,
-              textTransform: 'none',
-              borderRadius: '999px',
-              whiteSpace: 'nowrap',
-              bgcolor: alpha(theme.palette.error.main, isDark ? 0.1 : 0.04),
-              borderColor: alpha(theme.palette.error.main, isDark ? 0.35 : 0.2),
-              '&:hover': {
-                bgcolor: alpha(theme.palette.error.main, isDark ? 0.18 : 0.08),
-                borderColor: theme.palette.error.main
-              }
-            }}
-          >
-            Delete
-          </Button>
+          {!role?.isDefault && (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleOpenConfirmDialog({ roleId: role._id })
+              }}
+              size="small"
+              color="error"
+              variant="outlined"
+              startIcon={<DeleteOutlineIcon sx={{ fontSize: 16 }} />}
+              sx={{
+                height: 34,
+                minWidth: 'auto',
+                px: 1.35,
+                fontSize: 12,
+                fontWeight: 700,
+                textTransform: 'none',
+                borderRadius: '999px',
+                whiteSpace: 'nowrap',
+                bgcolor: alpha(theme.palette.error.main, isDark ? 0.1 : 0.04),
+                borderColor: alpha(
+                  theme.palette.error.main,
+                  isDark ? 0.35 : 0.2
+                ),
+                '&:hover': {
+                  bgcolor: alpha(
+                    theme.palette.error.main,
+                    isDark ? 0.18 : 0.08
+                  ),
+                  borderColor: theme.palette.error.main
+                }
+              }}
+            >
+              Delete
+            </Button>
+          )}
 
           <Box
             sx={{
@@ -324,7 +332,9 @@ function WorkspaceRoleCard({ role, data, handler }) {
           sx={{
             px: { xs: 2, md: 2.5 },
             py: 2,
-            bgcolor: isDark ? alpha(theme.palette.common.white, 0.025) : '#f8fafc'
+            bgcolor: isDark
+              ? alpha(theme.palette.common.white, 0.025)
+              : '#f8fafc'
           }}
         >
           <Stack spacing={2}>
@@ -376,15 +386,18 @@ function WorkspaceRoleCard({ role, data, handler }) {
                           borderRadius: 2,
                           bgcolor: has
                             ? alpha(
-                              theme.palette.success.main,
-                              isDark ? 0.14 : 0.07
-                            )
+                                theme.palette.success.main,
+                                isDark ? 0.14 : 0.07
+                              )
                             : isDark
                               ? alpha(theme.palette.common.white, 0.035)
                               : '#f8fafc',
                           border: '1px solid',
                           borderColor: has
-                            ? alpha(theme.palette.success.main, isDark ? 0.3 : 0.18)
+                            ? alpha(
+                                theme.palette.success.main,
+                                isDark ? 0.3 : 0.18
+                              )
                             : 'divider',
                           display: 'flex',
                           alignItems: 'flex-start',
@@ -405,38 +418,39 @@ function WorkspaceRoleCard({ role, data, handler }) {
                           arrow
                         >
                           <Box sx={{ mt: 0.25, flexShrink: 0 }}>
-                            {has ? (
-                              <CheckCircleOutlineIcon
-                                sx={{
-                                  fontSize: 18,
-                                  color: 'success.main',
-                                  cursor: 'pointer'
-                                }}
-                                onClick={() => {
-                                  handleChangeRolePermissions({
-                                    roleId: role._id,
-                                    permissionCode: p.permissionCode,
-                                    action: 'remove'
-                                  })
-                                }}
-                              />
-                            ) : (
-                              <RemoveCircleOutlineIcon
-                                sx={{
-                                  fontSize: 18,
-                                  color: 'text.disabled',
-                                  cursor: 'pointer',
-                                  '&:hover': { color: 'primary.main' }
-                                }}
-                                onClick={() => {
-                                  handleChangeRolePermissions({
-                                    roleId: role._id,
-                                    permissionCode: p.permissionCode,
-                                    action: 'add'
-                                  })
-                                }}
-                              />
-                            )}
+                            {!role?.isDefault &&
+                              (has ? (
+                                <CheckCircleOutlineIcon
+                                  sx={{
+                                    fontSize: 18,
+                                    color: 'success.main',
+                                    cursor: 'pointer'
+                                  }}
+                                  onClick={() => {
+                                    handleChangeRolePermissions({
+                                      roleId: role._id,
+                                      permissionCode: p.permissionCode,
+                                      action: 'remove'
+                                    })
+                                  }}
+                                />
+                              ) : (
+                                <RemoveCircleOutlineIcon
+                                  sx={{
+                                    fontSize: 18,
+                                    color: 'text.disabled',
+                                    cursor: 'pointer',
+                                    '&:hover': { color: 'primary.main' }
+                                  }}
+                                  onClick={() => {
+                                    handleChangeRolePermissions({
+                                      roleId: role._id,
+                                      permissionCode: p.permissionCode,
+                                      action: 'add'
+                                    })
+                                  }}
+                                />
+                              ))}
                           </Box>
                         </Tooltip>
                         <Box>
@@ -444,16 +458,6 @@ function WorkspaceRoleCard({ role, data, handler }) {
                             color={has ? 'text.secondary' : 'text.disabled'}
                           >
                             {p.description}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: 'text.disabled',
-                              fontSize: 11,
-                              wordBreak: 'break-all'
-                            }}
-                          >
-                            {p.permissionCode}
                           </Typography>
                         </Box>
                       </ListItem>

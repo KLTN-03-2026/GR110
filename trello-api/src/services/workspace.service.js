@@ -34,6 +34,7 @@ import {
   invalidateBoardAccessCachesByUser
 } from '~/helpers/boardPermission.cache'
 import S3Provider from '~/providers/S3Provider'
+import BackgroundRepo from '~/repo/adminBackground.repo'
 
 const generateWorkspaceAdminRole = ({ workspaceId }) => {
   return {
@@ -69,7 +70,9 @@ const generateWorkspaceViewerRole = ({ workspaceId }) => {
 
 class WorkspaceService {
   static fetchWorkspacePermission = async () => {
-    const workspacePermissions = await WorkspacePermissionRepo.findMany({})
+    const workspacePermissions = await WorkspacePermissionRepo.findMany({
+      options: { projection: { _id: 1, permissionCode: 1, description: 1 } }
+    })
 
     return workspacePermissions
   }
@@ -113,7 +116,10 @@ class WorkspaceService {
 
   static fetchWorkspaceRole = async ({ _id }) => {
     const workspaceRoles = await WorkspaceRoleRepo.findMany({
-      filter: { workspaceId: _id.toString() }
+      filter: { workspaceId: _id.toString() },
+      options: {
+        projection: { key: 0, createdAt: 0, updatedAt: 0, workspaceId: 0 }
+      }
     })
 
     return workspaceRoles
@@ -162,7 +168,10 @@ class WorkspaceService {
       })
 
       const plan = await PlanRepo.findOne({
-        filter: { _id: new ObjectId('69dc9cc2454ef403fb52c8ba'), isDeleted: false },
+        filter: {
+          _id: new ObjectId('69dc9cc2454ef403fb52c8ba'),
+          isDeleted: false
+        },
         options: { session }
       })
 
@@ -192,7 +201,8 @@ class WorkspaceService {
     }
 
     return await WorkspaceRepo.findOne({
-      filter: { _id: new ObjectId(createdWorkspaceId) }
+      filter: { _id: new ObjectId(createdWorkspaceId) },
+      options: { projection: { _id: 1, title: 1 } }
     })
   }
 
@@ -214,24 +224,23 @@ class WorkspaceService {
 
     const updatedWorkspace = await WorkspaceRepo.updateOne({
       filter: { _id: workspaceId, status: 'active' },
-      data: { $set: { ...updateData, updatedAt: Date.now() } }
+      data: { $set: { ...updateData, updatedAt: Date.now() } },
+      projection: { _id: 1, title: 1, description: 1 }
     })
 
-    if (updatedWorkspace.matchedCount === 0)
+    if (!updatedWorkspace)
       throw new NotFoundErrorResponse('Workspace not found')
 
     await invalidateWorkspaceAccessCachesByWorkspace({ workspaceId: _id })
 
-    return await WorkspaceRepo.findOne({
-      filter: { _id: workspaceId }
-    })
+    return updatedWorkspace
   }
 
   static delete = async ({ _id }) => {
     const session = await mongoClientInstance.startSession()
     const workspaceId = _id.toString()
     let deletedBoardIds = []
-    let fileKeys = []
+    let fileKeys = new Set()
 
     try {
       await session.withTransaction(async () => {
@@ -249,6 +258,20 @@ class WorkspaceService {
 
         deletedBoardIds = boards.map((board) => board._id.toString())
 
+        const backgrounds = await BackgroundRepo.findMany({
+          filter: {
+            entity: 'board',
+            type: 'board',
+            boardId: { $in: deletedBoardIds }
+          },
+          options: { projection: { image: 1 }, session }
+        })
+
+        backgrounds
+          ?.map((item) => S3Provider.getKeyFromUrl(item.image))
+          .filter(Boolean)
+          .forEach((key) => fileKeys.add(key))
+
         if (deletedBoardIds.length > 0) {
           const cards = await CardRepo.findMany({
             filter: { boardId: { $in: deletedBoardIds } },
@@ -263,8 +286,10 @@ class WorkspaceService {
               options: { projection: { fileKey: 1 }, session }
             })
 
-            fileKeys =
-              attachments?.map((item) => item.fileKey).filter(Boolean) ?? []
+            attachments
+              ?.map((item) => item.fileKey)
+              .filter(Boolean)
+              .forEach((key) => fileKeys.add(key))
 
             await CommentRepo.deleteMany({
               filter: { cardId: { $in: cardIds } },
@@ -315,6 +340,14 @@ class WorkspaceService {
             filter: { workspaceId },
             session
           })
+          await BackgroundRepo.deleteMany({
+            filter: {
+              entity: 'board',
+              type: 'board',
+              boardId: { $in: deletedBoardIds }
+            },
+            session
+          })
         }
 
         await WorkspaceRoleRepo.deleteMany({
@@ -353,7 +386,7 @@ class WorkspaceService {
       )
     ])
 
-    if (fileKeys.length > 0) await S3Provider.deleteMany(fileKeys)
+    if (fileKeys.size > 0) await S3Provider.deleteMany([...fileKeys])
 
     return { message: 'Workspace deleted successfully.' }
   }
@@ -410,7 +443,10 @@ class WorkspaceService {
     })
 
     const role = await WorkspaceRoleRepo.findOne({
-      filter: { _id: new ObjectId(createdRole.insertedId) }
+      filter: { _id: new ObjectId(createdRole.insertedId) },
+      options: {
+        projection: { key: 0, createdAt: 0, updatedAt: 0, workspaceId: 0 }
+      }
     })
 
     return role
@@ -490,10 +526,7 @@ class WorkspaceService {
     const roleId = new ObjectId(_id)
 
     const role = await WorkspaceRoleRepo.findOne({
-      filter: {
-        _id: roleId,
-        workspaceId
-      }
+      filter: { _id: roleId, workspaceId }
     })
 
     if (!role) throw new NotFoundErrorResponse('Role not found.')
@@ -515,11 +548,7 @@ class WorkspaceService {
       )
 
     const deletedRole = await WorkspaceRoleRepo.deleteOne({
-      filter: {
-        _id: roleId,
-        workspaceId,
-        isDefault: false
-      }
+      filter: { _id: roleId, workspaceId, isDefault: false }
     })
 
     if (deletedRole.deletedCount === 0)

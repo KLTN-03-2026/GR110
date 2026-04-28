@@ -170,10 +170,10 @@ class BoardMemberRepo {
       .toArray()
   }
 
-  static countDocuments = async ({ filter }) => {
+  static countDocuments = async ({ filter, options = {} }) => {
     return await GET_DB()
       .collection(boardMemberModel.BOARD_MEMBER_COLLECTION_NAME)
-      .countDocuments(filter)
+      .countDocuments(filter, options)
   }
 
   static deleteManyByBoardId = async ({ boardId, session }) => {

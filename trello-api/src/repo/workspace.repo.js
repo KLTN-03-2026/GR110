@@ -3,6 +3,7 @@ import { GET_DB } from '~/config/mongodb'
 import { workspaceMemberModel } from '~/models/workspaceMember.model'
 import { planModel } from '~/models/plan.model'
 import { subscriptionModel } from '~/models/subscription.model'
+import { ObjectId } from 'mongodb'
 
 class WorkspaceRepo {
   static findOne = async ({ filter, options = {} }) => {
@@ -25,10 +26,14 @@ class WorkspaceRepo {
       .insertOne(validData, { session })
   }
 
-  static updateOne = async ({ filter, data, session }) => {
+  static updateOne = async ({ filter, data, session, projection }) => {
     return await GET_DB()
       .collection(workspaceModel.WORKSPACE_COLLECTION_NAME)
-      .updateOne(filter, data, { session })
+      .findOneAndUpdate(filter, data, {
+        returnDocument: 'after',
+        session,
+        projection
+      })
   }
 
   static deleteOne = async ({ filter, session }) => {
@@ -38,35 +43,19 @@ class WorkspaceRepo {
   }
 
   static fetchByUser = async ({ userId }) => {
+    const members = await GET_DB()
+      .collection(workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME)
+      .find({ userId, status: 'active' })
+      .toArray()
+
+    const workspaceIds = members.map((m) => new ObjectId(m.workspaceId))
+
     return await GET_DB()
       .collection(workspaceModel.WORKSPACE_COLLECTION_NAME)
-      .aggregate([
-        {
-          $lookup: {
-            from: workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME,
-            let: { workspaceId: { $toString: '$_id' } },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ['$workspaceId', '$$workspaceId'] },
-                      { $eq: ['$userId', userId] },
-                      { $eq: ['$status', 'active'] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: 'members'
-          }
-        },
-        {
-          $match: {
-            members: { $ne: [] }
-          }
-        }
-      ])
+      .find(
+        { _id: { $in: workspaceIds } },
+        { projection: { _id: 1, title: 1, description: 1 } }
+      )
       .toArray()
   }
 

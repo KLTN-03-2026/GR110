@@ -48,8 +48,7 @@ class AttachmentService {
       )
     }
 
-    const limits =
-      subscription?.limits || subscription?.planFeatureSnapshot?.limits || {}
+    const limits = subscription?.planFeatureSnapshot?.limits || {}
 
     const {
       maxStorageMb = 0,

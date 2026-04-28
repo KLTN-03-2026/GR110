@@ -5,12 +5,13 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import Box from '@mui/material/Box'
+import Alert from '@mui/material/Alert'
 import AddIcon from '@mui/icons-material/Add'
 import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined'
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined'
 import SecurityRoundedIcon from '@mui/icons-material/SecurityRounded'
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined'
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import CircularProgress from '@mui/material/CircularProgress'
 import WorkspaceRoleCard from '~/components/Workspace/WorkspaceRoleCard'
 import CreateWorkspaceRoleModal from '~/components/Workspace/CreateWorkspaceRoleModal'
@@ -42,7 +43,6 @@ function WorkspaceSettingsPage() {
   const { workspace } = useOutletContext()
 
   const roleCount = roles?.length || 0
-  const customRoleCount = roles?.filter((role) => !role.isDefault).length || 0
 
   return (
     <>
@@ -171,6 +171,27 @@ function WorkspaceSettingsPage() {
         </Stack>
       </Box>
 
+      <Alert
+        icon={<InfoOutlinedIcon fontSize="inherit" />}
+        severity="info"
+        sx={{
+          mb: 2.5,
+          borderRadius: '12px',
+          backgroundColor: isDark
+            ? alpha('#2196f3', 0.08)
+            : alpha('#2196f3', 0.05),
+          borderColor: isDark ? alpha('#2196f3', 0.25) : alpha('#2196f3', 0.15),
+          color: isDark ? '#64b5f6' : '#1976d2',
+          '& .MuiAlert-icon': {
+            color: isDark ? '#64b5f6' : '#1976d2'
+          }
+        }}
+      >
+        <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>
+          Default roles cannot be edited. They are managed by the system to
+          ensure workspace security and consistency.
+        </Typography>
+      </Alert>
 
       <Paper
         elevation={0}

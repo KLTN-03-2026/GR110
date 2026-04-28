@@ -7,6 +7,7 @@ import { workspaceMiddleware } from '~/middlewares/workspacePermission.middlewar
 import { WORKSPACE_PERMISSIONS } from '~/constant/workspacePermission.constant'
 import { boardMiddleware } from '~/middlewares/boardPermission.middleware'
 import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
+import validate from '~/utils/validate'
 
 const Router = express.Router()
 
@@ -21,10 +22,10 @@ Router.route('/workspace').post(
 
 Router.route('/board').post(
   asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(invitationValidation.createBoardInvitation, 'body')),
   asyncHandler(
     boardMiddleware.checkPermission(BOARD_PERMISSIONS.MEMBER_INVITE)
   ),
-  // asyncHandler(validate(invitationValidation.createNewBoardInvitation)),
   asyncHandler(InvitationController.createBoardInvitation)
 )
 
@@ -40,6 +41,8 @@ Router.route('/workspace/:_id').put(
 
 Router.route('/board/:_id').put(
   asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(invitationValidation.updateInvitationParam, 'params')),
+  asyncHandler(validate(invitationValidation.updateInvitationStatus, 'body')),
   asyncHandler(InvitationController.updateBoardInvitation)
 )
 

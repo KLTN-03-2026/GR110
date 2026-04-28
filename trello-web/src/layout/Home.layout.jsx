@@ -20,11 +20,12 @@ function HomeLayout() {
             workspaces={workspaces}
             handleOpenCreateWorkspaceModal={handleOpenCreateWorkspaceModal}
           />
-          <Grid item xs={1} sm={1} md={1}></Grid>
-          <Grid item xs={12} sm={8} md={8}>
+
+          <Grid item xs={1} sm={1} md={1.5}></Grid>
+          <Grid item xs={12} sm={8} md={7}>
             <Outlet />
           </Grid>
-          <Grid item xs={1} sm={1} md={1}></Grid>
+          <Grid item xs={1} sm={1} md={1.5}></Grid>
         </Grid>
         <CreateWorkspaceModal {...createModal} />
       </Box>

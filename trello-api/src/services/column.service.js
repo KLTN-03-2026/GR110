@@ -91,7 +91,7 @@ class ColumnService {
           session
         })
 
-         emitColumnCreated({
+        emitColumnCreated({
           boardId: boardAccess.board._id.toString(),
           column
         })
@@ -138,6 +138,28 @@ class ColumnService {
         throw new ForbiddenErrorResponse(
           'Your current subscription plan does not allow creating custom colors for columns.'
         )
+    }
+
+    if ('cardOrderIds' in updateData) {
+      const cardOrderIds = updateData.cardOrderIds
+
+      const uniqueIds = new Set(cardOrderIds)
+      if (uniqueIds.size !== cardOrderIds.length)
+        throw new BadRequestErrorResponse('Duplicate card IDs are not allowed.')
+
+      if (cardOrderIds.length > 0) {
+        const existingCards = await CardRepo.findMany({
+          filter: {
+            _id: { $in: cardOrderIds.map((id) => new ObjectId(id)) },
+            columnId: _id.toString()
+          }
+        })
+
+        if (existingCards.length !== cardOrderIds.length)
+          throw new BadRequestErrorResponse(
+            'Some card IDs do not exist or do not belong to this column.'
+          )
+      }
     }
 
     updateData.updatedAt = new Date()
@@ -189,7 +211,7 @@ class ColumnService {
           session
         })
 
-         emitColumnArchived({
+        emitColumnArchived({
           boardId: boardAccess.board._id.toString(),
           column: updatedColumn
         })
@@ -346,13 +368,13 @@ class ColumnService {
           session
         })
 
-        deletedColumn = await ColumnRepo.deleteById({
-          _id,
+        await BoardRepo.pullColumnOrderIds({
+          column,
           session
         })
 
-        await BoardRepo.pullColumnOrderIds({
-          column,
+        deletedColumn = await ColumnRepo.deleteById({
+          _id,
           session
         })
       })
