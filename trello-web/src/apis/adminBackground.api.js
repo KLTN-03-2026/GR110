@@ -2,12 +2,13 @@ import { toast } from 'react-toastify'
 import authorizeAdminAxiosInstance from '~/utils/authorizeAdminAxios'
 import { API_ROOT } from '~/utils/constants'
 
-export const fetchAdminBackgroundAPI = async ({ search, page, limit }) => {
+export const fetchAdminBackgroundAPI = async ({ search, page, limit, entity }) => {
   const response = await authorizeAdminAxiosInstance.get(`${API_ROOT}/v1/admin/backgrounds`, {
     params: {
       ...(search ? { search } : {}),
       page,
-      limit
+      limit,
+      entity
     }
   })
   return response.data.metadata

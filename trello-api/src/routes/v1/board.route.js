@@ -32,7 +32,7 @@ Router.route('/').get(
   asyncHandler(BoardController.getBoards)
 )
 
-Router.route('/backgrounds').get(
+Router.route('/backgrounds/:boardId').get(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(BoardController.getBackground)
 )

@@ -9,8 +9,12 @@ function TabMember() {
     members,
     roles,
     search,
+    page,
+    rowsPerPage,
+    totalCount,
     handleChangeMemberRole,
     handleInputSearchChange,
+    handleChangePage,
     handleOpenInviteModal,
     handleRemoveMember,
     handleLeaveBoard,
@@ -73,6 +77,10 @@ function TabMember() {
       <BoardMemberTable
         members={members}
         roles={roles}
+        page={page}
+        rowsPerPage={rowsPerPage}
+        totalCount={totalCount}
+        onPageChange={handleChangePage}
         handleChangeMemberRole={handleChangeMemberRole}
         handleRemoveMember={handleRemoveMember}
         handleLeaveWorkspace={handleLeaveBoard}

@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   Box,
   Button,
@@ -137,67 +136,6 @@ export default function PlanPage() {
           }}
         />
 
-        <Stack direction="row" spacing={1.2}>
-          <Button
-            variant="outlined"
-            startIcon={<FilterListOutlinedIcon />}
-            sx={{
-              textTransform: 'none',
-              color: '#374151',
-              borderColor: '#6b7280',
-              backgroundColor: '#fff',
-              borderRadius: '8px',
-              px: 2,
-              minWidth: 'auto',
-              '&:hover': {
-                borderColor: '#4b5563',
-                backgroundColor: '#f9fafb'
-              }
-            }}
-          >
-            Filter
-          </Button>
-
-          <Button
-            variant="outlined"
-            startIcon={<FileDownloadOutlinedIcon />}
-            sx={{
-              textTransform: 'none',
-              color: '#374151',
-              borderColor: '#6b7280',
-              backgroundColor: '#fff',
-              borderRadius: '8px',
-              px: 2,
-              minWidth: 'auto',
-              '&:hover': {
-                borderColor: '#4b5563',
-                backgroundColor: '#f9fafb'
-              }
-            }}
-          >
-            Excel
-          </Button>
-
-          <Button
-            variant="outlined"
-            startIcon={<PictureAsPdfOutlinedIcon />}
-            sx={{
-              textTransform: 'none',
-              color: '#374151',
-              borderColor: '#6b7280',
-              backgroundColor: '#fff',
-              borderRadius: '8px',
-              px: 2,
-              minWidth: 'auto',
-              '&:hover': {
-                borderColor: '#4b5563',
-                backgroundColor: '#f9fafb'
-              }
-            }}
-          >
-            PDF
-          </Button>
-        </Stack>
       </Stack>
 
       <Paper

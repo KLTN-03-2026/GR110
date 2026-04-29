@@ -83,7 +83,7 @@ class WorkspaceService {
     })
 
     if (!workspaces || !workspaces.length) return []
-    
+
     return workspaces
   }
 
@@ -98,20 +98,41 @@ class WorkspaceService {
   }
 
   static fetchWorkspaceMember = async ({ _id, data }) => {
-    const filter = { workspaceId: _id }
+    const keyword = data?.search?.trim() || ''
+    const page = Number(data?.page || 1)
+    const limit = 7
+    const skip = (page - 1) * limit
 
-    // if (data?.status === 'all') {
-    //   delete filter.status
-    // } else {
-    //   filter.status = data?.status || 'active'
-    // }
+    const filter = {
+      workspaceId: _id
+    }
 
-    const workspaceMember = await WorkspaceMemberRepo.getMembers({
-      filter,
-      data
-    })
+    const [workspaceMember, totalCount] = await Promise.all([
+      WorkspaceMemberRepo.findManyWithPagination({
+        filter,
+        data: {
+          search: keyword
+        },
+        options: {
+          skip,
+          limit,
+          sort: { createdAt: -1 }
+        }
+      }),
+      WorkspaceMemberRepo.countDocumentsWithSearch({
+        filter,
+        data: {
+          search: keyword
+        }
+      })
+    ])
 
-    return workspaceMember
+    return {
+      workspaceMember,
+      totalCount,
+      page,
+      limit
+    }
   }
 
   static fetchWorkspaceRole = async ({ _id }) => {
@@ -775,12 +796,20 @@ class WorkspaceService {
     return plans
   }
 
-  static buildQuota = ({ key, label, used = 0, limit = 0, unit = '', mode = 'workspace' }) => {
+  static buildQuota = ({
+    key,
+    label,
+    used = 0,
+    limit = 0,
+    unit = '',
+    mode = 'workspace'
+  }) => {
     const safeUsed = Number(used || 0)
     const safeLimit = Number(limit || 0)
-    const percent = safeLimit > 0
-      ? Number(Math.min((safeUsed / safeLimit) * 100, 100).toFixed(2))
-      : 0
+    const percent =
+      safeLimit > 0
+        ? Number(Math.min((safeUsed / safeLimit) * 100, 100).toFixed(2))
+        : 0
 
     return {
       key,
@@ -817,7 +846,9 @@ class WorkspaceService {
     })
 
     if (!workspaceMember) {
-      throw new ForbiddenErrorResponse('You do not have access to this workspace')
+      throw new ForbiddenErrorResponse(
+        'You do not have access to this workspace'
+      )
     }
 
     let subscription = await SubscriptionRepo.findOne({
@@ -838,7 +869,8 @@ class WorkspaceService {
         }
       })
 
-      if (!freePlan) throw new NotFoundErrorResponse('Default Free plan not found')
+      if (!freePlan)
+        throw new NotFoundErrorResponse('Default Free plan not found')
 
       planFeatureSnapshot = freePlan.feature
       subscription = {
@@ -854,22 +886,32 @@ class WorkspaceService {
 
     const limits = planFeatureSnapshot?.limits || {}
 
+    const workspaceBoards = await BoardRepo.findMany({
+      filter: { workspaceId, status: 'active' },
+      options: { projection: { _id: 1, title: 1 } }
+    })
+
+    const boardIds = workspaceBoards.map((board) => board._id.toString())
+
+    const countByField = (items, field) => {
+      return items.reduce((acc, item) => {
+        const value = item?.[field]?.toString()
+        if (!value) return acc
+
+        acc[value] = (acc[value] || 0) + 1
+        return acc
+      }, {})
+    }
+
     const [
       membersUsed,
-      boardsUsed,
       workspaceRolesUsed,
       storageUsedBytes,
-      maxBoardRolesUsed,
-      maxColumnsPerBoardUsed,
-      maxCardsPerBoardUsed,
-      maxCommentsPerCardUsed,
-      maxChecklistItemsPerCardUsed
+      boardRoles,
+      columns,
+      cards
     ] = await Promise.all([
       WorkspaceMemberRepo.countDocuments({
-        filter: { workspaceId, status: 'active' }
-      }),
-
-      BoardRepo.countDocuments({
         filter: { workspaceId, status: 'active' }
       }),
 
@@ -881,28 +923,56 @@ class WorkspaceService {
         workspaceId
       }),
 
-      BoardRoleRepo.getMaxBoardRolesPerBoard({
-        workspaceId
-      }),
+      boardIds.length
+        ? BoardRoleRepo.findMany({
+          filter: { boardId: { $in: boardIds }, isDefault: false },
+          options: { projection: { boardId: 1 } }
+        })
+        : [],
 
-      ColumnRepo.getMaxColumnsPerBoard({
-        workspaceId
-      }),
+      boardIds.length
+        ? ColumnRepo.findMany({
+          filter: { boardId: { $in: boardIds } },
+          options: { projection: { boardId: 1 } }
+        })
+        : [],
 
-      CardRepo.getMaxCardsPerBoard({
-        workspaceId
-      }),
-
-      CommentRepo.getMaxCommentsPerCard({
-        workspaceId
-      }),
-
-      TaskRepo.getMaxTasksPerCard({
-        workspaceId
-      })
+      boardIds.length
+        ? CardRepo.findMany({
+          filter: { boardId: { $in: boardIds } },
+          options: {
+            projection: {
+              _id: 1,
+              boardId: 1,
+              commentCount: 1,
+              taskCount: 1
+            }
+          }
+        })
+        : []
     ])
 
-    const storageUsedMb = Number(((storageUsedBytes || 0) / 1024 / 1024).toFixed(2))
+    const boardRoleCountByBoard = countByField(boardRoles, 'boardId')
+    const columnCountByBoard = countByField(columns, 'boardId')
+    const cardCountByBoard = countByField(cards, 'boardId')
+
+    const boardsUsed = boardIds.length
+
+    const boardQuota = workspaceBoards.reduce((acc, board) => {
+      const boardId = board._id.toString()
+
+      acc[board.title] = {
+        boardRolesUsed: boardRoleCountByBoard[boardId] || 0,
+        columnsUsed: columnCountByBoard[boardId] || 0,
+        cardsUsed: cardCountByBoard[boardId] || 0
+      }
+
+      return acc
+    }, {})
+
+    const storageUsedMb = Number(
+      ((storageUsedBytes || 0) / 1024 / 1024).toFixed(2)
+    )
 
     return {
       subscription: {
@@ -946,45 +1016,7 @@ class WorkspaceService {
             mode: 'workspace'
           })
         ],
-        board: [
-          this.buildQuota({
-            key: 'maxBoardRoles',
-            label: 'Highest board roles usage',
-            used: maxBoardRolesUsed,
-            limit: limits.maxBoardRoles,
-            mode: 'board'
-          }),
-          this.buildQuota({
-            key: 'maxColumnsPerBoard',
-            label: 'Highest columns in a board',
-            used: maxColumnsPerBoardUsed,
-            limit: limits.maxColumnsPerBoard,
-            mode: 'board'
-          }),
-          this.buildQuota({
-            key: 'maxCardsPerBoard',
-            label: 'Highest cards in a board',
-            used: maxCardsPerBoardUsed,
-            limit: limits.maxCardsPerBoard,
-            mode: 'board'
-          })
-        ],
-        card: [
-          this.buildQuota({
-            key: 'maxCommentsPerCard',
-            label: 'Highest comments in a card',
-            used: maxCommentsPerCardUsed,
-            limit: limits.maxCommentsPerCard,
-            mode: 'card'
-          }),
-          this.buildQuota({
-            key: 'maxChecklistItemsPerCard',
-            label: 'Highest checklist items in a card',
-            used: maxChecklistItemsPerCardUsed,
-            limit: limits.maxChecklistItemsPerCard,
-            mode: 'card'
-          })
-        ],
+        board: boardQuota,
         rules: [
           {
             key: 'maxFileSizeMb',

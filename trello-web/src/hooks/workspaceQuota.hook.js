@@ -9,7 +9,8 @@ export function useQuota() {
   useEffect(() => {
     const fetchQuota = async () => {
       const response = await fetchWorkspaceQuota(workspaceId)
-    
+      console.log(response.quota);
+      
       setQuota(response.quota)
     }
 

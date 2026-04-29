@@ -2,15 +2,13 @@ import { OkSuccessResponse } from '~/core/success.response'
 import AdminTicketService from '~/services/adminTicket.service'
 
 export default class AdminTicketController {
-  static fetchTickets = async (req, res, next) => {
-    console.log(req.query);
-    
+  static fetchTickets = async (req, res) => {
     new OkSuccessResponse({
       metadata: await AdminTicketService.fetchTickets({ data: req.query })
     }).send(res)
   }
 
-  static rejectTicket = async (req, res, next) => {
+  static rejectTicket = async (req, res) => {
     const ticketId = req.params.ticketId
 
     new OkSuccessResponse({
@@ -18,7 +16,7 @@ export default class AdminTicketController {
     }).send(res)
   }
 
-  static replyTicket = async (req, res, next) => {
+  static replyTicket = async (req, res) => {
     const ticketId = req.params.ticketId
 
     new OkSuccessResponse({

@@ -18,7 +18,9 @@ class BoardController {
 
   static getBackground = async (req, res) => {
     new OkSuccessResponse({
-      metadata: await BoardService.getBackground()
+      metadata: await BoardService.getBackground({
+        _id: req.params.boardId
+      })
     }).send(res)
   }
 

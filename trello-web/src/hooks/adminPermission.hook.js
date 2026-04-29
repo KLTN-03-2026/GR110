@@ -10,14 +10,16 @@ export default function useAdminPermissionPage() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const search = searchParams.get('search') || ''
+  const type = searchParams.get('type') || 'all'
   const page = Number(searchParams.get('page') || 1)
   const rowsPerPage = Number(searchParams.get('limit') || 8)
 
   const updateQueryParams = useCallback(
-    ({ nextSearch, nextPage, nextLimit }) => {
+    ({ nextSearch, nextType, nextPage, nextLimit }) => {
       const params = new URLSearchParams(searchParams)
 
       const finalSearch = nextSearch ?? search
+      const finalType = nextType ?? type
       const finalPage = nextPage ?? page
       const finalLimit = nextLimit ?? rowsPerPage
 
@@ -27,12 +29,18 @@ export default function useAdminPermissionPage() {
         params.delete('search')
       }
 
+      if (finalType && finalType !== 'all') {
+        params.set('type', finalType)
+      } else {
+        params.delete('type')
+      }
+
       params.set('page', String(finalPage))
       params.set('limit', String(finalLimit))
 
       setSearchParams(params)
     },
-    [searchParams, setSearchParams, search, page, rowsPerPage]
+    [searchParams, setSearchParams, search, type, page, rowsPerPage]
   )
 
   useEffect(() => {
@@ -42,11 +50,11 @@ export default function useAdminPermissionPage() {
 
         const data = await fetchAdminPermissionAPI({
           search,
+          type,
           page,
           limit: rowsPerPage
         })
-        console.log(data);
-        
+
         setPermissions(data.permissions || [])
         setTotalCount(data.totalCount || 0)
       } finally {
@@ -55,14 +63,17 @@ export default function useAdminPermissionPage() {
     }
 
     fetchPermission()
-  }, [search, page, rowsPerPage])
+  }, [search, type, page, rowsPerPage])
 
-  const handleSearchChange = useCallback((event) => {
-    updateQueryParams({
-      nextSearch: event.target.value,
-      nextPage: 1
-    })
-  }, [])
+  const handleSearchChange = useCallback(
+    (event) => {
+      updateQueryParams({
+        nextSearch: event.target.value,
+        nextPage: 1
+      })
+    },
+    [updateQueryParams]
+  )
 
   const handleChangePage = useCallback(
     (_, newPage) => {
@@ -83,14 +94,27 @@ export default function useAdminPermissionPage() {
     [updateQueryParams]
   )
 
+  const handleChangeType = useCallback(
+    (value) => {
+      updateQueryParams({
+        nextType: value,
+        nextPage: 1
+      })
+    },
+    [updateQueryParams]
+  )
+
   return {
     permissions,
     totalCount,
+    loading,
     search,
+    type,
     page: page - 1,
     rowsPerPage,
     handleSearchChange,
     handleChangePage,
-    handleChangeRowsPerPage
+    handleChangeRowsPerPage,
+    handleChangeType
   }
 }

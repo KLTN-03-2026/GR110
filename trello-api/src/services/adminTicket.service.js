@@ -8,19 +8,21 @@ export default class AdminTicketService {
     const page = Number(data?.page || 1)
     const limit = Number(data?.limit || 8)
     const skip = (page - 1) * limit
-
-    console.log('key', keyword)
+    const type = data?.type || 'all'
 
     const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-    const filter = keyword
-      ? {
-          $or: [
-            { email: { $regex: escapedKeyword, $options: 'i' } },
-            { title: { $regex: escapedKeyword, $options: 'i' } }
-          ]
-        }
-      : {}
+    const filter = {
+      ...(keyword
+        ? {
+            $or: [
+              { email: { $regex: escapedKeyword, $options: 'i' } },
+              { title: { $regex: escapedKeyword, $options: 'i' } }
+            ]
+          }
+        : {}),
+      ...(type !== 'all' ? { type } : {})
+    }
 
     const [tickets, totalCount] = await Promise.all([
       TicketRepo.findManyWithPagination({
@@ -71,7 +73,6 @@ export default class AdminTicketService {
       }
     })
 
-  
     await sendEmailService({
       recipientEmail: ticket.email,
       customSubject: 'Taskio - Reply to your ticket',

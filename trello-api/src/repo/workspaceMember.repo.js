@@ -36,8 +36,12 @@ class WorkspaceMemberRepo {
       .findOneAndUpdate(filter, data, { session, returnDocument: 'after' })
   }
 
-  static getMembers = async ({ filter, data, options = {} }) => {
-    const { sort = { createdAt: -1 }, skip = 0, limit = 50 } = options
+  static findManyWithPagination = async ({
+    filter,
+    data = {},
+    options = {}
+  }) => {
+    const { sort = { createdAt: -1 }, skip = 0, limit = 7 } = options
     const { search = '' } = data
 
     return await GET_DB()
@@ -83,14 +87,17 @@ class WorkspaceMemberRepo {
           }
         },
 
-        // Search sau khi đã lookup user
         ...(search
           ? [
               {
                 $match: {
                   $or: [
                     { 'user.email': { $regex: search, $options: 'i' } },
-                    { 'user.displayName': { $regex: search, $options: 'i' } }
+                    { 'user.displayName': { $regex: search, $options: 'i' } },
+                    {
+                      'inviter.displayName': { $regex: search, $options: 'i' }
+                    },
+                    { 'inviter.email': { $regex: search, $options: 'i' } }
                   ]
                 }
               }
@@ -104,6 +111,7 @@ class WorkspaceMemberRepo {
             workspaceRoleId: 1,
             userId: 1,
             joinAt: 1,
+            createdAt: 1,
             user: {
               displayName: '$user.displayName',
               email: '$user.email',
@@ -121,6 +129,75 @@ class WorkspaceMemberRepo {
         { $limit: limit }
       ])
       .toArray()
+  }
+
+  static countDocumentsWithSearch = async ({ filter, data = {} }) => {
+    const { search = '' } = data
+
+    const result = await GET_DB()
+      .collection(workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME)
+      .aggregate([
+        { $match: filter },
+
+        {
+          $addFields: {
+            userObjectId: { $toObjectId: '$userId' },
+            invitedByObjectId: { $toObjectId: '$invitedBy' }
+          }
+        },
+
+        {
+          $lookup: {
+            from: userModel.USER_COLLECTION_NAME,
+            localField: 'userObjectId',
+            foreignField: '_id',
+            as: 'user'
+          }
+        },
+        {
+          $unwind: {
+            path: '$user',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+
+        {
+          $lookup: {
+            from: userModel.USER_COLLECTION_NAME,
+            localField: 'invitedByObjectId',
+            foreignField: '_id',
+            as: 'inviter'
+          }
+        },
+        {
+          $unwind: {
+            path: '$inviter',
+            preserveNullAndEmptyArrays: true
+          }
+        },
+
+        ...(search
+          ? [
+              {
+                $match: {
+                  $or: [
+                    { 'user.email': { $regex: search, $options: 'i' } },
+                    { 'user.displayName': { $regex: search, $options: 'i' } },
+                    { 'inviter.email': { $regex: search, $options: 'i' } },
+                    { 'inviter.displayName': { $regex: search, $options: 'i' } }
+                  ]
+                }
+              }
+            ]
+          : []),
+
+        {
+          $count: 'totalCount'
+        }
+      ])
+      .toArray()
+
+    return result[0]?.totalCount || 0
   }
 
   static deleteOne = async ({ filter, session }) => {

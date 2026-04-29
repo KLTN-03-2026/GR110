@@ -21,38 +21,71 @@ class PermissionRepo {
   static findManyWithPagination = async ({
     filter = {},
     skip = 0,
-    limit = 8
+    limit = 8,
+    type = 'all'
   }) => {
+    const boardPipeline = [
+      { $match: filter },
+      {
+        $project: {
+          _id: 1,
+          permissionCode: 1,
+          description: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          type: { $literal: 'board' }
+        }
+      }
+    ]
+
+    const workspacePipeline = [
+      { $match: filter },
+      {
+        $project: {
+          _id: 1,
+          permissionCode: 1,
+          description: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          type: { $literal: 'workspace' }
+        }
+      }
+    ]
+
+    if (type === 'board') {
+      return await GET_DB()
+        .collection(boardPermissionModel.BOARD_PERMISSION_COLLECTION_NAME)
+        .aggregate([
+          ...boardPipeline,
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit }
+        ])
+        .toArray()
+    }
+
+    if (type === 'workspace') {
+      return await GET_DB()
+        .collection(
+          workspacePermissionModel.WORKSPACE_PERMISSION_COLLECTION_NAME
+        )
+        .aggregate([
+          ...workspacePipeline,
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit }
+        ])
+        .toArray()
+    }
+
     return await GET_DB()
       .collection(boardPermissionModel.BOARD_PERMISSION_COLLECTION_NAME)
       .aggregate([
-        { $match: filter },
-        {
-          $project: {
-            _id: 1,
-            permissionCode: 1,
-            description: 1,
-            createdAt: 1,
-            updatedAt: 1,
-            type: { $literal: 'board' }
-          }
-        },
+        ...boardPipeline,
         {
           $unionWith: {
             coll: workspacePermissionModel.WORKSPACE_PERMISSION_COLLECTION_NAME,
-            pipeline: [
-              { $match: filter },
-              {
-                $project: {
-                  _id: 1,
-                  permissionCode: 1,
-                  description: 1,
-                  createdAt: 1,
-                  updatedAt: 1,
-                  type: { $literal: 'workspace' }
-                }
-              }
-            ]
+            pipeline: workspacePipeline
           }
         },
         { $sort: { createdAt: -1 } },

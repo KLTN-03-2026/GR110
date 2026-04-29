@@ -24,15 +24,7 @@ import ViewKanbanOutlinedIcon from '@mui/icons-material/ViewKanbanOutlined'
 import { useDispatch } from 'react-redux'
 import { fetchWorkspacesAPI } from '~/redux/workspace/workspacesSlice'
 import ConfirmDialog from '~/components/Workspace/workspaceBilling/ConfirmDialog'
-
-const dotPatternSx = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1px)',
-  backgroundSize: '22px 22px',
-  pointerEvents: 'none'
-}
+import WorkspacePageHeader from '~/components/Workspace/WorkspacePageHeader'
 
 const PLAN_FREE = '69dc9cc2454ef403fb52c8ba'
 
@@ -120,102 +112,61 @@ export default function WorkspaceBillingPage() {
 
   return (
     <>
-      <Box
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: '24px',
-          background:
-            'linear-gradient(145deg, #0f172a 0%, #1e3a8a 55%, #1d4ed8 100%)',
-          color: 'white',
-          px: { xs: 3, md: 5 },
-          py: { xs: 3.5, md: 4 },
-          mb: 3,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 2
-        }}
+      <WorkspacePageHeader
+        badgeIcon={<AutoAwesomeRoundedIcon sx={{ fontSize: 13 }} />}
+        badgeLabel="Workspace Plans"
+        title="Workspace Billings"
+        description="Compare plans, review limits, and upgrade your workspace."
+        accentColor="#7c3aed"
       >
-        <Box sx={dotPatternSx} />
+        <Chip
+          icon={<ViewKanbanOutlinedIcon sx={{ fontSize: 15 }} />}
+          label={`${plans.length} plans`}
+          sx={(theme) => ({
+            height: 32,
+            color:
+                theme.palette.mode === 'dark'
+                  ? '#bfdbfe'
+                  : theme.palette.primary.main,
+            fontWeight: 700,
+            bgcolor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.10)'
+                  : alpha(theme.palette.primary.main, 0.08),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+            '& .MuiChip-icon': { color: 'inherit' }
+          })}
+        />
 
-        <Box sx={{ position: 'relative', zIndex: 1, minWidth: 0 }}>
+        {activePlan && (
           <Chip
-            icon={
-              <AutoAwesomeRoundedIcon
-                sx={{ fontSize: 13, color: '#fde68a !important' }}
-              />
-            }
-            label="Workspace Plans"
-            size="small"
-            sx={{
-              mb: 1.5,
-              backgroundColor: 'rgba(255,255,255,0.10)',
-              color: '#fde68a',
-              fontWeight: 600,
-              fontSize: '0.7rem',
-              letterSpacing: 1,
-              border: '1px solid rgba(253,230,138,0.30)',
-              backdropFilter: 'blur(6px)'
-            }}
-          />
-
-          <Typography
-            sx={{
-              fontSize: 28,
-              fontWeight: 800,
-              lineHeight: 1.2,
-              letterSpacing: 0,
-              mb: 0.5
-            }}
-          >
-            Workspace Billings
-          </Typography>
-
-          <Typography sx={{ opacity: 0.72, fontSize: '0.875rem' }}>
-            Compare plans, review limits, and upgrade your workspace.
-          </Typography>
-        </Box>
-
-        <Stack
-          direction="row"
-          spacing={1}
-          useFlexGap
-          flexWrap="wrap"
-          sx={{ position: 'relative', zIndex: 1 }}
-        >
-          <Chip
-            icon={<ViewKanbanOutlinedIcon sx={{ fontSize: 15 }} />}
-            label={`${plans.length} plans`}
-            sx={{
+            icon={<CheckCircleRoundedIcon sx={{ fontSize: 15 }} />}
+            label={isActivePlanCurrent ? 'Current plan' : 'Plan selected'}
+            sx={(theme) => ({
               height: 32,
-              color: '#bfdbfe',
+              color: isActivePlanCurrent
+                ? theme.palette.success.main
+                : theme.palette.warning.main,
               fontWeight: 700,
-              bgcolor: 'rgba(255,255,255,0.10)',
-              border: '1px solid rgba(255,255,255,0.16)',
-              '& .MuiChip-icon': { color: '#93c5fd' }
-            }}
+              bgcolor: alpha(
+                isActivePlanCurrent
+                  ? theme.palette.success.main
+                  : theme.palette.warning.main,
+                theme.palette.mode === 'dark' ? 0.16 : 0.1
+              ),
+              border: `1px solid ${alpha(
+                isActivePlanCurrent
+                  ? theme.palette.success.main
+                  : theme.palette.warning.main,
+                0.22
+              )}`,
+              '& .MuiChip-icon': {
+                color: 'inherit'
+              }
+            })}
           />
-
-          {activePlan && (
-            <Chip
-              icon={<CheckCircleRoundedIcon sx={{ fontSize: 15 }} />}
-              label={isActivePlanCurrent ? 'Current plan' : 'Plan selected'}
-              sx={{
-                height: 32,
-                color: isActivePlanCurrent ? '#bbf7d0' : '#fde68a',
-                fontWeight: 700,
-                bgcolor: 'rgba(255,255,255,0.10)',
-                border: '1px solid rgba(255,255,255,0.16)',
-                '& .MuiChip-icon': {
-                  color: isActivePlanCurrent ? '#86efac' : '#fde68a'
-                }
-              }}
-            />
-          )}
-        </Stack>
-      </Box>
+        )}
+      </WorkspacePageHeader>
 
       <Box
         sx={{

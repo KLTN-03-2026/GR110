@@ -1,12 +1,16 @@
+import { useState } from 'react'
 import {
   Box,
+  Button,
   InputAdornment,
+  Menu,
+  MenuItem,
   Stack,
   TextField,
   Typography
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
-import { useState } from 'react'
+import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined'
 import AdminTicketTable from '~/components/Admin/Ticket/TicketTable'
 import ReplyTicketModal from '~/components/Admin/Ticket/ReplyTicketModal'
 import ViewReplyModal from '~/components/Admin/Ticket/ViewReplyModal'
@@ -15,6 +19,7 @@ import { useAdminTicket } from '~/hooks/adminTicket.hook'
 export default function AdminTicketPage() {
   const {
     search,
+    type,
     page,
     rowsPerPage,
     replyModalOpen,
@@ -22,8 +27,8 @@ export default function AdminTicketPage() {
     selectedTicket,
     tickets,
     totalCount,
-    loading,
     handleSearchChange,
+    handleChangeType,
     handleOpenReplyModal,
     handleCloseReplyModal,
     handleOpenViewReplyModal,
@@ -33,6 +38,33 @@ export default function AdminTicketPage() {
     handleChangePage,
     handleChangeRowsPerPage
   } = useAdminTicket()
+
+  const [anchorEl, setAnchorEl] = useState(null)
+  const openFilter = Boolean(anchorEl)
+
+  const TICKET_TYPES = [
+    { value: 'all', label: 'All' },
+    { value: 'support', label: 'Support' },
+    { value: 'billing', label: 'Billing' },
+    { value: 'bug', label: 'Bug' },
+    { value: 'feedback', label: 'Feedback' }
+  ]
+
+  const handleOpenFilter = (event) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleCloseFilter = () => {
+    setAnchorEl(null)
+  }
+
+  const handleSelectType = (value) => {
+    handleChangeType(value)
+    handleCloseFilter()
+  }
+
+  const selectedTypeLabel =
+    TICKET_TYPES.find((item) => item.value === type)?.label || 'All'
 
   return (
     <Box>
@@ -51,7 +83,7 @@ export default function AdminTicketPage() {
               lineHeight: 1.2
             }}
           >
-            Payment
+            Ticket
           </Typography>
 
           <Typography
@@ -61,7 +93,7 @@ export default function AdminTicketPage() {
               color: '#374151'
             }}
           >
-            View payment list
+            View ticket list
           </Typography>
         </Box>
       </Stack>
@@ -70,12 +102,14 @@ export default function AdminTicketPage() {
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 2 }}
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ mb: 2, gap: 1.5 }}
       >
         <TextField
           value={search}
           onChange={handleSearchChange}
-          placeholder="Search payments..."
+          placeholder="Search tickets..."
           size="small"
           sx={{
             width: 280,
@@ -97,6 +131,61 @@ export default function AdminTicketPage() {
             )
           }}
         />
+
+        <Button
+          variant="outlined"
+          startIcon={<FilterListOutlinedIcon />}
+          onClick={handleOpenFilter}
+          sx={{
+            textTransform: 'none',
+            color: '#374151',
+            borderColor: '#d1d5db',
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+            px: 2,
+            minWidth: 'auto',
+            fontWeight: 600,
+            '&:hover': {
+              borderColor: '#9ca3af',
+              backgroundColor: '#f9fafb'
+            }
+          }}
+        >
+          Filter: {selectedTypeLabel}
+        </Button>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={openFilter}
+          onClose={handleCloseFilter}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right'
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right'
+          }}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              minWidth: 180,
+              borderRadius: '10px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 10px 30px rgba(15,23,42,0.08)'
+            }
+          }}
+        >
+          {TICKET_TYPES.map((item) => (
+            <MenuItem
+              key={item.value}
+              selected={type === item.value}
+              onClick={() => handleSelectType(item.value)}
+            >
+              {item.label}
+            </MenuItem>
+          ))}
+        </Menu>
       </Stack>
 
       <AdminTicketTable
