@@ -26,6 +26,10 @@ import {
   emitCardRestored,
   emitCardUpdatedBasic
 } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
+import Joi from 'joi'
+import { getCacheJSON, setCache } from '~/helpers/cache'
+import crypto from 'crypto'
+import { invokeOpenAIModel } from '~/providers/OpenAIProvider'
 
 const CARD_UPDATE_FIELDS = [
   'title',
@@ -35,6 +39,8 @@ const CARD_UPDATE_FIELDS = [
   'isCompleted',
   'cover'
 ]
+
+const AI_CACHE_TTL = 86400
 
 class CardService {
   static fetchArchived = async ({ boardId }) => {
@@ -851,6 +857,170 @@ class CardService {
       await session.endSession()
     }
   }
+
+  static generateCardAssist = async ({ cardId, boardAccess, userPrompt }) => {
+    const card = await CardRepo.findOne({
+      filter: {
+        _id: new ObjectId(cardId),
+        boardId: boardAccess.board._id.toString(),
+        status: 'active'
+      }
+    })
+
+    if (!card) throw new NotFoundErrorResponse('Card not found.')
+    if (!card.title) throw new BadRequestErrorResponse('Card title is empty.')
+
+    const MODEL_TAG = 'gpt-4o'
+    const cacheInput = userPrompt ? `${card.title}::${userPrompt}` : card.title
+
+    const hash = crypto.createHash('sha256').update(cacheInput).digest('hex')
+    const cacheKey = `ai:card-assist:${MODEL_TAG}:${hash}`
+
+    const cached = await getCacheJSON({ key: cacheKey })
+    if (cached) return { ...cached, fromCache: true }
+
+    const prompt = buildPrompt(card.title, userPrompt)
+
+    let raw
+    try {
+      raw = await invokeOpenAIModel({ prompt })
+    } catch (err) {
+      throw new BadRequestErrorResponse(`AI service error: ${err?.message}`)
+    }
+
+    let parsed
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      throw new BadRequestErrorResponse('AI returned invalid JSON.')
+    }
+
+    const validated = await AI_OUTPUT_SCHEMA.validateAsync(parsed, {
+      abortEarly: false
+    })
+
+    await setCache({
+      key: cacheKey,
+      value: validated,
+      ttlInSeconds: AI_CACHE_TTL
+    })
+
+    return { ...validated, fromCache: false }
+  }
+
+  static applyCardAssist = async ({ cardId, boardAccess, data }) => {
+    const { description, subtasks } = data
+
+    if (!description && (!subtasks || subtasks.length === 0)) {
+      throw new BadRequestErrorResponse('Nothing to apply.')
+    }
+
+    const session = await mongoClientInstance.startSession()
+
+    try {
+      const result = await session.withTransaction(async () => {
+        const card = await CardRepo.findOne({
+          filter: {
+            _id: new ObjectId(cardId),
+            boardId: boardAccess.board._id.toString(),
+            status: 'active'
+          },
+          options: { session }
+        })
+
+        if (!card) throw new NotFoundErrorResponse('Card not found.')
+
+        let updatedCard = card
+
+        if (description) {
+          updatedCard = await CardRepo.updateOne({
+            filter: { _id: new ObjectId(cardId) },
+            data: {
+              $set: {
+                description,
+                isHasDescription: true
+              }
+            },
+            session
+          })
+        }
+
+        let createdTasks = []
+
+        if (subtasks && subtasks.length > 0) {
+          const parentTaskData = {
+            cardId: card._id.toString(),
+            content: 'AI Generated Tasks',
+            parentTaskId: null,
+            memberId: null,
+            isCompleted: false,
+            dueAt: null
+          }
+
+          const parentResult = await TaskRepo.createOne({
+            data: parentTaskData,
+            session
+          })
+
+          const parentTask = await TaskRepo.findOne({
+            filter: { _id: new ObjectId(parentResult.insertedId) },
+            options: { session }
+          })
+
+          for (const content of subtasks) {
+            const childData = {
+              cardId: card._id.toString(),
+              content,
+              parentTaskId: parentTask._id.toString(),
+              memberId: null,
+              isCompleted: false,
+              dueAt: null
+            }
+
+            await TaskRepo.createOne({ data: childData, session })
+          }
+
+          createdTasks = await TaskRepo.findMany({
+            filter: { parentTaskId: parentTask._id.toString() },
+            options: { session }
+          })
+
+          updatedCard = await CardRepo.updateOne({
+            filter: { _id: new ObjectId(cardId) },
+            data: {
+              $inc: { taskCount: subtasks.length }
+            },
+            session
+          })
+        }
+
+        return { card: updatedCard, tasks: createdTasks }
+      })
+
+      return result
+    } finally {
+      await session.endSession()
+    }
+  }
 }
+
+const buildPrompt = (title, userPrompt) => `
+You are a task management assistant.
+
+Return ONLY valid JSON, no extra text.
+
+Given a card title, generate:
+- A concise description (1–3 sentences)
+- 3–7 actionable subtasks
+
+Card title: "${title}"
+
+${userPrompt ? `Additional context: "${userPrompt}"` : ''}
+`
+
+const AI_OUTPUT_SCHEMA = Joi.object({
+  description: Joi.string().max(2000).required(),
+  subtasks: Joi.array().items(Joi.string().max(200)).min(1).max(10).required()
+})
 
 export default CardService

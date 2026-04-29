@@ -7,8 +7,9 @@ import HomeIcon from '@mui/icons-material/Home'
 import AddIcon from '@mui/icons-material/Add'
 import WorkspaceSidebarItem from './WorkspaceSidebarItem'
 import { styled, alpha } from '@mui/material/styles'
-
-const SidebarRootItem = styled(Box)(({ theme }) => ({
+import { useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
+const SidebarRootItem = styled(NavLink)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -46,6 +47,8 @@ const ItemLeft = styled(Box)(() => ({
 }))
 
 function SideBar({ workspaces, handleOpenCreateWorkspaceModal }) {
+  const location = useLocation()
+  const isHomeActive = location.pathname === '/h/introduction'
   return (
     <Grid
       xs={12}
@@ -58,7 +61,10 @@ function SideBar({ workspaces, handleOpenCreateWorkspaceModal }) {
       }}
     >
       <Stack spacing={1.2}>
-        <SidebarRootItem className="active">
+        <SidebarRootItem
+          className={isHomeActive ? 'active' : ''}
+          to="/h/introduction"
+        >
           <ItemLeft>
             <HomeIcon fontSize="small" />
             <Typography fontSize={15} fontWeight={600}>

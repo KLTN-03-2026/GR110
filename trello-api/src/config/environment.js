@@ -54,5 +54,7 @@ export const env = {
   //PAYPAL
   PAYPAL_CLIENT_ID:process.env.PAYPAL_CLIENT_ID,
   PAYPAL_SECRET: process.env.PAYPAL_SECRET,
-  PAYPAL_BASE_URL:process.env.PAYPAL_BASE_URL
+  PAYPAL_BASE_URL:process.env.PAYPAL_BASE_URL,
+
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY
 }

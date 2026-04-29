@@ -39,6 +39,10 @@ const create = Joi.object({
     .pattern(OBJECT_ID_RULE)
     .message(OBJECT_ID_RULE_MESSAGE),
 
+  isGenerateWithAI: Joi.boolean().required(),
+
+  aiPrompt: Joi.string().optional().allow(''),
+
   cover: Joi.object({
     type: Joi.string().valid('color', 'image').required().messages({
       'any.required': 'Cover type is required.',

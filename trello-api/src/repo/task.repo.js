@@ -75,7 +75,7 @@ class TaskRepo {
       .deleteMany(filter, { session })
   }
 
-   static getMaxTasksPerCard = async ({ workspaceId }) => {
+  static getMaxTasksPerCard = async ({ workspaceId }) => {
     const result = await GET_DB()
       .collection(taskModel.TASK_COLLECTION_NAME)
       .aggregate([
@@ -128,6 +128,33 @@ class TaskRepo {
       .toArray()
 
     return result[0]?.total || 0
+  }
+
+  static aggregateTaskStats = async (boardId) => {
+    const result = await GET_DB()
+      .collection('tasks')
+      .aggregate([
+        {
+          $match: { boardId }
+        },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            done: {
+              $sum: {
+                $cond: [{ $eq: ['$isCompleted', true] }, 1, 0]
+              }
+            }
+          }
+        }
+      ])
+      .toArray()
+
+    return {
+      total: result[0]?.total || 0,
+      done: result[0]?.done || 0
+    }
   }
 }
 

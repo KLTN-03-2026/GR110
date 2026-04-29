@@ -32,6 +32,8 @@ import S3Provider from '~/providers/S3Provider'
 import { emitBoardUpdated } from '~/realtime/realtimeEmitters/boardRealtime.emitter'
 import { emitCardMoved } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
 import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
+import { invokeModel } from '~/providers/BedrockProvider'
+import { invokeOpenAIModel } from '~/providers/OpenAIProvider'
 
 const DEFAULT_BOARD_LABELS = [
   { title: '', color: 'green' },
@@ -218,91 +220,153 @@ class BoardService {
   }
 
   static create = async ({ workspaceAccess, userContext, data }) => {
-    const createBoardData = { ...data, createdBy: userContext._id }
+    const { isGenerateWithAI = false, aiPrompt, ...restData } = data
 
-    let createdBoard = null
+    const workspaceId = workspaceAccess.workspace._id.toString()
 
-    const subscription = await getActiveSubscriptionCached({
-      workspaceId: workspaceAccess.workspace._id
-    })
-
+    const subscription = await getActiveSubscriptionCached({ workspaceId })
     if (!subscription)
-      throw new NotFoundErrorResponse(
-        'Subscription not found for this workspace.'
-      )
-
-    const features = subscription.planFeatureSnapshot
+      throw new NotFoundErrorResponse('Subscription not found.')
 
     const countBoards = await BoardRepo.count({
-      filter: { workspaceId: workspaceAccess.workspace._id.toString() }
+      filter: { workspaceId }
     })
 
-    if (countBoards >= features?.limits?.maxBoards)
-      throw new ForbiddenErrorResponse(
-        'Your current subscription plan does not allow creating more boards.'
-      )
+    if (countBoards >= subscription.planFeatureSnapshot?.limits?.maxBoards)
+      throw new ForbiddenErrorResponse('Board limit reached.')
+
+    const mergePrompt = `
+Project title: ${data.title || ''}
+
+Project description:
+${data.description || ''}
+
+Extra instruction from user:
+${aiPrompt || ''}
+`
+
+    let aiStructure = null
+    if (isGenerateWithAI) {
+      aiStructure = await buildBoardStructureFromAI(mergePrompt)
+    }
+
+    console.log('aiStructure::::', aiStructure)
+
+    const createBoardData = {
+      ...restData,
+      workspaceId,
+      createdBy: userContext._id,
+      title: aiStructure?.boardTitle || restData.title,
+      description: isGenerateWithAI
+        ? `AI-generated board from: "${aiPrompt}"`
+        : restData.description
+    }
 
     const session = await mongoClientInstance.startSession()
 
     try {
+      let boardId = null
+
       await session.withTransaction(async () => {
-        createdBoard = await BoardRepo.createOne({
+        const createdBoard = await BoardRepo.createOne({
           data: createBoardData,
           session
         })
+        boardId = createdBoard.insertedId
 
-        const createdBoardRole = await BoardRoleRepo.createOne({
-          data: generateBoardAdminRole({ boardId: createdBoard.insertedId }),
+        const adminRole = await BoardRoleRepo.createOne({
+          data: generateBoardAdminRole({ boardId }),
           session
         })
 
         await BoardRoleRepo.createOne({
-          data: generateBoardViewerRole({ boardId: createdBoard.insertedId }),
+          data: generateBoardViewerRole({ boardId }),
           session
         })
 
-        const workspaceMember = workspaceAccess?.workspaceMember
-
-        const createdBoardMemberData = {
-          boardId: createdBoard.insertedId.toString(),
-          workspaceMemberId: workspaceMember._id.toString(),
-          boardRoleId: createdBoardRole.insertedId.toString(),
-          invitedBy: userContext._id.toString(),
-          status: BOARD_MEMBER_STATUS[0],
-          joinAt: new Date()
-        }
-
+        const workspaceMember = workspaceAccess.workspaceMember
         const createdMember = await BoardMemberRepo.createOne({
-          data: createdBoardMemberData,
-          session
-        })
-
-        const createLabelData = generateBoardLabel({
-          boardId: createdBoard.insertedId.toString(),
-          createdBy: createdMember.insertedId.toString()
-        })
-
-        await ActivityLogRepo.createOne({
           data: {
-            boardId: createdBoard.insertedId.toString(),
-            authorId: createdMember.insertedId.toString(),
-            authorType: 'boardMember',
-            entityType: 'board',
-            entityId: createdBoard.insertedId.toString(),
-            action: 'board.create',
-            content: 'created this board'
+            boardId: boardId.toString(),
+            workspaceMemberId: workspaceMember._id.toString(),
+            boardRoleId: adminRole.insertedId.toString(),
+            invitedBy: userContext._id.toString(),
+            status: 'active',
+            joinAt: new Date()
           },
           session
         })
 
-        await LabelRepo.createMany({ data: createLabelData, session })
+        const labels = generateBoardLabel({
+          boardId: boardId.toString(),
+          createdBy: createdMember.insertedId.toString()
+        })
+        await LabelRepo.createMany({ data: labels, session })
+
+        const columnOrderIds = []
+
+        if (aiStructure?.columns?.length) {
+          for (const col of aiStructure.columns) {
+            const createdCol = await ColumnRepo.createOne({
+              data: {
+                boardId: boardId.toString(),
+                title: col.title
+              },
+              session
+            })
+
+            columnOrderIds.push(createdCol.insertedId)
+
+            const cardOrderIds = []
+
+            for (const card of col.cards || []) {
+              const createdCard = await CardRepo.createOne({
+                data: {
+                  boardId: boardId.toString(),
+                  columnId: createdCol.insertedId.toString(),
+                  title: card.title,
+                  description: card.description,
+                  isHasDescription: !!card.description
+                },
+                session
+              })
+
+              cardOrderIds.push(createdCard.insertedId)
+            }
+
+            if (cardOrderIds.length) {
+              await ColumnRepo.updateById({
+                _id: createdCol.insertedId.toString(),
+                data: { cardOrderIds },
+                session
+              })
+            }
+          }
+
+          await BoardRepo.updateOne({
+            _id: boardId.toString(),
+            data: { columnOrderIds },
+            session
+          })
+        }
+
+        await ActivityLogRepo.createOne({
+          data: {
+            boardId: boardId.toString(),
+            authorId: createdMember.insertedId.toString(),
+            authorType: 'boardMember',
+            entityType: 'board',
+            entityId: boardId.toString(),
+            action: 'board.create',
+            content: isGenerateWithAI
+              ? `created this board with AI from: "${aiPrompt}"`
+              : 'created this board'
+          },
+          session
+        })
       })
 
-      const newBoard = await BoardRepo.findById({
-        _id: createdBoard.insertedId
-      })
-
-      return newBoard
+      return await BoardRepo.findById({ _id: boardId })
     } finally {
       await session.endSession()
     }
@@ -1345,6 +1409,64 @@ class BoardService {
       return [BOARD_PERMISSIONS.VIEW, ...uniqueCodes]
 
     return uniqueCodes
+  }
+}
+
+const buildBoardStructureFromAI = async (prompt) => {
+  if (!prompt?.trim()) {
+    throw new BadRequestErrorResponse('Project description is required.')
+  }
+
+  const boardPrompt = `
+You are a senior project manager.
+
+Based on the PROJECT INFORMATION below, design a practical kanban board structure for real work.
+
+STRICT RULES:
+- boardTitle: concise, max 200 chars, same language as input
+- Create 6–7 workflow columns that represent real execution stages
+- Each column must contain 5–7 realistic task cards
+- Card title: actionable task, max 500 chars
+- Card description: clear explanation, max 2000 chars
+- Do NOT repeat generic tasks across columns
+- Return ONLY valid JSON. No explanation text.
+
+Output JSON format:
+{
+  "boardTitle": "...",
+  "columns": [
+    {
+      "title": "...",
+      "cards": [
+        { "title": "...", "description": "..." }
+      ]
+    }
+  ]
+}
+
+PROJECT INFORMATION:
+"""
+${prompt}
+"""
+`
+
+  let rawResponse
+  try {
+    rawResponse = await invokeOpenAIModel({
+      prompt: boardPrompt,
+      maxTokens: 2048
+    })
+  } catch (e) {
+    throw new BadRequestErrorResponse(
+      `AI service error: ${e?.message || 'Unknown'}`
+    )
+  }
+
+  try {
+    const jsonMatch = rawResponse.match(/\{[\s\S]*\}/)
+    return JSON.parse(jsonMatch[0]) // { boardTitle, columns }
+  } catch {
+    throw new BadRequestErrorResponse('AI returned invalid format.')
   }
 }
 

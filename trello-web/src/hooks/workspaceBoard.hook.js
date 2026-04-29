@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { aiGenerateBoardAPI, createNewBoardsAPI } from '~/apis'
 import { fetchBoardByWorkspaceIdAPI } from '~/apis/board.api'
-import { fetchWorkspaceQuota } from '~/apis/workspace.api'
 
 const BOARD_ITEMS_PER_PAGE = 10
 
@@ -12,6 +11,7 @@ export const useWorkspaceBoards = () => {
   const [isOpenCreateBoard, setIsOpenCreateBoard] = useState(false)
   const [isOpenAIGenerateBoard, setIsOpenAIGenerateBoard] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   const { workspaceId } = useParams()
   const [searchParams] = useSearchParams()
@@ -22,14 +22,19 @@ export const useWorkspaceBoards = () => {
     if (!workspaceId) return
 
     const fetchWorkspaceBoards = async () => {
-      const data = await fetchBoardByWorkspaceIdAPI({
-        workspaceId,
-        page,
-        itemsPerPage: BOARD_ITEMS_PER_PAGE
-      })
+      try {
+        setIsLoading(true)
+        const data = await fetchBoardByWorkspaceIdAPI({
+          workspaceId,
+          page,
+          itemsPerPage: BOARD_ITEMS_PER_PAGE
+        })
 
-      setBoards(data.boards)
-      setCount(data.count)
+        setBoards(data.boards)
+        setCount(data.count)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     fetchWorkspaceBoards()
@@ -44,10 +49,7 @@ export const useWorkspaceBoards = () => {
     try {
       setIsSubmitting(true)
 
-      const payload = {
-        ...data,
-        workspaceId
-      }
+      const payload = { ...data, workspaceId }
 
       const board = await createNewBoardsAPI(payload)
 
@@ -93,7 +95,8 @@ export const useWorkspaceBoards = () => {
             isOpen: isOpenAIGenerateBoard
           }
         }
-      }
+      },
+      isLoading
     },
     data: {
       boardList: {
