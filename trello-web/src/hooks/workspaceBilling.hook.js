@@ -52,17 +52,30 @@ const mapPlanFromDbToUi = (plan) => {
 
 export default function useBillingPage() {
   const [plans, setPlans] = useState([])
+  const [isLoadingPlans, setIsLoadingPlans] = useState(true)
 
-  const {workspaceId} = useParams()
+  const { workspaceId } = useParams()
 
   useEffect(() => {
+    let isMounted = true
+
     const fetchPlans = async () => {
-      const data = await fetchWorkspacePlan(workspaceId)
-      setPlans(data.map(mapPlanFromDbToUi))
+      setIsLoadingPlans(true)
+      try {
+        const data = await fetchWorkspacePlan(workspaceId)
+        if (!isMounted) return
+        setPlans(data.map(mapPlanFromDbToUi))
+      } finally {
+        if (!isMounted) return
+        setIsLoadingPlans(false)
+      }
     }
 
     fetchPlans()
-  }, [])
+    return () => {
+      isMounted = false
+    }
+  }, [workspaceId])
 
-  return { plans }
+  return { plans, isLoadingPlans }
 }

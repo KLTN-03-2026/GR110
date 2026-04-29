@@ -158,9 +158,6 @@ function WorkspaceSidebarItem({ workspace }) {
             : theme.palette.mode === 'dark'
               ? alpha(theme.palette.common.white, 0.03)
               : alpha(theme.palette.common.white, 0.72),
-          boxShadow: isWorkspaceActive
-            ? `0 10px 24px ${alpha(theme.palette.primary.main, 0.12)}`
-            : 'none',
           transition: 'all 0.18s ease',
           '&:hover': {
             bgcolor: isWorkspaceActive
@@ -179,8 +176,7 @@ function WorkspaceSidebarItem({ workspace }) {
               fontWeight: 800,
               borderRadius: 2,
               bgcolor: avatarColor,
-              color: '#fff',
-              boxShadow: `0 8px 18px ${alpha(avatarColor, 0.28)}`
+              color: '#fff'
             }}
           >
             {workspace?.title?.charAt(0)?.toUpperCase()}

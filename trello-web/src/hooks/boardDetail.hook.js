@@ -5,6 +5,7 @@ import {
 } from '~/apis'
 import {
   fetchBoardDetailsAPI,
+  clearActiveBoard,
   updateCurrentActiveBoard
 } from '~/redux/activeBoard/activeBoardSlice'
 import { useEffect, useRef, useState } from 'react'
@@ -393,6 +394,7 @@ const useBoardDetail = () => {
       socket.off('column:updated', handleColumnUpdated)
       socket.off('column:archived', handleColumnArchived)
       socket.off('column:restored', handleColumnRestored)
+      dispatch(clearActiveBoard())
     }
   }, [dispatch, boardId])
 

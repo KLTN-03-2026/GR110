@@ -21,6 +21,7 @@ export const useWorkspaceMember = () => {
   const [members, setMembers] = useState([])
   const [roles, setRoles] = useState([])
   const [inviteCandidates, setInviteCandidates] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   const [memberKeyword, setMemberKeyword] = useState('')
   const [inviteKeyword, setInviteKeyword] = useState('')
@@ -30,14 +31,19 @@ export const useWorkspaceMember = () => {
 
   const fetchWorkspaceMembers = useCallback(
     async (keyword = '') => {
-      if (!workspaceId) return
+      try {
+        setIsLoading(true)
+        if (!workspaceId) return
 
-      const data = await fetchWorkspaceMemberAPI({
-        _id: workspaceId,
-        search: keyword
-      })
+        const data = await fetchWorkspaceMemberAPI({
+          _id: workspaceId,
+          search: keyword
+        })
 
-      setMembers(data || [])
+        setMembers(data || [])
+      } finally {
+        setIsLoading(false)
+      }
     },
     [workspaceId]
   )
@@ -146,6 +152,7 @@ export const useWorkspaceMember = () => {
     members,
     roles,
     memberKeyword,
+    isLoading,
     handleMemberSearchChange,
     handleOpenInviteModal,
     handleChangeMemberRole,

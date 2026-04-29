@@ -1,4 +1,12 @@
-import { Box, Button, Chip, InputAdornment, Paper, TextField, Typography } from '@mui/material'
+import {
+  Box,
+  Button,
+  Chip,
+  InputAdornment,
+  Paper,
+  TextField,
+  Typography
+} from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
 import { useWorkspaceMember } from '~/hooks/workspaceMember.hook'
 import Diversity2RoundedIcon from '@mui/icons-material/Diversity2Rounded'
@@ -30,7 +38,8 @@ function WorkspaceMemberPage() {
     handleChangeMemberRole,
     handleLeaveWorkspace,
     handleRemoveMember,
-    inviteModal
+    inviteModal,
+    isLoading
   } = useWorkspaceMember()
 
   return (
@@ -41,7 +50,8 @@ function WorkspaceMemberPage() {
           position: 'relative',
           overflow: 'hidden',
           borderRadius: '24px',
-          background: 'linear-gradient(145deg, #0f172a 0%, #1e3a8a 55%, #1d4ed8 100%)',
+          background:
+            'linear-gradient(145deg, #0f172a 0%, #1e3a8a 55%, #1d4ed8 100%)',
           color: 'white',
           px: { xs: 3, md: 5 },
           py: { xs: 3.5, md: 4 },
@@ -64,14 +74,19 @@ function WorkspaceMemberPage() {
             width: 240,
             height: 240,
             borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(56,189,248,0.22) 0%, transparent 70%)',
+            background:
+              'radial-gradient(circle, rgba(56,189,248,0.22) 0%, transparent 70%)',
             pointerEvents: 'none'
           }}
         />
 
         <Box sx={{ position: 'relative', zIndex: 1 }}>
           <Chip
-            icon={<GroupsRoundedIcon sx={{ fontSize: 13, color: '#93c5fd !important' }} />}
+            icon={
+              <GroupsRoundedIcon
+                sx={{ fontSize: 13, color: '#93c5fd !important' }}
+              />
+            }
             label="People & Access"
             size="small"
             sx={{
@@ -97,7 +112,8 @@ function WorkspaceMemberPage() {
             Workspace Members
           </Typography>
           <Typography sx={{ opacity: 0.72, fontSize: '0.875rem' }}>
-            {members?.length ?? 0} member{(members?.length ?? 0) !== 1 ? 's' : ''} · Manage roles and access
+            {members?.length ?? 0} member
+            {(members?.length ?? 0) !== 1 ? 's' : ''} · Manage roles and access
           </Typography>
         </Box>
 
@@ -146,8 +162,18 @@ function WorkspaceMemberPage() {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Diversity2RoundedIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', whiteSpace: 'nowrap' }}>
+          <Diversity2RoundedIcon
+            fontSize="small"
+            sx={{ color: 'text.secondary' }}
+          />
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 600,
+              color: 'text.secondary',
+              whiteSpace: 'nowrap'
+            }}
+          >
             Filter members
           </Typography>
         </Box>
@@ -160,7 +186,10 @@ function WorkspaceMemberPage() {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchRoundedIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+                <SearchRoundedIcon
+                  fontSize="small"
+                  sx={{ color: 'text.disabled' }}
+                />
               </InputAdornment>
             )
           }}
@@ -177,7 +206,10 @@ function WorkspaceMemberPage() {
             ml: 'auto',
             fontWeight: 700,
             fontSize: '0.75rem',
-            backgroundColor: alpha(theme.palette.primary.main, isDark ? 0.15 : 0.08),
+            backgroundColor: alpha(
+              theme.palette.primary.main,
+              isDark ? 0.15 : 0.08
+            ),
             color: 'primary.main',
             border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
           }}
@@ -201,6 +233,7 @@ function WorkspaceMemberPage() {
           handleChangeMemberRole={handleChangeMemberRole}
           handleLeaveWorkspace={handleLeaveWorkspace}
           handleRemoveMember={handleRemoveMember}
+          isLoading={isLoading}
         />
       </Paper>
 

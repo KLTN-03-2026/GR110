@@ -21,24 +21,37 @@ export const useWorkspaceSetting = () => {
   const [deleteRoleId, setDeleteRoleId] = useState(null)
   const [permissions, setPermissions] = useState([])
   const [roles, setRoles] = useState([])
+  const [isLoadingRoles, setIsLoadingRoles] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isDeletingWorkspace, setIsDeletingWorkspace] = useState(false)
 
   useEffect(() => {
-    const fetchWorkspaceRole = async () => {
-      const data = await fetchWorkspaceRoleAPI({ _id: workspaceId })
-      setRoles(data)
+    let isMounted = true
+
+    const fetchData = async () => {
+      setIsLoadingRoles(true)
+      try {
+        const [rolesData, permissionsData] = await Promise.all([
+          fetchWorkspaceRoleAPI({ _id: workspaceId }),
+          fetchWorkspacePermissionAPI()
+        ])
+
+        if (!isMounted) return
+        setRoles(rolesData)
+        setPermissions(permissionsData)
+      } finally {
+        if (!isMounted) return
+        setIsLoadingRoles(false)
+      }
     }
 
-    const fetchWorkspacePermission = async () => {
-      const data = await fetchWorkspacePermissionAPI()
-      setPermissions(data)
-    }
+    fetchData()
 
-    fetchWorkspaceRole()
-    fetchWorkspacePermission()
+    return () => {
+      isMounted = false
+    }
   }, [workspaceId])
 
   const handleChangeRolePermissions = ({ roleId, permissionCode, action }) => {
@@ -145,6 +158,7 @@ export const useWorkspaceSetting = () => {
 
   return {
     ui: {
+      isLoadingRoles,
       isUpdating,
       isDeletingWorkspace,
       createModal: {

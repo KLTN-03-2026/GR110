@@ -192,7 +192,7 @@ function Profiles() {
           sx={{
             ...menuItemSx,
             textDecoration: 'none',
-            color: 'inherit',
+            color: 'inherit'
           }}
         >
           <ListItemIcon>
@@ -204,7 +204,7 @@ function Profiles() {
         <MenuItem
           onClick={handleOpenCreateModal}
           sx={{
-            ...menuItemSx,
+            ...menuItemSx
           }}
         >
           <ListItemIcon>
@@ -214,20 +214,6 @@ function Profiles() {
             />
           </ListItemIcon>
           Create workspace
-        </MenuItem>
-
-        <MenuItem sx={menuItemSx}>
-          <ListItemIcon>
-            <PersonAdd fontSize="small" />
-          </ListItemIcon>
-          Add another account
-        </MenuItem>
-
-        <MenuItem sx={menuItemSx}>
-          <ListItemIcon>
-            <Settings fontSize="small" />
-          </ListItemIcon>
-          Settings
         </MenuItem>
 
         <Divider sx={{ my: 1 }} />

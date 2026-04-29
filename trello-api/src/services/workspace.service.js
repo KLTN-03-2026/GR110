@@ -35,6 +35,8 @@ import {
 } from '~/helpers/boardPermission.cache'
 import S3Provider from '~/providers/S3Provider'
 import BackgroundRepo from '~/repo/adminBackground.repo'
+import Joi from 'joi'
+import { invokeOpenAIModel } from '~/providers/OpenAIProvider'
 
 const generateWorkspaceAdminRole = ({ workspaceId }) => {
   return {
@@ -68,6 +70,46 @@ const generateWorkspaceViewerRole = ({ workspaceId }) => {
   }
 }
 
+const buildWorkspaceSummaryPrompt = (workspaceName, boards) => `
+You are a project management analyst.
+
+Return the result in JSON.
+
+Workspace: "${workspaceName}"
+
+Boards overview:
+${boards
+  .map(
+    (b, i) => `
+Board ${i + 1}:
+- Title: ${b.title}
+- Columns: ${b.columnCount}
+- Cards: ${b.cardCount}
+- Cards with description: ${b.describedCards}
+- Cards without description: ${b.undocumentedCards}
+- Tasks completed: ${b.tasksDone}/${b.tasksTotal}
+- Overdue cards: ${b.overdueCards}
+- Sample cards: ${b.sampleCards.join(', ')}
+`
+  )
+  .join('\n')}
+
+JSON format:
+{
+  "summary": "...",
+  "insights": ["..."],
+  "risks": ["..."],
+  "suggestions": ["..."]
+}
+`
+
+const WORKSPACE_SUMMARY_SCHEMA = Joi.object({
+  summary: Joi.string().required(),
+  insights: Joi.array().items(Joi.string()).required(),
+  risks: Joi.array().items(Joi.string()).required(),
+  suggestions: Joi.array().items(Joi.string()).required()
+})
+
 class WorkspaceService {
   static fetchWorkspacePermission = async () => {
     const workspacePermissions = await WorkspacePermissionRepo.findMany({
@@ -83,7 +125,7 @@ class WorkspaceService {
     })
 
     if (!workspaces || !workspaces.length) return []
-    
+
     return workspaces
   }
 
@@ -770,17 +812,95 @@ class WorkspaceService {
     return updatedMember
   }
 
+  static summarize = async ({ workspaceId }) => {
+    const boards = await BoardRepo.findMany({ filter: { workspaceId } })
+
+    const signals = []
+
+    for (const board of boards) {
+      const boardId = board._id.toString()
+
+      const columnCount = await ColumnRepo.count({ filter: { boardId } })
+
+      const cards = await CardRepo.findMany({
+        filter: { boardId, status: 'active' },
+        options: { limit: 50 }
+      })
+
+      const cardCount = cards.length
+      const describedCards = cards.filter((c) => c.isHasDescription).length
+      const undocumentedCards = cardCount - describedCards
+      const sampleCards = cards.slice(0, 5).map((c) => c.title)
+
+      const taskAgg = await TaskRepo.aggregateTaskStats([
+        { $match: { boardId } },
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            done: { $sum: { $cond: ['$isCompleted', 1, 0] } }
+          }
+        }
+      ])
+
+      const tasksTotal = taskAgg[0]?.total || 0
+      const tasksDone = taskAgg[0]?.done || 0
+
+      const overdueCards = await CardRepo.count({
+        filter: {
+          boardId,
+          dueAt: { $lt: new Date() },
+          status: 'active'
+        }
+      })
+
+      signals.push({
+        title: board.title,
+        columnCount,
+        cardCount,
+        describedCards,
+        undocumentedCards,
+        tasksDone,
+        tasksTotal,
+        overdueCards,
+        sampleCards
+      })
+    }
+
+    const prompt = buildWorkspaceSummaryPrompt('Workspace', signals)
+
+    const raw = await invokeOpenAIModel({ prompt, json: true })
+    const parsed = JSON.parse(raw)
+
+    const summarizeContent = await WORKSPACE_SUMMARY_SCHEMA.validateAsync(
+      parsed,
+      {
+        abortEarly: false
+      }
+    )
+
+    return summarizeContent
+  }
+
   static fetchPlans = async ({ workspaceId }) => {
     const plans = await WorkspaceRepo.fetchByPlan(workspaceId)
     return plans
   }
 
-  static buildQuota = ({ key, label, used = 0, limit = 0, unit = '', mode = 'workspace' }) => {
+  static buildQuota = ({
+    key,
+    label,
+    used = 0,
+    limit = 0,
+    unit = '',
+    mode = 'workspace'
+  }) => {
     const safeUsed = Number(used || 0)
     const safeLimit = Number(limit || 0)
-    const percent = safeLimit > 0
-      ? Number(Math.min((safeUsed / safeLimit) * 100, 100).toFixed(2))
-      : 0
+    const percent =
+      safeLimit > 0
+        ? Number(Math.min((safeUsed / safeLimit) * 100, 100).toFixed(2))
+        : 0
 
     return {
       key,
@@ -817,7 +937,9 @@ class WorkspaceService {
     })
 
     if (!workspaceMember) {
-      throw new ForbiddenErrorResponse('You do not have access to this workspace')
+      throw new ForbiddenErrorResponse(
+        'You do not have access to this workspace'
+      )
     }
 
     let subscription = await SubscriptionRepo.findOne({
@@ -838,7 +960,8 @@ class WorkspaceService {
         }
       })
 
-      if (!freePlan) throw new NotFoundErrorResponse('Default Free plan not found')
+      if (!freePlan)
+        throw new NotFoundErrorResponse('Default Free plan not found')
 
       planFeatureSnapshot = freePlan.feature
       subscription = {
@@ -902,7 +1025,9 @@ class WorkspaceService {
       })
     ])
 
-    const storageUsedMb = Number(((storageUsedBytes || 0) / 1024 / 1024).toFixed(2))
+    const storageUsedMb = Number(
+      ((storageUsedBytes || 0) / 1024 / 1024).toFixed(2)
+    )
 
     return {
       subscription: {

@@ -1,4 +1,3 @@
-import BoardPage from './pages/Board/Board.page'
 import { Route, Routes, Navigate, Outlet } from 'react-router-dom'
 import NotFound from './pages/404/NotFound'
 import Auth from './pages/Auth/Auth'
@@ -37,13 +36,7 @@ import PaymentPage from './pages/Admin/Payment/Payment.page'
 import TicketPage from './pages/Tickets/Tickets.page'
 import AdminTicketPage from './pages/Admin/Ticket/Ticket.page'
 import { WorkspaceQuotaPage } from './pages/Home/WorkspaceQuota.page'
-/**
- * Giải pháp Clean Code trong việc xác định các route nào cần đăng nhập tài khoản xong thì mới cho truy cập
- * Sử dụng <Outlet /> của react-router-dom để hiển thị các Child Route (xem cách sử dụng trong App() bên dưới)
- * https://reactrouter.com/en/main/components/outlet
- * Một bài hướng dẫn khá đầy đủ:
- * https://www.robinwieruch.de/react-router-private-routes/
- */
+
 const ProtectedRoute = ({ user }) => {
   if (!user) return <Navigate to="/auth/login" replace={true} />
   return <Outlet />
@@ -53,7 +46,6 @@ const ProtectedRouteAdmin = ({ admin }) => {
   if (!admin) return <Navigate to="/admin/auth/login" replace={true} />
   return <Outlet />
 }
-
 
 const UnauthorizedRoute = ({ user }) => {
   if (user) return <Navigate to="/h" replace={true} />
@@ -77,9 +69,7 @@ function App() {
 
       <Route
         path="/admin"
-        element={
-          <Navigate to="/admin/auth/login" replace={true} />
-        }
+        element={<Navigate to="/admin/auth/login" replace={true} />}
       />
 
       {/* Protected Routes (Hiểu đơn giản trong dự án của chúng ta là những route chỉ cho truy cập sau khi đã login) */}
@@ -91,9 +81,7 @@ function App() {
 
         {/* Board list  */}
         <Route path="/h" element={<HomeLayout />}>
-          <Route path="boards" element={<BoardPage />} />
           <Route path="tickets" element={<TicketPage />} />
-
           <Route path="workspaces" element={<WorkspaceLayout />}>
             <Route
               path=":workspaceId/boards"
@@ -115,17 +103,13 @@ function App() {
               element={<WorkspaceBillingPage />}
             />
 
-            <Route
-              path=":workspaceId/quota"
-              element={<WorkspaceQuotaPage />}
-            />
+            <Route path=":workspaceId/quota" element={<WorkspaceQuotaPage />} />
 
             <Route
               path=":workspaceId/payment/:subscriptionId"
               element={<WorkspacePaymentPage />}
             />
           </Route>
-
           {/* <Route index element={<Navigate to="boards" replace />} />
           <Route path="boards" element={<BoardsOverviewPage />} />
           
@@ -151,25 +135,31 @@ function App() {
       </Route>
 
       <Route element={<ProtectedRouteAdmin admin={currentAdmin} />}>
-        <Route path='/admin' element={<AdminLayout />}>
-          <Route path='profile' element={<ProfilePage />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="profile" element={<ProfilePage />} />
 
-          <Route path='ticket' element={<AdminTicketPage />} />
-          <Route path='user' element={<UserPage />} />
-          <Route path='user/create' element={<CreateUserPage />} />
-          <Route path='user/update/:_id' element={<UpdateUserPage />} />
-          <Route path='board' element={<BoardPages />} />
-          <Route path='permission' element={<PermissionPage />} />
-          <Route path='payment' element={<PaymentPage />} />
-          <Route path='background' element={<BackgroundPage />} />
-          <Route path='background/create' element={<CreateBackgroundPage />} />
-          <Route path='background/update/:_id' element={<UpdateBackgroundPage />} />
-          <Route path='workspace' element={<WorkspacePage />} />
-          <Route path='subscription' element={<SubscriptionPage />} />
-          <Route path='subscription/update/:_id' element={<UpdateSubscriptionPage />} />
-          <Route path='plan' element={<PlanPage />} />
-          <Route path='plan/create' element={<CreatePlanPage />} />
-          <Route path='plan/update/:_id' element={<UpdatePlanPage />} />
+          <Route path="ticket" element={<AdminTicketPage />} />
+          <Route path="user" element={<UserPage />} />
+          <Route path="user/create" element={<CreateUserPage />} />
+          <Route path="user/update/:_id" element={<UpdateUserPage />} />
+          <Route path="board" element={<BoardPages />} />
+          <Route path="permission" element={<PermissionPage />} />
+          <Route path="payment" element={<PaymentPage />} />
+          <Route path="background" element={<BackgroundPage />} />
+          <Route path="background/create" element={<CreateBackgroundPage />} />
+          <Route
+            path="background/update/:_id"
+            element={<UpdateBackgroundPage />}
+          />
+          <Route path="workspace" element={<WorkspacePage />} />
+          <Route path="subscription" element={<SubscriptionPage />} />
+          <Route
+            path="subscription/update/:_id"
+            element={<UpdateSubscriptionPage />}
+          />
+          <Route path="plan" element={<PlanPage />} />
+          <Route path="plan/create" element={<CreatePlanPage />} />
+          <Route path="plan/update/:_id" element={<UpdatePlanPage />} />
         </Route>
       </Route>
 

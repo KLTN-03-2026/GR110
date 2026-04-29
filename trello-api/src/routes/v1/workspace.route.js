@@ -67,7 +67,10 @@ Router.route('/members/:workspaceId/:memberId')
       )
     ),
     asyncHandler(
-      validate(workspaceMemberValidation.updateWorkspaceMemberRoleSchema, 'body')
+      validate(
+        workspaceMemberValidation.updateWorkspaceMemberRoleSchema,
+        'body'
+      )
     ),
     asyncHandler(
       workspaceMiddleware.checkPermission(
@@ -125,6 +128,12 @@ Router.route('/quota/:workspaceId').get(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
   asyncHandler(WorkspaceController.fetchQuota)
+)
+
+Router.route('/summarize/:workspaceId').get(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+  asyncHandler(WorkspaceController.summarize)
 )
 
 Router.route('/:workspaceId')

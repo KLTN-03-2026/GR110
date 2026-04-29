@@ -31,7 +31,6 @@ import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
 import { backgroundBoardList } from '~/constant/backgroundBoard'
 import PopoverBoardColor from './PopoverBoardColor'
 import { fetchBackgroundAPI } from '~/apis/board.api'
-import AIGenerateBoardModal from './AIGenerateBoardModal'
 
 const type = {
   PUBLIC: 'public',
@@ -279,7 +278,10 @@ function CreateBoardModal({ ui, handler }) {
                 borderRadius: '12px',
                 display: 'grid',
                 placeItems: 'center',
-                bgcolor: alpha(theme.palette.warning.main, isDark ? 0.18 : 0.12),
+                bgcolor: alpha(
+                  theme.palette.warning.main,
+                  isDark ? 0.18 : 0.12
+                ),
                 color: isDark
                   ? theme.palette.warning.light
                   : theme.palette.warning.dark,
@@ -815,9 +817,13 @@ function CreateBoardModal({ ui, handler }) {
                   <Box>
                     <Typography
                       id="board-modal-title"
-                      sx={{ fontWeight: 800, fontSize: '1.1rem', lineHeight: 1.3 }}
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: '1.1rem',
+                        lineHeight: 1.3
+                      }}
                     >
-                    Create board
+                      Create board
                     </Typography>
                     <Typography
                       sx={{
@@ -827,8 +833,8 @@ function CreateBoardModal({ ui, handler }) {
                         lineHeight: 1.5
                       }}
                     >
-                    Choose a cover, add the board details, and set who can
-                    access it.
+                      Choose a cover, add the board details, and set who can
+                      access it.
                     </Typography>
                   </Box>
                 </Stack>
@@ -851,13 +857,6 @@ function CreateBoardModal({ ui, handler }) {
           </Box>
         </Fade>
       </Modal>
-
-      <AIGenerateBoardModal
-        isOpen={aiUi.isOpen}
-        handleClose={aiHandler.handleClose || (() => {})}
-        handleGenerate={aiHandler.handleGenerate || (async () => null)}
-        isSubmitting={aiHandler.isSubmitting ?? isSubmitting}
-      />
     </>
   )
 }

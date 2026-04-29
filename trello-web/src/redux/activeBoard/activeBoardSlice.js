@@ -139,7 +139,9 @@ export const activeBoardSlice = createSlice({
 
       state.board.columns.push(restoringColumn)
       state.board.columnOrderIds.push(restoringColumn._id)
-    }
+    },
+
+    clearActiveBoard: () => initialState
   },
   extraReducers: (builder) => {
     builder.addCase(fetchBoardDetailsAPI.pending, (state) => {
@@ -211,7 +213,8 @@ export const {
   updateCardInBoard,
   removeCardInBoard,
   restoreCardInBoard,
-  restoreColumnInBoard
+  restoreColumnInBoard,
+  clearActiveBoard
 } = activeBoardSlice.actions
 
 export const activeBoardReducer = activeBoardSlice.reducer

@@ -4,6 +4,7 @@ import {
   Chip,
   Container,
   Paper,
+  Skeleton,
   Stack,
   Typography
 } from '@mui/material'
@@ -39,7 +40,7 @@ const PLAN_FREE = '69dc9cc2454ef403fb52c8ba'
 export default function WorkspaceBillingPage() {
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
-  const { plans } = useBillingPage()
+  const { plans, isLoadingPlans } = useBillingPage()
   const [selectedPlan, setSelectedPlan] = useState('')
   const [currentPlanId, setCurrentPlanId] = useState('')
   const [openFreePlanConfirm, setOpenFreePlanConfirm] = useState(false)
@@ -76,6 +77,59 @@ export default function WorkspaceBillingPage() {
   const isActivePlanCurrent = activePlan?.id === currentPlanId
   const isDowngradeToFree =
     activePlan?.id === PLAN_FREE && currentPlanId && currentPlanId !== PLAN_FREE
+
+  const renderPlanSkeletons = () =>
+    Array.from({ length: 3 }).map((_, idx) => (
+      <Box
+        key={`plan-skeleton-${idx}`}
+        sx={{
+          px: { xs: 2, md: 2.25 },
+          py: 2.25,
+          borderRadius: '16px',
+          border: `1px solid ${theme.palette.divider}`,
+          bgcolor: theme.palette.background.paper,
+          boxShadow: isDark
+            ? `0 8px 20px ${alpha('#000', 0.16)}`
+            : `0 8px 20px ${alpha(theme.palette.common.black, 0.05)}`
+        }}
+      >
+        <Stack spacing={1.75}>
+          <Stack direction="row" spacing={1.5} alignItems="flex-start">
+            <Skeleton
+              variant="rounded"
+              width={42}
+              height={42}
+              sx={{ borderRadius: '14px', flexShrink: 0 }}
+            />
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Skeleton variant="text" width="62%" height={30} />
+              <Skeleton variant="text" width="100%" height={18} />
+              <Skeleton variant="text" width="88%" height={18} />
+            </Box>
+          </Stack>
+
+          <Box
+            sx={{
+              borderRadius: 2,
+              px: 1.75,
+              py: 1.25,
+              border: `1px solid ${theme.palette.divider}`
+            }}
+          >
+            <Skeleton variant="text" width={110} height={32} />
+            <Skeleton variant="text" width={70} height={18} />
+          </Box>
+
+          <Skeleton variant="rounded" width="100%" height={1} />
+
+          <Stack spacing={0.8}>
+            {Array.from({ length: 6 }).map((__, i) => (
+              <Skeleton key={`feature-skeleton-${idx}-${i}`} height={18} />
+            ))}
+          </Stack>
+        </Stack>
+      </Box>
+    ))
 
   const handleSelectPlan = async () => {
     if (!activePlan) return
@@ -187,7 +241,9 @@ export default function WorkspaceBillingPage() {
         >
           <Chip
             icon={<ViewKanbanOutlinedIcon sx={{ fontSize: 15 }} />}
-            label={`${plans.length} plans`}
+            label={
+              isLoadingPlans ? 'Loading plans...' : `${plans.length} plans`
+            }
             sx={{
               height: 32,
               color: '#bfdbfe',
@@ -198,7 +254,7 @@ export default function WorkspaceBillingPage() {
             }}
           />
 
-          {activePlan && (
+          {!isLoadingPlans && activePlan && (
             <Chip
               icon={<CheckCircleRoundedIcon sx={{ fontSize: 15 }} />}
               label={isActivePlanCurrent ? 'Current plan' : 'Plan selected'}
@@ -246,46 +302,80 @@ export default function WorkspaceBillingPage() {
                 justifyContent="space-between"
                 spacing={2}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                  <ReceiptLongOutlinedIcon color="primary" />
-                  <Box>
-                    <Typography sx={{ fontWeight: 800, color: 'text.primary' }}>
-                      Choose a plan
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: 'text.secondary', mt: 0.25 }}
+                {isLoadingPlans ? (
+                  <>
+                    <Box
+                      sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}
                     >
-                      Pick the limits and capabilities that match your workspace.
-                    </Typography>
-                  </Box>
-                </Box>
+                      <Skeleton variant="circular" width={22} height={22} />
+                      <Box>
+                        <Skeleton variant="text" width={140} height={28} />
+                        <Skeleton variant="text" width={300} height={20} />
+                      </Box>
+                    </Box>
 
-                {activePlan && (
-                  <Chip
-                    label={
-                      isActivePlanCurrent
-                        ? `Current: ${activePlan.title}`
-                        : `Selected: ${activePlan.title}`
-                    }
-                    size="small"
-                    sx={{
-                      height: 30,
-                      fontWeight: 700,
-                      color: isActivePlanCurrent
-                        ? 'success.main'
-                        : 'primary.main',
-                      bgcolor: isActivePlanCurrent
-                        ? alpha(theme.palette.success.main, isDark ? 0.14 : 0.08)
-                        : alpha(theme.palette.primary.main, isDark ? 0.15 : 0.08),
-                      border: `1px solid ${alpha(
-                        isActivePlanCurrent
-                          ? theme.palette.success.main
-                          : theme.palette.primary.main,
-                        0.2
-                      )}`
-                    }}
-                  />
+                    <Skeleton
+                      variant="rounded"
+                      width={160}
+                      height={30}
+                      sx={{ borderRadius: '999px' }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Box
+                      sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}
+                    >
+                      <ReceiptLongOutlinedIcon color="primary" />
+                      <Box>
+                        <Typography
+                          sx={{ fontWeight: 800, color: 'text.primary' }}
+                        >
+                          Choose a plan
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: 'text.secondary', mt: 0.25 }}
+                        >
+                          Pick the limits and capabilities that match your
+                          workspace.
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {activePlan && (
+                      <Chip
+                        label={
+                          isActivePlanCurrent
+                            ? `Current: ${activePlan.title}`
+                            : `Selected: ${activePlan.title}`
+                        }
+                        size="small"
+                        sx={{
+                          height: 30,
+                          fontWeight: 700,
+                          color: isActivePlanCurrent
+                            ? 'success.main'
+                            : 'primary.main',
+                          bgcolor: isActivePlanCurrent
+                            ? alpha(
+                                theme.palette.success.main,
+                                isDark ? 0.14 : 0.08
+                              )
+                            : alpha(
+                                theme.palette.primary.main,
+                                isDark ? 0.15 : 0.08
+                              ),
+                          border: `1px solid ${alpha(
+                            isActivePlanCurrent
+                              ? theme.palette.success.main
+                              : theme.palette.primary.main,
+                            0.2
+                          )}`
+                        }}
+                      />
+                    )}
+                  </>
                 )}
               </Stack>
             </Paper>
@@ -301,67 +391,92 @@ export default function WorkspaceBillingPage() {
                 alignItems: 'start'
               }}
             >
-              {plans.map((plan) => (
-                <PlanCard
-                  key={plan.id}
-                  plan={plan}
-                  selected={selectedPlan === plan.id}
-                  onSelect={setSelectedPlan}
-                />
-              ))}
+              {isLoadingPlans
+                ? renderPlanSkeletons()
+                : plans.map((plan) => (
+                    <PlanCard
+                      key={plan.id}
+                      plan={plan}
+                      selected={selectedPlan === plan.id}
+                      onSelect={setSelectedPlan}
+                    />
+                  ))}
             </Box>
 
             <Stack alignItems="center" sx={{ mt: 5 }}>
-              <Button
-                variant="contained"
-                onClick={() => handleSelectPlan()}
-                disabled={isActivePlanCurrent}
-                startIcon={<RocketLaunchRoundedIcon />}
-                sx={{
-                  minWidth: 300,
-                  maxWidth: '100%',
-                  height: 52,
-                  px: 5,
-                  textTransform: 'none',
-                  fontSize: '0.95rem',
-                  fontWeight: 700,
-                  borderRadius: '999px',
-                  background: 'linear-gradient(135deg, #1d4ed8, #2563eb)',
-                  boxShadow: '0 8px 24px rgba(37,99,235,0.30)',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    boxShadow: '0 12px 32px rgba(37,99,235,0.45)',
-                    transform: 'translateY(-1px)'
-                  },
-                  '&:disabled': {
-                    background: 'rgba(0,0,0,0.08)',
-                    boxShadow: 'none'
-                  }
-                }}
-              >
-                {isActivePlanCurrent
-                  ? `Current plan: ${activePlan.title}`
-                  : `Select plan${activePlan ? `: ${activePlan.title}` : ''}`}
-              </Button>
+              {isLoadingPlans ? (
+                <>
+                  <Skeleton
+                    variant="rounded"
+                    width={320}
+                    height={52}
+                    sx={{ borderRadius: '999px', maxWidth: '100%' }}
+                  />
+                  <Skeleton
+                    variant="text"
+                    width={360}
+                    height={24}
+                    sx={{ mt: 2.5, maxWidth: '100%' }}
+                  />
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleSelectPlan()}
+                    disabled={isActivePlanCurrent}
+                    startIcon={<RocketLaunchRoundedIcon />}
+                    sx={{
+                      minWidth: 300,
+                      maxWidth: '100%',
+                      height: 52,
+                      px: 5,
+                      textTransform: 'none',
+                      fontSize: '0.95rem',
+                      fontWeight: 700,
+                      borderRadius: '999px',
+                      background: 'linear-gradient(135deg, #1d4ed8, #2563eb)',
+                      boxShadow: '0 8px 24px rgba(37,99,235,0.30)',
+                      transition: 'all 0.2s',
+                      '&:hover': {
+                        boxShadow: '0 12px 32px rgba(37,99,235,0.45)',
+                        transform: 'translateY(-1px)'
+                      },
+                      '&:disabled': {
+                        background: 'rgba(0,0,0,0.08)',
+                        boxShadow: 'none'
+                      }
+                    }}
+                  >
+                    {isActivePlanCurrent
+                      ? `Current plan: ${activePlan.title}`
+                      : `Select plan${activePlan ? `: ${activePlan.title}` : ''}`}
+                  </Button>
 
-              <Typography
-                variant="body2"
-                sx={{ mt: 2.5, color: 'text.secondary', textAlign: 'center' }}
-              >
-                Need more control, security, or dedicated support?{' '}
-                <Box
-                  component="span"
-                  sx={{
-                    color: 'primary.main',
-                    fontWeight: 600,
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                    '&:hover': { opacity: 0.8 }
-                  }}
-                >
-                  Explore Enterprise
-                </Box>
-              </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mt: 2.5,
+                      color: 'text.secondary',
+                      textAlign: 'center'
+                    }}
+                  >
+                    Need more control, security, or dedicated support?{' '}
+                    <Box
+                      component="span"
+                      sx={{
+                        color: 'primary.main',
+                        fontWeight: 600,
+                        textDecoration: 'underline',
+                        cursor: 'pointer',
+                        '&:hover': { opacity: 0.8 }
+                      }}
+                    >
+                      Explore Enterprise
+                    </Box>
+                  </Typography>
+                </>
+              )}
             </Stack>
           </Box>
         </Container>

@@ -118,6 +118,28 @@ class CardController {
       })
     }).send(res)
   }
+
+  static generateCardAssist = async (req, res) => {
+    new OkSuccessResponse({
+      message: 'AI suggestions generated successfully.',
+      metadata: await CardService.generateCardAssist({
+        cardId: req.params.cardId,
+        boardAccess: req.boardAccess,
+        userPrompt: req.body.userPrompt
+      })
+    }).send(res)
+  }
+
+  static applyCardAssist = async (req, res) => {
+    new OkSuccessResponse({
+      message: 'AI suggestions applied successfully.',
+      metadata: await CardService.applyCardAssist({
+        cardId: req.params.cardId,
+        boardAccess: req.boardAccess,
+        data: req.body
+      })
+    }).send(res)
+  }
 }
 
 export default CardController

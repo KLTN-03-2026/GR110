@@ -142,5 +142,13 @@ class WorkspaceController {
       })
     }).send(res)
   }
+
+  static summarize = async (req, res) => {
+    new OkSuccessResponse({
+      metadata: await WorkspaceService.summarize({
+        workspaceId: req.params.workspaceId
+      })
+    }).send(res)
+  }
 }
 export default WorkspaceController

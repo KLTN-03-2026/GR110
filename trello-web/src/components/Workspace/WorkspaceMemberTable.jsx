@@ -11,6 +11,7 @@ import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
 import Typography from '@mui/material/Typography'
+import Skeleton from '@mui/material/Skeleton'
 import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded'
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded'
 import MailOutlineRoundedIcon from '@mui/icons-material/MailOutlineRounded'
@@ -30,35 +31,35 @@ function formatDate(dateString) {
 
 function getStatusChipSx(status, isDark) {
   switch (status) {
-  case 'active':
-    return {
-      backgroundColor: isDark ? 'rgba(34,197,94,0.15)' : '#dcfce7',
-      color: isDark ? '#4ade80' : '#15803d',
-      border: `1px solid ${isDark ? 'rgba(74,222,128,0.25)' : '#bbf7d0'}`
-    }
-  case 'removed':
-    return {
-      backgroundColor: isDark ? 'rgba(239,68,68,0.15)' : '#fee2e2',
-      color: isDark ? '#f87171' : '#b91c1c',
-      border: `1px solid ${isDark ? 'rgba(248,113,113,0.25)' : '#fecaca'}`
-    }
-  default:
-    return {
-      backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f3f4f6',
-      color: isDark ? '#9ca3af' : '#6b7280',
-      border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#e5e7eb'}`
-    }
+    case 'active':
+      return {
+        backgroundColor: isDark ? 'rgba(34,197,94,0.15)' : '#dcfce7',
+        color: isDark ? '#4ade80' : '#15803d',
+        border: `1px solid ${isDark ? 'rgba(74,222,128,0.25)' : '#bbf7d0'}`
+      }
+    case 'removed':
+      return {
+        backgroundColor: isDark ? 'rgba(239,68,68,0.15)' : '#fee2e2',
+        color: isDark ? '#f87171' : '#b91c1c',
+        border: `1px solid ${isDark ? 'rgba(248,113,113,0.25)' : '#fecaca'}`
+      }
+    default:
+      return {
+        backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#f3f4f6',
+        color: isDark ? '#9ca3af' : '#6b7280',
+        border: `1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#e5e7eb'}`
+      }
   }
 }
 
 function getStatusLabel(status) {
   switch (status) {
-  case 'active':
-    return 'Active'
-  case 'removed':
-    return 'Removed'
-  default:
-    return status || ''
+    case 'active':
+      return 'Active'
+    case 'removed':
+      return 'Removed'
+    default:
+      return status || ''
   }
 }
 
@@ -69,11 +70,92 @@ function WorkspaceMemberTable({
   roles,
   handleChangeMemberRole,
   handleLeaveWorkspace,
-  handleRemoveMember
+  handleRemoveMember,
+  isLoading = false
 }) {
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
   const currentUser = useSelector((state) => state.user.currentUser)
+
+  const renderMemberSkeletons = () => {
+    return Array.from({ length: 5 }).map((_, idx) => (
+      <TableRow
+        key={`skeleton-${idx}`}
+        sx={{
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          '& .MuiTableCell-root': {
+            borderBottom: 'none',
+            py: 1.65,
+            px: 2.5
+          }
+        }}
+      >
+        {/* Member Column */}
+        <TableCell>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Skeleton variant="circular" width={42} height={42} />
+            <Stack spacing={0.5} sx={{ flex: 1 }}>
+              <Skeleton variant="text" width="80%" height={18} />
+              <Skeleton variant="text" width="60%" height={14} />
+            </Stack>
+          </Stack>
+        </TableCell>
+
+        {/* Invited By Column */}
+        <TableCell>
+          <Stack spacing={0.5}>
+            <Skeleton variant="text" width="70%" height={18} />
+            <Skeleton variant="text" width="50%" height={14} />
+          </Stack>
+        </TableCell>
+
+        {/* Role Column */}
+        <TableCell>
+          <Skeleton
+            variant="rounded"
+            width={148}
+            height={36}
+            sx={{
+              borderRadius: '999px'
+            }}
+          />
+        </TableCell>
+
+        {/* Status Column */}
+        <TableCell>
+          <Skeleton
+            variant="rounded"
+            width={70}
+            height={26}
+            sx={{
+              borderRadius: '4px'
+            }}
+          />
+        </TableCell>
+
+        {/* Joined Column */}
+        <TableCell>
+          <Stack direction="row" spacing={0.75} alignItems="center">
+            <Skeleton variant="circular" width={16} height={16} />
+            <Skeleton variant="text" width={80} height={18} />
+          </Stack>
+        </TableCell>
+
+        {/* Action Column */}
+        <TableCell align="center">
+          <Skeleton
+            variant="rounded"
+            width={104}
+            height={36}
+            sx={{
+              borderRadius: '999px',
+              mx: 'auto'
+            }}
+          />
+        </TableCell>
+      </TableRow>
+    ))
+  }
 
   return (
     <TableContainer
@@ -116,7 +198,9 @@ function WorkspaceMemberTable({
         </TableHead>
 
         <TableBody>
-          {members.length === 0 ? (
+          {isLoading ? (
+            renderMemberSkeletons()
+          ) : members.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} sx={{ py: 9, border: 'none' }}>
                 <Stack alignItems="center" spacing={1.5}>
@@ -192,7 +276,8 @@ function WorkspaceMemberTable({
                           height: 42,
                           fontWeight: 800,
                           fontSize: '0.95rem',
-                          background: 'linear-gradient(135deg, #1d4ed8, #2563eb)',
+                          background:
+                            'linear-gradient(135deg, #1d4ed8, #2563eb)',
                           color: 'white',
                           boxShadow: isDark
                             ? '0 8px 18px rgba(0,0,0,0.28)'

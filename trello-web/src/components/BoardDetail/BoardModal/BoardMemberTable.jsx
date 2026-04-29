@@ -14,7 +14,6 @@ import {
   TableRow,
   Typography
 } from '@mui/material'
-import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import MemberActionButton from '~/components/Workspace/workspaceMember/MemberActionButton'
 import { useSelector } from 'react-redux'
 
