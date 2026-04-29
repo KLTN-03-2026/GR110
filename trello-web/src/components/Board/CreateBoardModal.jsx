@@ -11,6 +11,7 @@ import Button from '@mui/material/Button'
 import Radio from '@mui/material/Radio'
 import RadioGroup from '@mui/material/RadioGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import Switch from '@mui/material/Switch'
 import Fade from '@mui/material/Fade'
 import Backdrop from '@mui/material/Backdrop'
 import Box from '@mui/material/Box'
@@ -20,11 +21,9 @@ import AbcIcon from '@mui/icons-material/Abc'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import PublicIcon from '@mui/icons-material/Public'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
-import Groups2OutlinedIcon from '@mui/icons-material/Groups2Outlined'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import CheckIcon from '@mui/icons-material/Check'
 import ViewKanbanRoundedIcon from '@mui/icons-material/ViewKanbanRounded'
-import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import { alpha, useTheme } from '@mui/material/styles'
 import { FIELD_REQUIRED_MESSAGE } from '~/utils/validators'
 import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
@@ -34,16 +33,14 @@ import { fetchBackgroundAPI } from '~/apis/board.api'
 
 const type = {
   PUBLIC: 'public',
-  PRIVATE: 'private',
-  WORKSPACE: 'workspace'
+  PRIVATE: 'private'
 }
 
 const descriptionType = {
   PUBLIC:
     'Anyone on the internet can see this board. Only board members can edit.',
   PRIVATE:
-    'Board members and Trello Workspace admins can see and edit this board.',
-  WORKSPACE: 'All members of the Trello Workspace can see and edit this board.'
+    'Board members and Trello Workspace admins can see and edit this board.'
 }
 
 const alertConfig = {
@@ -54,10 +51,6 @@ const alertConfig = {
   [type.PRIVATE]: {
     severity: 'info',
     text: descriptionType.PRIVATE
-  },
-  [type.WORKSPACE]: {
-    severity: 'success',
-    text: descriptionType.WORKSPACE
   }
 }
 
@@ -73,12 +66,6 @@ const visibilityOptions = [
     label: 'Private',
     icon: <LockOutlinedIcon fontSize="small" />,
     color: 'info.main'
-  },
-  {
-    value: type.WORKSPACE,
-    label: 'Workspace',
-    icon: <Groups2OutlinedIcon fontSize="small" />,
-    color: 'success.main'
   }
 ]
 
@@ -97,11 +84,10 @@ function CreateBoardModal({ ui, handler }) {
   const [backgrounds, setBackgrounds] = useState([])
   const [anchorEl, setAnchorEl] = useState(null)
   const [selectedBackground, setSelectedBackground] = useState(null)
+  const [useGenerateWithAI, setUseGenerateWithAI] = useState(false)
 
   const { handleClose, handleCreateBoard, isSubmitting } = handler
   const { isOpen } = ui
-  const aiUi = ui.ai || { isOpen: false }
-  const aiHandler = handler.ai || {}
 
   const {
     control,
@@ -118,7 +104,8 @@ function CreateBoardModal({ ui, handler }) {
       cover: {
         type: 'image',
         value: ''
-      }
+      },
+      aiPrompt: ''
     }
   })
 
@@ -220,114 +207,12 @@ function CreateBoardModal({ ui, handler }) {
   }
 
   const onSubmit = (data) => {
-    handleCreateBoard(data)
-  }
-
-  const handleOpenAIModal = () => {
-    if (isSubmitting) return
-    aiHandler.handleOpen?.()
+    const payload = { isGenerateWithAI: useGenerateWithAI, ...data }
+    handleCreateBoard(payload)
   }
 
   const renderCreateBoardContent = () => (
     <Box sx={{ p: { xs: 2.25, sm: 3 } }}>
-      <Box
-        onClick={handleOpenAIModal}
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: '16px',
-          mb: 2.25,
-          p: 2,
-          cursor: isSubmitting ? 'default' : 'pointer',
-          border: `1px solid ${alpha(theme.palette.warning.main, 0.24)}`,
-          background: isDark
-            ? 'linear-gradient(135deg, rgba(180,83,9,0.18), rgba(15,23,42,0.55))'
-            : 'linear-gradient(135deg, #fff7ed 0%, #ffffff 100%)',
-          transition:
-            'transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease',
-          '&:hover': {
-            transform: isSubmitting ? 'none' : 'translateY(-1px)',
-            borderColor: alpha(theme.palette.warning.main, 0.42),
-            boxShadow: isDark
-              ? '0 12px 28px rgba(180,83,9,0.16)'
-              : '0 12px 28px rgba(217,119,6,0.12)'
-          }
-        }}
-      >
-        <Box
-          sx={{
-            ...dotPatternSx,
-            backgroundImage: isDark
-              ? 'radial-gradient(circle, rgba(251,191,36,0.10) 1px, transparent 1px)'
-              : 'radial-gradient(circle, rgba(217,119,6,0.11) 1px, transparent 1px)'
-          }}
-        />
-
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={1.5}
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
-          justifyContent="space-between"
-          sx={{ position: 'relative', zIndex: 1 }}
-        >
-          <Stack direction="row" spacing={1.25} alignItems="center">
-            <Box
-              sx={{
-                width: 42,
-                height: 42,
-                borderRadius: '12px',
-                display: 'grid',
-                placeItems: 'center',
-                bgcolor: alpha(
-                  theme.palette.warning.main,
-                  isDark ? 0.18 : 0.12
-                ),
-                color: isDark
-                  ? theme.palette.warning.light
-                  : theme.palette.warning.dark,
-                flexShrink: 0
-              }}
-            >
-              <AutoAwesomeRoundedIcon />
-            </Box>
-
-            <Box>
-              <Typography sx={{ fontWeight: 800, color: 'text.primary' }}>
-                Generate this board with AI
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', lineHeight: 1.5 }}
-              >
-                Describe your project and let AI create columns and cards.
-              </Typography>
-            </Box>
-          </Stack>
-
-          <Button
-            type="button"
-            variant="contained"
-            onClick={(event) => {
-              event.stopPropagation()
-              handleOpenAIModal()
-            }}
-            disabled={isSubmitting}
-            startIcon={<AutoAwesomeRoundedIcon />}
-            sx={{
-              minWidth: 126,
-              borderRadius: '999px',
-              textTransform: 'none',
-              fontWeight: 800,
-              bgcolor: '#d97706',
-              boxShadow: '0 8px 22px rgba(217,119,6,0.22)',
-              '&:hover': { bgcolor: '#b45309' }
-            }}
-          >
-            Use AI
-          </Button>
-        </Stack>
-      </Box>
-
       <Box
         sx={{
           width: '100%',
@@ -614,6 +499,55 @@ function CreateBoardModal({ ui, handler }) {
               }}
             />
             <FieldErrorAlert errors={errors} fieldName="description" />
+          </Box>
+
+          <Box>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={useGenerateWithAI}
+                  onChange={(event) => {
+                    setUseGenerateWithAI(event.target.checked)
+                    if (!event.target.checked) {
+                      setValue('aiPrompt', '', {
+                        shouldDirty: true,
+                        shouldValidate: true
+                      })
+                    }
+                  }}
+                />
+              }
+              label={
+                <Typography
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '0.95rem',
+                    color: 'text.primary'
+                  }}
+                >
+                  Generate With AI
+                </Typography>
+              }
+              sx={{
+                mb: useGenerateWithAI ? 1.5 : 0
+              }}
+            />
+
+            {useGenerateWithAI && (
+              <TextField
+                fullWidth
+                label="AI Prompt"
+                placeholder="Describe what you want the board to contain..."
+                rows={4}
+                multiline
+                variant="outlined"
+                {...register('aiPrompt')}
+                error={!!errors.aiPrompt}
+                sx={{
+                  '& .MuiOutlinedInput-root': { borderRadius: '12px' }
+                }}
+              />
+            )}
           </Box>
 
           <Controller
