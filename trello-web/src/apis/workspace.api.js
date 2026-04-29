@@ -8,10 +8,16 @@ export const fetchWorkspaceInfoAPI = async ({ _id }) => {
   return response.data.metadata
 }
 
-export const fetchWorkspaceMemberAPI = async ({ _id, search }) => {
+export const fetchWorkspaceMemberAPI = async ({ _id, search, page }) => {
   const response = await authorizeAxiosInstance.get(
     `${API_ROOT}/v1/workspaces/members/${_id}`,
-    { params: search ? { search } : {} }
+    {
+      params: {
+        ...(search ? { search } : {}),
+        page,
+        limit: 7
+      }
+    }
   )
   return response.data.metadata
 }
@@ -99,3 +105,4 @@ export const summarizeWorkspaceAPI = async (workspaceId) => {
   )
   return response.data.metadata
 }
+

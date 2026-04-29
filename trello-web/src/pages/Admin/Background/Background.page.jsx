@@ -1,12 +1,16 @@
+import { useState } from 'react'
 import {
   Box,
   Button,
   InputAdornment,
+  Menu,
+  MenuItem,
   Stack,
   TextField,
   Typography
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
+import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined'
 import ConfirmDeleteModal from '~/components/Admin/ModalDelete/ConfirmDeleteModal'
 import BackgroundTable from '~/components/Admin/Background/BackgroundTable'
 import { useAdminBackground } from '~/hooks/adminBackground.hook'
@@ -14,6 +18,7 @@ import { useAdminBackground } from '~/hooks/adminBackground.hook'
 export default function BackgroundPage() {
   const {
     search,
+    entity,
     page,
     rowsPerPage,
     backgrounds,
@@ -21,6 +26,7 @@ export default function BackgroundPage() {
     deleteModalOpen,
     selectedBackground,
     handleSearchChange,
+    handleChangeEntity,
     handleChangePage,
     handleChangeRowsPerPage,
     handleOpenDeleteModal,
@@ -28,8 +34,33 @@ export default function BackgroundPage() {
     handleConfirmDelete,
     handleEditBackground,
     handleCreateBackground,
-    handleUpdateBlockBackground
+    handleUpdateBlockBackground,
   } = useAdminBackground()
+
+  const [anchorEl, setAnchorEl] = useState(null)
+  const openFilter = Boolean(anchorEl)
+
+  const ENTITY_OPTIONS = [
+    { value: 'all', label: 'All' },
+    { value: 'board', label: 'Board' },
+    { value: 'card', label: 'Card' }
+  ]
+
+  const handleOpenFilter = (event) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleCloseFilter = () => {
+    setAnchorEl(null)
+  }
+
+  const handleSelectEntity = (value) => {
+    handleChangeEntity(value)
+    handleCloseFilter()
+  }
+
+  const selectedEntityLabel =
+    ENTITY_OPTIONS.find((item) => item.value === entity)?.label || 'All'
 
   return (
     <Box>
@@ -89,7 +120,9 @@ export default function BackgroundPage() {
         direction='row'
         justifyContent='space-between'
         alignItems='center'
-        sx={{ mb: 2 }}
+        flexWrap='wrap'
+        useFlexGap
+        sx={{ mb: 2, gap: 1.5 }}
       >
         <TextField
           value={search}
@@ -117,6 +150,60 @@ export default function BackgroundPage() {
           }}
         />
 
+        <Button
+          variant='outlined'
+          startIcon={<FilterListOutlinedIcon />}
+          onClick={handleOpenFilter}
+          sx={{
+            textTransform: 'none',
+            color: '#374151',
+            borderColor: '#d1d5db',
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+            px: 2,
+            minWidth: 'auto',
+            fontWeight: 600,
+            '&:hover': {
+              borderColor: '#9ca3af',
+              backgroundColor: '#f9fafb'
+            }
+          }}
+        >
+          Entity: {selectedEntityLabel}
+        </Button>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={openFilter}
+          onClose={handleCloseFilter}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right'
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right'
+          }}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              minWidth: 180,
+              borderRadius: '10px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 10px 30px rgba(15,23,42,0.08)'
+            }
+          }}
+        >
+          {ENTITY_OPTIONS.map((item) => (
+            <MenuItem
+              key={item.value}
+              selected={entity === item.value}
+              onClick={() => handleSelectEntity(item.value)}
+            >
+              {item.label}
+            </MenuItem>
+          ))}
+        </Menu>
       </Stack>
 
       <BackgroundTable

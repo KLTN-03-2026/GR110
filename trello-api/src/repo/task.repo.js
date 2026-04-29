@@ -156,6 +156,7 @@ class TaskRepo {
       done: result[0]?.done || 0
     }
   }
+
 }
 
 export default TaskRepo

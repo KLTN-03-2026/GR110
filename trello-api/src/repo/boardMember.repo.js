@@ -119,6 +119,50 @@ class BoardMemberRepo {
     })
   }
 
+  static countMembersByBoardId = async ({ boardId, data = {}, options = {} }) => {
+    const db = GET_DB()
+    const { session } = options
+    const keyword = data.search?.trim() || ''
+
+    const boardMemberCol = db.collection(
+      boardMemberModel.BOARD_MEMBER_COLLECTION_NAME
+    )
+    const workspaceMemberCol = db.collection(
+      workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME
+    )
+    const userCol = db.collection(userModel.USER_COLLECTION_NAME)
+    const sess = { session }
+
+    if (!keyword) return await boardMemberCol.countDocuments({ boardId }, sess)
+
+    const userIds = await userCol
+      .find(
+        {
+          $or: [
+            { email: { $regex: keyword, $options: 'i' } },
+            { displayName: { $regex: keyword, $options: 'i' } }
+          ]
+        },
+        { projection: { _id: 1 }, ...sess }
+      )
+      .toArray()
+      .then((rows) => rows.map((u) => u._id.toString()))
+
+    if (!userIds.length) return 0
+
+    const wsmIds = await workspaceMemberCol
+      .find({ userId: { $in: userIds } }, { projection: { _id: 1 }, ...sess })
+      .toArray()
+      .then((rows) => rows.map((r) => r._id.toString()))
+
+    if (!wsmIds.length) return 0
+
+    return await boardMemberCol.countDocuments(
+      { boardId, workspaceMemberId: { $in: wsmIds } },
+      sess
+    )
+  }
+
   static findMemberInBoard = async ({ userId, boardId, session }) => {
     const db = GET_DB()
 

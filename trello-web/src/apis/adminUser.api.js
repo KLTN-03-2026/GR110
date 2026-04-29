@@ -2,12 +2,13 @@ import { toast } from 'react-toastify'
 import authorizeAdminAxiosInstance from '~/utils/authorizeAdminAxios'
 import { API_ROOT } from '~/utils/constants'
 
-export const fetchAdminUsersAPI = async ({ search, page, limit }) => {
+export const fetchAdminUsersAPI = async ({ search, page, limit, role }) => {
   const response = await authorizeAdminAxiosInstance.get(`${API_ROOT}/v1/admin/users`, {
     params: {
       ...(search ? { search } : {}),
       page,
-      limit
+      limit,
+      role
     }
   })
   return response.data.metadata

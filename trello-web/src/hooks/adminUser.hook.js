@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { fetchAdminUsersAPI, updateBlockUserAPI } from '~/apis/adminUser.api'
 
@@ -7,6 +7,7 @@ export const useAdminUser = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const search = searchParams.get('search') || ''
+  const role = searchParams.get('role') || 'all'
   const page = Number(searchParams.get('page') || 1)
   const rowsPerPage = Number(searchParams.get('limit') || 8)
 
@@ -17,10 +18,11 @@ export const useAdminUser = () => {
   const [loading, setLoading] = useState(false)
 
   const updateQueryParams = useCallback(
-    ({ nextSearch, nextPage, nextLimit }) => {
+    ({ nextSearch, nextRole, nextPage, nextLimit }) => {
       const params = new URLSearchParams(searchParams)
 
       const finalSearch = nextSearch ?? search
+      const finalRole = nextRole ?? role
       const finalPage = nextPage ?? page
       const finalLimit = nextLimit ?? rowsPerPage
 
@@ -30,12 +32,18 @@ export const useAdminUser = () => {
         params.delete('search')
       }
 
+      if (finalRole && finalRole !== 'all') {
+        params.set('role', finalRole)
+      } else {
+        params.delete('role')
+      }
+
       params.set('page', String(finalPage))
       params.set('limit', String(finalLimit))
 
       setSearchParams(params)
     },
-    [searchParams, setSearchParams, search, page, rowsPerPage]
+    [searchParams, setSearchParams, search, role, page, rowsPerPage]
   )
 
   useEffect(() => {
@@ -45,6 +53,7 @@ export const useAdminUser = () => {
 
         const data = await fetchAdminUsersAPI({
           search,
+          role,
           page,
           limit: rowsPerPage
         })
@@ -57,23 +66,39 @@ export const useAdminUser = () => {
     }
 
     fetchUsers()
-  }, [search, page, rowsPerPage])
+  }, [search, role, page, rowsPerPage])
 
-  const handleUpdateBlockUsers = useCallback(async (user) => {
-    await updateBlockUserAPI({ userId: user._id })
-    const data = await fetchAdminUsersAPI({
-      search,
-      page,
-      limit: rowsPerPage
-    })
-    setUsers(data.users || [])
-    setTotalCount(data.totalCount || 0)
-  }, [search, page, rowsPerPage])
+  const handleUpdateBlockUsers = useCallback(
+    async (user) => {
+      await updateBlockUserAPI({ userId: user._id })
+
+      const data = await fetchAdminUsersAPI({
+        search,
+        role,
+        page,
+        limit: rowsPerPage
+      })
+
+      setUsers(data.users || [])
+      setTotalCount(data.totalCount || 0)
+    },
+    [search, role, page, rowsPerPage]
+  )
 
   const handleSearchChange = useCallback(
     (event) => {
       updateQueryParams({
         nextSearch: event.target.value,
+        nextPage: 1
+      })
+    },
+    [updateQueryParams]
+  )
+
+  const handleChangeRole = useCallback(
+    (nextRole) => {
+      updateQueryParams({
+        nextRole,
         nextPage: 1
       })
     },
@@ -132,6 +157,7 @@ export const useAdminUser = () => {
 
   return {
     search,
+    role,
     page: page - 1,
     rowsPerPage,
     deleteModalOpen,
@@ -141,6 +167,7 @@ export const useAdminUser = () => {
     loading,
 
     handleSearchChange,
+    handleChangeRole,
     handleOpenDeleteModal,
     handleCloseDeleteModal,
     handleConfirmDelete,

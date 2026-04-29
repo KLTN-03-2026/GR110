@@ -105,6 +105,7 @@ class AdminBackgroundService {
 
   static fetchBackgrounds = async ({ data }) => {
     const keyword = data?.search?.trim() || ''
+    const entity = data?.entity || 'all'
     const page = Number(data?.page || 1)
     const limit = Number(data?.limit || 8)
     const skip = (page - 1) * limit
@@ -112,7 +113,8 @@ class AdminBackgroundService {
     const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
     const filter = {
-      isDelete: false
+      isDelete: false,
+      ...(entity !== 'all' ? { entity } : {})
     }
 
     if (keyword) {

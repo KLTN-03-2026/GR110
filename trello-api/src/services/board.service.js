@@ -179,13 +179,16 @@ class BoardService {
     return boards
   }
 
-  static getBackground = async () => {
+  static getBackground = async ({ _id }) => {
     return await BackgroundRepo.findMany({
       filter: {
         isDelete: false,
         status: 'active',
         entity: 'board',
-        type: { $in: ['system', 'board'] }
+        $or: [
+          { type: 'system' },
+          { type: 'custom', boardId: _id }
+        ]
       },
       options: {}
     })
@@ -917,12 +920,32 @@ ${aiPrompt || ''}
 
   // ============================== MEMBER ==============================
   static fetchBoardMember = async ({ _id, data }) => {
-    const boardMember = await BoardMemberRepo.getMembersByBoardId({
-      boardId: _id,
-      data
-    })
+    const page = Number(data?.page || 1)
+    const limit = Number(data?.limit || 7)
+    const skip = (page - 1) * limit
 
-    return boardMember
+    const [boardMember, totalCount] = await Promise.all([
+      BoardMemberRepo.getMembersByBoardId({
+        boardId: _id,
+        data,
+        options: {
+          skip,
+          limit,
+          sort: { createdAt: -1 }
+        }
+      }),
+      BoardMemberRepo.countMembersByBoardId({
+        boardId: _id,
+        data
+      })
+    ])
+
+    return {
+      boardMember,
+      totalCount,
+      page,
+      limit
+    }
   }
 
   static updateMemberRole = async ({ _id, boardAccess, data }) => {
@@ -1311,7 +1334,7 @@ ${aiPrompt || ''}
           title: board.title,
           image: S3Provider.getUrl(upload.fileKey),
           status: 'active',
-          type: 'board',
+          type: 'custom',
           boardId,
           isDelete: false
         }
@@ -1354,7 +1377,7 @@ ${aiPrompt || ''}
           filter: {
             _id: new ObjectId(backgroundId),
             entity: 'board',
-            type: 'board',
+            type: 'custom',
             boardId
           },
           options: { session }

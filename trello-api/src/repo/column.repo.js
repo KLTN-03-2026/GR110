@@ -135,46 +135,5 @@ class ColumnRepo {
       .countDocuments(filter, options)
   }
 
-  static getMaxColumnsPerBoard = async ({ workspaceId }) => {
-    const result = await GET_DB()
-      .collection(columnModel.COLUMN_COLLECTION_NAME)
-      .aggregate([
-        {
-          $addFields: {
-            boardObjectId: { $toObjectId: '$boardId' }
-          }
-        },
-        {
-          $lookup: {
-            from: 'boards',
-            localField: 'boardObjectId',
-            foreignField: '_id',
-            as: 'board'
-          }
-        },
-        { $unwind: '$board' },
-        {
-          $match: {
-            'board.workspaceId': workspaceId,
-            status: 'active'
-          }
-        },
-        {
-          $group: {
-            _id: '$boardObjectId',
-            total: { $sum: 1 }
-          }
-        },
-        {
-          $sort: { total: -1 }
-        },
-        {
-          $limit: 1
-        }
-      ])
-      .toArray()
-
-    return result[0]?.total || 0
-  }
 }
 export default ColumnRepo

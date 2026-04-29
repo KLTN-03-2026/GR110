@@ -1,6 +1,5 @@
 import {
   Avatar,
-  Button,
   Chip,
   MenuItem,
   Paper,
@@ -11,6 +10,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   Typography
 } from '@mui/material'
@@ -52,6 +52,10 @@ function getStatusLabel(status) {
 function BoardMemberTable({
   members = [],
   roles = [],
+  page = 0,
+  rowsPerPage = 7,
+  totalCount = 0,
+  onPageChange,
   handleChangeMemberRole,
   handleRemoveMember,
   handleLeaveWorkspace
@@ -180,6 +184,32 @@ function BoardMemberTable({
           )}
         </TableBody>
       </Table>
+      <TablePagination
+        component="div"
+        count={totalCount}
+        page={page}
+        onPageChange={onPageChange}
+        rowsPerPage={rowsPerPage}
+        rowsPerPageOptions={[]}
+        labelRowsPerPage=""
+        sx={{
+          borderTop: '1px solid',
+          borderColor: 'divider',
+          '.MuiTablePagination-toolbar': {
+            minHeight: 56,
+            px: 2
+          },
+          '.MuiTablePagination-selectLabel': {
+            display: 'none'
+          },
+          '.MuiTablePagination-select': {
+            display: 'none'
+          },
+          '.MuiTablePagination-displayedRows': {
+            fontWeight: 600
+          }
+        }}
+      />
     </TableContainer>
   )
 }

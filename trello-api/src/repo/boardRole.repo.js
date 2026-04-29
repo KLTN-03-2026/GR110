@@ -52,46 +52,6 @@ class BoardRoleRepo {
       .deleteMany({ boardId: String(boardId) }, { session })
   }
 
-  static getMaxBoardRolesPerBoard = async ({ workspaceId }) => {
-    const result = await GET_DB()
-      .collection(boardRoleModel.BOARD_ROLE_COLLECTION_NAME)
-      .aggregate([
-        {
-          $addFields: {
-            boardObjectId: { $toObjectId: '$boardId' }
-          }
-        },
-        {
-          $lookup: {
-            from: 'boards',
-            localField: 'boardObjectId',
-            foreignField: '_id',
-            as: 'board'
-          }
-        },
-        { $unwind: '$board' },
-        {
-          $match: {
-            'board.workspaceId': workspaceId
-          }
-        },
-        {
-          $group: {
-            _id: '$boardObjectId',
-            total: { $sum: 1 }
-          }
-        },
-        {
-          $sort: { total: -1 }
-        },
-        {
-          $limit: 1
-        }
-      ])
-      .toArray()
-
-    return result[0]?.total || 0
-  }
 }
 
 export default BoardRoleRepo

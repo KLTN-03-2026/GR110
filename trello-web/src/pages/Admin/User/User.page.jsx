@@ -1,24 +1,27 @@
+import { useState } from 'react'
 import {
   Box,
   Button,
   InputAdornment,
+  Menu,
+  MenuItem,
   Stack,
   TextField,
   Typography
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined'
-import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import { useNavigate } from 'react-router-dom'
 import ConfirmDeleteModal from '~/components/Admin/ModalDelete/ConfirmDeleteModal'
 import UserTable from '~/components/Admin/User/UserTable'
 import { useAdminUser } from '~/hooks/adminUser.hook'
 
 export default function UserPage() {
-  const navigate = useNavigate();
-  
+  const navigate = useNavigate()
+
   const {
     search,
+    role,
     page,
     rowsPerPage,
     deleteModalOpen,
@@ -26,6 +29,7 @@ export default function UserPage() {
     users,
     totalCount,
     handleSearchChange,
+    handleChangeRole,
     handleOpenDeleteModal,
     handleCloseDeleteModal,
     handleConfirmDelete,
@@ -34,6 +38,32 @@ export default function UserPage() {
     handleEditUser,
     handleUpdateBlockUsers
   } = useAdminUser()
+
+  const [anchorEl, setAnchorEl] = useState(null)
+  const openFilter = Boolean(anchorEl)
+
+  const ROLE_OPTIONS = [
+    { value: 'all', label: 'All' },
+    { value: 'client', label: 'Client' },
+    { value: 'admin', label: 'Admin' }
+  ]
+
+  const handleOpenFilter = (event) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleCloseFilter = () => {
+    setAnchorEl(null)
+  }
+
+  const handleSelectRole = (value) => {
+    handleChangeRole(value)
+    handleCloseFilter()
+  }
+
+  const selectedRoleLabel =
+    ROLE_OPTIONS.find((item) => item.value === role)?.label || 'All'
+
   return (
     <Box>
       <Stack
@@ -91,7 +121,9 @@ export default function UserPage() {
         direction="row"
         justifyContent="space-between"
         alignItems="center"
-        sx={{ mb: 2 }}
+        flexWrap="wrap"
+        useFlexGap
+        sx={{ mb: 2, gap: 1.5 }}
       >
         <TextField
           value={search}
@@ -99,7 +131,7 @@ export default function UserPage() {
           placeholder="Search users..."
           size="small"
           sx={{
-            '& .MuiInputLabel-root': {
+            '& .InputLabel-root': {
               color: '#6b7280'
             },
             '& .MuiInputLabel-root.Mui-focused': {
@@ -131,47 +163,60 @@ export default function UserPage() {
           }}
         />
 
-        <Stack direction="row" spacing={1.2}>
-          <Button
-            variant="outlined"
-            startIcon={<FilterListOutlinedIcon />}
-            sx={{
-              textTransform: 'none',
-              color: '#374151',
-              borderColor: '#6b7280',
-              backgroundColor: '#fff',
-              borderRadius: '8px',
-              px: 2,
-              minWidth: 'auto',
-              '&:hover': {
-                borderColor: '#4b5563',
-                backgroundColor: '#f9fafb'
-              }
-            }}
-          >
-            Filter
-          </Button>
+        <Button
+          variant="outlined"
+          startIcon={<FilterListOutlinedIcon />}
+          onClick={handleOpenFilter}
+          sx={{
+            textTransform: 'none',
+            color: '#374151',
+            borderColor: '#d1d5db',
+            backgroundColor: '#fff',
+            borderRadius: '8px',
+            px: 2,
+            minWidth: 'auto',
+            fontWeight: 600,
+            '&:hover': {
+              borderColor: '#9ca3af',
+              backgroundColor: '#f9fafb'
+            }
+          }}
+        >
+          Role: {selectedRoleLabel}
+        </Button>
 
-          <Button
-            variant="outlined"
-            startIcon={<FileDownloadOutlinedIcon />}
-            sx={{
-              textTransform: 'none',
-              color: '#374151',
-              borderColor: '#6b7280',
-              backgroundColor: '#fff',
-              borderRadius: '8px',
-              px: 2,
-              minWidth: 'auto',
-              '&:hover': {
-                borderColor: '#4b5563',
-                backgroundColor: '#f9fafb'
-              }
-            }}
-          >
-            Excel
-          </Button>
-        </Stack>
+        <Menu
+          anchorEl={anchorEl}
+          open={openFilter}
+          onClose={handleCloseFilter}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right'
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right'
+          }}
+          PaperProps={{
+            sx: {
+              mt: 1,
+              minWidth: 180,
+              borderRadius: '10px',
+              border: '1px solid #e5e7eb',
+              boxShadow: '0 10px 30px rgba(15,23,42,0.08)'
+            }
+          }}
+        >
+          {ROLE_OPTIONS.map((item) => (
+            <MenuItem
+              key={item.value}
+              selected={role === item.value}
+              onClick={() => handleSelectRole(item.value)}
+            >
+              {item.label}
+            </MenuItem>
+          ))}
+        </Menu>
       </Stack>
 
       <UserTable

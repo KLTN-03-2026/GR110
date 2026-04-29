@@ -6,7 +6,6 @@ import Pagination from '@mui/material/Pagination'
 import PaginationItem from '@mui/material/PaginationItem'
 import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
-import Stack from '@mui/material/Stack'
 import Button from '@mui/material/Button'
 import Skeleton from '@mui/material/Skeleton'
 import CreateBoardModal from './CreateBoardModal'
@@ -16,15 +15,7 @@ import Divider from '@mui/material/Divider'
 import { Link, useParams } from 'react-router-dom'
 import { backgroundBoardList } from '~/constant/backgroundBoard'
 import { alpha, useTheme } from '@mui/material/styles'
-
-const dotPatternSx = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1px)',
-  backgroundSize: '22px 22px',
-  pointerEvents: 'none'
-}
+import WorkspacePageHeader from '~/components/Workspace/WorkspacePageHeader'
 
 const truncateText = (text, maxLength) => {
   if (!text) return ''
@@ -77,110 +68,75 @@ function BoardList({ ui, data, handler, isLoading = false }) {
 
   return (
     <>
-      <Box
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: '24px',
-          background:
-            'linear-gradient(145deg, #0f172a 0%, #1e3a8a 55%, #1d4ed8 100%)',
-          color: 'white',
-          px: { xs: 3, md: 5 },
-          py: { xs: 3.5, md: 4 },
-          mb: 3,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 2
-        }}
+      <WorkspacePageHeader
+        badgeIcon={<ViewKanbanRoundedIcon sx={{ fontSize: 13 }} />}
+        badgeLabel="Workspace Boards"
+        title="Your Boards"
+        description={`${activeBoards.length} active board${
+          activeBoards.length !== 1 ? 's' : ''
+        } in this workspace`}
       >
-        <Box sx={dotPatternSx} />
+        <Chip
+          icon={<ViewKanbanRoundedIcon sx={{ fontSize: 15 }} />}
+          label={`${count} total`}
+          sx={(theme) => ({
+            height: 32,
+            color:
+                theme.palette.mode === 'dark'
+                  ? '#bfdbfe'
+                  : theme.palette.primary.main,
+            fontWeight: 700,
+            bgcolor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.10)'
+                  : alpha(theme.palette.primary.main, 0.08),
+            border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
+            '& .MuiChip-icon': { color: 'inherit' }
+          })}
+        />
 
-        <Box sx={{ position: 'relative', zIndex: 1, minWidth: 0 }}>
-          <Chip
-            icon={
-              <ViewKanbanRoundedIcon
-                sx={{ fontSize: 13, color: '#93c5fd !important' }}
-              />
+        <Button
+          onClick={handleOpenCreateBoard}
+          startIcon={<AddRoundedIcon />}
+          variant="contained"
+          sx={(theme) => ({
+            fontWeight: 700,
+            borderRadius: '999px',
+            px: 2.5,
+            py: 1.05,
+            bgcolor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.12)'
+                  : 'primary.main',
+            color:
+                theme.palette.mode === 'dark'
+                  ? 'common.white'
+                  : 'primary.contrastText',
+            border: `1px solid ${
+              theme.palette.mode === 'dark'
+                ? 'rgba(255,255,255,0.18)'
+                : 'transparent'
+            }`,
+            boxShadow:
+                theme.palette.mode === 'dark'
+                  ? 'none'
+                  : '0 8px 24px rgba(37,99,235,0.24)',
+            '&:hover': {
+              bgcolor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255,255,255,0.18)'
+                    : 'primary.dark',
+              transform: 'translateY(-1px)',
+              boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? 'none'
+                    : '0 12px 30px rgba(37,99,235,0.30)'
             }
-            label="Workspace Boards"
-            size="small"
-            sx={{
-              mb: 1.5,
-              backgroundColor: 'rgba(255,255,255,0.10)',
-              color: '#bfdbfe',
-              fontWeight: 600,
-              fontSize: '0.7rem',
-              letterSpacing: 1,
-              border: '1px solid rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(6px)'
-            }}
-          />
-
-          <Typography
-            sx={{
-              fontSize: { xs: 22, md: 28 },
-              fontWeight: 800,
-              lineHeight: 1.2,
-              letterSpacing: 0,
-              mb: 0.5
-            }}
-          >
-            Your Boards
-          </Typography>
-
-          <Typography sx={{ opacity: 0.72, fontSize: '0.875rem' }}>
-            {activeBoards.length} active board
-            {activeBoards.length !== 1 ? 's' : ''} in this workspace
-          </Typography>
-        </Box>
-
-        <Stack
-          direction="row"
-          spacing={1}
-          useFlexGap
-          flexWrap="wrap"
-          alignItems="center"
-          sx={{ position: 'relative', zIndex: 1 }}
+          })}
         >
-          <Chip
-            icon={<ViewKanbanRoundedIcon sx={{ fontSize: 15 }} />}
-            label={`${count} total`}
-            sx={{
-              height: 32,
-              color: '#bfdbfe',
-              fontWeight: 700,
-              bgcolor: 'rgba(255,255,255,0.10)',
-              border: '1px solid rgba(255,255,255,0.16)',
-              '& .MuiChip-icon': { color: '#93c5fd' }
-            }}
-          />
-
-          <Button
-            onClick={handleOpenCreateBoard}
-            startIcon={<AddRoundedIcon />}
-            variant="contained"
-            sx={{
-              textTransform: 'none',
-              fontWeight: 700,
-              borderRadius: '999px',
-              px: 2.5,
-              py: 1.05,
-              backgroundColor: 'white',
-              color: '#1d4ed8',
-              boxShadow: '0 6px 20px rgba(0,0,0,0.20)',
-              '&:hover': {
-                backgroundColor: 'rgba(255,255,255,0.92)',
-                transform: 'translateY(-1px)',
-                boxShadow: '0 10px 28px rgba(0,0,0,0.25)'
-              }
-            }}
-          >
             Create Board
-          </Button>
-        </Stack>
-      </Box>
+        </Button>
+      </WorkspacePageHeader>
 
       <Box sx={{ overflow: 'hidden' }}>
         <Grid container spacing={2.5}>
@@ -468,9 +424,6 @@ function BoardList({ ui, data, handler, isLoading = false }) {
 
       <CreateBoardModal ui={ui.createModal} handler={handler.createModal} />
 
-      <Box sx={{ mt: 4 }}>
-        <Divider />
-      </Box>
     </>
   )
 }

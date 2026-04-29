@@ -1,6 +1,12 @@
+import { useState } from 'react'
 import {
+  Box,
   Button,
   Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Divider,
   Paper,
   Stack,
   Table,
@@ -21,6 +27,16 @@ const TICKET_TYPE_MAP = {
   feedback: 'Feedback'
 }
 
+const TICKET_DETAIL_FIELDS = [
+  { key: 'email', label: 'Email' },
+  { key: 'title', label: 'Title' },
+  { key: 'type', label: 'Type' },
+  { key: 'content', label: 'Content' },
+  { key: 'status', label: 'Status' },
+  { key: 'createdBy', label: 'Created By', fallbackKey: 'createBy' },
+  { key: 'createdAt', label: 'Created At' }
+]
+
 function formatDateTime(value) {
   if (!value) return '-'
 
@@ -34,6 +50,20 @@ function truncateText(value, maxLength = 40) {
   if (!value) return '-'
   if (value.length <= maxLength) return value
   return `${value.slice(0, maxLength)}...`
+}
+
+function formatTicketValue(key, value) {
+  if (value === null || value === undefined || value === '') return '-'
+  if (key.endsWith('At')) return formatDateTime(value)
+  if (key === 'type') return TICKET_TYPE_MAP[value] || value
+  if (key === 'status') return getStatusChipStyle(value).label
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
+  if (typeof value === 'object') return JSON.stringify(value, null, 2)
+  return String(value)
+}
+
+function getTicketFieldValue(ticket, field) {
+  return ticket?.[field.key] ?? ticket?.[field.fallbackKey]
 }
 
 function getStatusChipStyle(status) {
@@ -85,6 +115,17 @@ export default function AdminTicketTable({
   onReply,
   onViewReply
 }) {
+  const [detailTicket, setDetailTicket] = useState(null)
+  const detailOpen = Boolean(detailTicket)
+
+  const handleOpenDetail = (ticket) => {
+    setDetailTicket(ticket)
+  }
+
+  const handleCloseDetail = () => {
+    setDetailTicket(null)
+  }
+
   return (
     <Paper
       elevation={0}
@@ -201,6 +242,21 @@ export default function AdminTicketTable({
                         useFlexGap
                         flexWrap="wrap"
                       >
+                        <Button
+                          variant="outlined"
+                          onClick={() => handleOpenDetail(ticket)}
+                          sx={{
+                            textTransform: 'none',
+                            minWidth: 'auto',
+                            px: 2,
+                            py: 0.75,
+                            borderRadius: '8px',
+                            fontWeight: 600
+                          }}
+                        >
+                          Details
+                        </Button>
+
                         {!hasReply && ticket.status !== 'rejected' && (
                           <>
                             <Button
@@ -339,6 +395,77 @@ export default function AdminTicketTable({
           }}
         />
       </Stack>
+
+      {/* DIABLOG CHI TIẾT  */}
+      <Dialog open={detailOpen} onClose={handleCloseDetail} fullWidth maxWidth="md">
+        <DialogTitle>
+          <Typography sx={{ fontSize: 22, fontWeight: 700 }}>
+            Chi tiết ticket
+          </Typography>
+        </DialogTitle>
+
+        <Divider />
+
+        <DialogContent sx={{ pt: '20px !important' }}>
+          {detailTicket ? (
+            <Stack spacing={1.5}>
+              {TICKET_DETAIL_FIELDS.map((field) => (
+                <Box
+                  key={field.key}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr', sm: '180px 1fr' },
+                    gap: 1.5,
+                    p: 1.5,
+                    borderRadius: '10px',
+                    border: '1px solid #e5e7eb',
+                    backgroundColor: '#f9fafb'
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      color: '#374151'
+                    }}
+                  >
+                    {field.label}
+                  </Typography>
+
+                  <Typography
+                    sx={{
+                      fontSize: '14px',
+                      color: '#111827',
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word'
+                    }}
+                  >
+                    {formatTicketValue(
+                      field.key,
+                      getTicketFieldValue(detailTicket, field)
+                    )}
+                  </Typography>
+                </Box>
+              ))}
+
+              <Stack direction="row" justifyContent="flex-end" sx={{ pt: 1 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleCloseDetail}
+                  sx={{
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    boxShadow: 'none',
+                    '&:hover': { boxShadow: 'none' }
+                  }}
+                >
+                  Đóng
+                </Button>
+              </Stack>
+            </Stack>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </Paper>
   )
 }

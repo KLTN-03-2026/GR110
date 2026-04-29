@@ -11,7 +11,6 @@ import {
   Typography
 } from '@mui/material'
 import { Controller, useForm } from 'react-hook-form'
-import { styled } from '@mui/material/styles'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
 import { createAdminBackgroundAPI } from '~/apis/adminBackground.api'
@@ -78,6 +77,7 @@ const previewSx = {
 export default function CreateBackgroundForm() {
   const [fileName, setFileName] = useState('')
   const [selectedFile, setSelectedFile] = useState(null)
+  const [fileError, setFileError] = useState('')
 
   const {
     register,
@@ -96,6 +96,10 @@ export default function CreateBackgroundForm() {
 
   const onSubmit = async (data) => {
     try {
+       if (!selectedFile) {
+        setFileError('Image is required')
+        return
+      }
       const formData = new FormData()
       formData.append('entity', data.entity)
       formData.append('title', data.title)
@@ -109,16 +113,26 @@ export default function CreateBackgroundForm() {
       reset(defaultValues)
       setSelectedFile(null)
       setFileName('')
+      setFileError('')
+      setValue('image', '')
     } catch (error) {
       console.log(error);
     }
   }
 
-
-
   const handleFileChange = (event) => {
     const file = event.target.files?.[0]
     if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setFileError('Only image files are allowed')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setFileError('Image must be smaller than 5MB')
+      return
+    }
 
     setSelectedFile(file)
     setFileName(file.name)
@@ -130,6 +144,7 @@ export default function CreateBackgroundForm() {
   const handleClear = () => {
     reset(defaultValues)
     setFileName('')
+    setFileError('')
   }
 
   return (
@@ -263,6 +278,12 @@ export default function CreateBackgroundForm() {
             {fileName ? (
               <Typography sx={{ fontSize: '13px', color: '#6b7280' }}>
                 {fileName}
+              </Typography>
+            ) : null}
+
+            {fileError ? (
+              <Typography sx={{ fontSize: '13px', color: '#d32f2f' }}>
+                {fileError}
               </Typography>
             ) : null}
           </Stack>

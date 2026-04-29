@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
   Box,
   CircularProgress,
@@ -11,6 +11,7 @@ import usePayment from '~/hooks/payment.hook'
 import PaymentPlanSummary from '~/components/Workspace/workspacePayment/PaymentPlanSummary'
 import PaymentCheckoutCard from '~/components/Workspace/workspacePayment/PaymentCheckoutCard'
 import PaymentMethodSelector from '~/components/Workspace/workspacePayment/PaymentMethodSelector'
+import WorkspacePageHeader from '~/components/Workspace/WorkspacePageHeader'
 
 function mapPlanFeatureToUiFeatures(planFeature) {
   if (!planFeature) return []
@@ -68,23 +69,13 @@ export default function WorkspacePaymentPage() {
 
   return (
     <>
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 2,
-          mb: 1,
-          flexWrap: 'wrap'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ReceiptLongOutlinedIcon fontSize="large" color="primary" />
-          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-            Workspace Payment
-          </Typography>
-        </Box>
-      </Box>
+      <WorkspacePageHeader
+        badgeIcon={<ReceiptLongOutlinedIcon sx={{ fontSize: 13 }} />}
+        badgeLabel="Payment Checkout"
+        title="Workspace Payment"
+        description="Review your selected plan, choose a payment method, and wait for payment confirmation."
+        accentColor="#0891b2"
+      />
 
       <Box
         sx={(theme) => ({
@@ -99,33 +90,7 @@ export default function WorkspacePaymentPage() {
         })}
       >
         <Container maxWidth="xl">
-          <Box sx={{ py: { xs: 5, md: 7 } }}>
-            <Stack spacing={1.5} alignItems="center" sx={{ mb: 5 }}>
-              <Typography
-                sx={(theme) => ({
-                  fontSize: { xs: 26, md: 40 },
-                  lineHeight: 1.2,
-                  fontWeight: 800,
-                  textAlign: 'center',
-                  maxWidth: 900,
-                  color: theme.palette.text.primary
-                })}
-              >
-                Complete your workspace upgrade
-              </Typography>
-
-              <Typography
-                sx={(theme) => ({
-                  color: theme.palette.text.secondary,
-                  textAlign: 'center',
-                  fontSize: { xs: 14, md: 17 },
-                  maxWidth: 760
-                })}
-              >
-                Review your selected plan, scan the QR code to pay, and wait for payment confirmation.
-              </Typography>
-            </Stack>
-
+          <Box sx={{ py: { xs: 3, md: 4 } }}>
             <Box
               sx={{
                 display: 'grid',

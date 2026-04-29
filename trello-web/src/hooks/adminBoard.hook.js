@@ -90,7 +90,7 @@ export default function useAdminBoardPage() {
     boards,
     totalCount,
     search,
-    page,
+    page: page - 1,
     rowsPerPage,
     handleSearchChange,
     handleChangePage,

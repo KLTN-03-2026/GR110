@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   deleteAdminBackgroundAPI,
@@ -11,6 +11,7 @@ export const useAdminBackground = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const search = searchParams.get('search') || ''
+  const entity = searchParams.get('entity') || 'all'
   const page = Number(searchParams.get('page') || 1)
   const rowsPerPage = Number(searchParams.get('limit') || 8)
 
@@ -21,10 +22,11 @@ export const useAdminBackground = () => {
   const [totalCount, setTotalCount] = useState(0)
 
   const updateQueryParams = useCallback(
-    ({ nextSearch, nextPage, nextLimit }) => {
+    ({ nextSearch, nextEntity, nextPage, nextLimit }) => {
       const params = new URLSearchParams(searchParams)
 
       const finalSearch = nextSearch ?? search
+      const finalEntity = nextEntity ?? entity
       const finalPage = nextPage ?? page
       const finalLimit = nextLimit ?? rowsPerPage
 
@@ -34,54 +36,64 @@ export const useAdminBackground = () => {
         params.delete('search')
       }
 
+      if (finalEntity && finalEntity !== 'all') {
+        params.set('entity', finalEntity)
+      } else {
+        params.delete('entity')
+      }
+
       params.set('page', String(finalPage))
       params.set('limit', String(finalLimit))
 
       setSearchParams(params)
     },
-    [searchParams, setSearchParams, search, page, rowsPerPage]
+    [searchParams, setSearchParams, search, entity, page, rowsPerPage]
   )
 
-  useEffect(() => {
-    const fetchBackgrounds = async () => {
-      try {
-        setLoading(true)
-
-        const data = await fetchAdminBackgroundAPI({
-          search,
-          page,
-          limit: rowsPerPage
-        })
-        setBackgrounds(data.backgrounds || [])
-        setTotalCount(data.totalCount || 0)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchBackgrounds()
-  }, [search, page, rowsPerPage])
-
-  const handleUpdateBlockBackground = useCallback(
-    async (background) => {
-      await updateBlockBackgroundAPI({ backgroundId: background._id })
+  const fetchBackgrounds = useCallback(async () => {
+    try {
+      setLoading(true)
 
       const data = await fetchAdminBackgroundAPI({
         search,
+        entity,
         page,
         limit: rowsPerPage
       })
 
       setBackgrounds(data.backgrounds || [])
       setTotalCount(data.totalCount || 0)
+    } finally {
+      setLoading(false)
+    }
+  }, [search, entity, page, rowsPerPage])
+
+  useEffect(() => {
+    fetchBackgrounds()
+  }, [fetchBackgrounds])
+
+  const handleUpdateBlockBackground = useCallback(
+    async (background) => {
+      await updateBlockBackgroundAPI({ backgroundId: background._id })
+      await fetchBackgrounds()
     },
-    [search, page, rowsPerPage]
+    [fetchBackgrounds]
   )
 
   const handleSearchChange = useCallback(
     (event) => {
       updateQueryParams({
         nextSearch: event.target.value,
+        nextPage: 1
+      })
+    },
+    [updateQueryParams]
+  )
+
+  const handleChangeEntity = useCallback(
+    (nextEntity) => {
+      updateQueryParams({
+        nextEntity,
         nextPage: 1
       })
     },
@@ -126,8 +138,8 @@ export const useAdminBackground = () => {
       setBackgrounds((prev) =>
         prev.filter((item) => item._id !== selectedBackground._id)
       )
-
       setTotalCount((prev) => Math.max(prev - 1, 0))
+
       setDeleteModalOpen(false)
       setSelectedBackground(null)
     } catch (error) {
@@ -152,14 +164,17 @@ export const useAdminBackground = () => {
 
   return {
     search,
+    entity,
     page: page - 1,
     rowsPerPage,
     backgrounds,
     totalCount,
+    loading,
     deleteModalOpen,
     selectedBackground,
 
     handleSearchChange,
+    handleChangeEntity,
     handleChangePage,
     handleChangeRowsPerPage,
     handleOpenDeleteModal,
@@ -167,6 +182,7 @@ export const useAdminBackground = () => {
     handleConfirmDelete,
     handleEditBackground,
     handleCreateBackground,
-    handleUpdateBlockBackground
+    handleUpdateBlockBackground,
+    refetchBackgrounds: fetchBackgrounds
   }
 }

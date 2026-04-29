@@ -39,7 +39,6 @@ function WorkspaceHeader({ workspace, handleOpenUpdateModal }) {
           borderRadius: '24px',
           border: `1px solid ${theme.palette.divider}`,
           bgcolor: 'background.paper',
-          boxShadow: isDark ? 'none' : '0 18px 48px rgba(15,23,42,0.08)',
           height: '120px'
         }}
       >

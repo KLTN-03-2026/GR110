@@ -31,7 +31,7 @@ export default class TicketRepo {
     filter = {},
     sort = { createdAt: -1 },
     skip = 0,
-    limit = 8
+    limit = 8,
   }) => {
     return await GET_DB()
       .collection(ticketModel.TICKET_COLLECTION_NAME)

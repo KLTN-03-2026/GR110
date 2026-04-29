@@ -9,9 +9,9 @@ export const fetchBoardOverviewAPI = async (searchPath) => {
   return response.data.metadata
 }
 
-export const fetchBackgroundAPI = async () => {
+export const fetchBackgroundAPI = async (boardId) => {
   const response = await authorizeAxiosInstance.get(
-    `${API_ROOT}/v1/boards/backgrounds`
+    `${API_ROOT}/v1/boards/backgrounds/${boardId}`
   )
   return response.data.metadata
 }
@@ -38,6 +38,20 @@ export const fetchBoardMemberAPI = async ({ _id, search }) => {
   const response = await authorizeAxiosInstance.get(
     `${API_ROOT}/v1/boards/members/${_id}`,
     { params: search ? { search } : {} }
+  )
+  return response.data.metadata
+}
+
+export const fetchBoardMemberPageAPI = async ({ _id, search, page, limit }) => {
+  const response = await authorizeAxiosInstance.get(
+    `${API_ROOT}/v1/boards/members/${_id}`,
+    {
+      params: {
+        ...(search ? { search } : {}),
+        page,
+        limit
+      }
+    }
   )
   return response.data.metadata
 }

@@ -9,13 +9,14 @@ import { backgroundBoardList } from '~/constant/backgroundBoard'
 export function useBoardInfo() {
   const dispatch = useDispatch()
   const board = useSelector((state) => state.activeBoard.board)
+   const { boardId } = useParams()
   const [selectedBackground, setSelectedBackground] = useState(null)
   const [backgrounds, setBackgrounds] = useState([])
   const systemBackgrounds =
     backgrounds?.filter((item) => item.type === 'system') || []
 
   const customBackgrounds =
-    backgrounds?.filter((item) => item.type === 'board') || []
+    backgrounds?.filter((item) => item.type === 'custom' && item.boardId === boardId ) || []
 
   const type = {
     PUBLIC: 'public',
@@ -38,7 +39,7 @@ export function useBoardInfo() {
     message: ''
   })
 
-  const { boardId } = useParams()
+ 
 
   const {
     control,
@@ -61,7 +62,7 @@ export function useBoardInfo() {
 
   const getBackground = useCallback(async () => {
     try {
-      const response = await fetchBackgroundAPI()
+      const response = await fetchBackgroundAPI(boardId)
 
       const data = Array.isArray(response)
         ? response
@@ -70,6 +71,9 @@ export function useBoardInfo() {
       const activeBackgrounds = data.filter(
         (item) => item.status === 'active' && !item.isDelete
       )
+
+      console.log(response);
+      
 
       setBackgrounds(activeBackgrounds)
 

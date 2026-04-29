@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { fetchAdminTicketAPI, rejectTicketAPI, replyTicketAPI } from '~/apis/adminTicket.api'
+import {
+  fetchAdminTicketAPI,
+  rejectTicketAPI,
+  replyTicketAPI
+} from '~/apis/adminTicket.api'
 
 export const useAdminTicket = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const search = searchParams.get('search') || ''
+  const type = searchParams.get('type') || 'all'
   const page = Number(searchParams.get('page') || 1)
   const rowsPerPage = Number(searchParams.get('limit') || 8)
 
@@ -18,10 +23,11 @@ export const useAdminTicket = () => {
   const [loading, setLoading] = useState(false)
 
   const updateQueryParams = useCallback(
-    ({ nextSearch, nextPage, nextLimit }) => {
+    ({ nextSearch, nextType, nextPage, nextLimit }) => {
       const params = new URLSearchParams(searchParams)
 
       const finalSearch = nextSearch ?? search
+      const finalType = nextType ?? type
       const finalPage = nextPage ?? page
       const finalLimit = nextLimit ?? rowsPerPage
 
@@ -31,12 +37,18 @@ export const useAdminTicket = () => {
         params.delete('search')
       }
 
+      if (finalType && finalType !== 'all') {
+        params.set('type', finalType)
+      } else {
+        params.delete('type')
+      }
+
       params.set('page', String(finalPage))
       params.set('limit', String(finalLimit))
 
       setSearchParams(params)
     },
-    [searchParams, setSearchParams, search, page, rowsPerPage]
+    [searchParams, setSearchParams, search, type, page, rowsPerPage]
   )
 
   const fetchTickets = useCallback(async () => {
@@ -45,16 +57,16 @@ export const useAdminTicket = () => {
 
       const data = await fetchAdminTicketAPI({
         search,
+        type,
         page,
         limit: rowsPerPage
       })
-
       setTickets(data?.tickets || [])
       setTotalCount(data?.totalCount || 0)
     } finally {
       setLoading(false)
     }
-  }, [search, page, rowsPerPage])
+  }, [search, type, page, rowsPerPage])
 
   useEffect(() => {
     fetchTickets()
@@ -64,6 +76,16 @@ export const useAdminTicket = () => {
     (event) => {
       updateQueryParams({
         nextSearch: event.target.value,
+        nextPage: 1
+      })
+    },
+    [updateQueryParams]
+  )
+
+  const handleChangeType = useCallback(
+    (nextType) => {
+      updateQueryParams({
+        nextType,
         nextPage: 1
       })
     },
@@ -132,6 +154,7 @@ export const useAdminTicket = () => {
 
   return {
     search,
+    type,
     page: page - 1,
     rowsPerPage,
 
@@ -144,6 +167,7 @@ export const useAdminTicket = () => {
     loading,
 
     handleSearchChange,
+    handleChangeType,
     handleOpenReplyModal,
     handleCloseReplyModal,
     handleOpenViewReplyModal,

@@ -6,6 +6,7 @@ export default class AdminPermissionService {
     const page = Number(data?.page || 1)
     const limit = Number(data?.limit || 8)
     const skip = (page - 1) * limit
+    const type = data?.type.trim() || 'all'
 
     const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
@@ -22,7 +23,8 @@ export default class AdminPermissionService {
       PermissionRepo.findManyWithPagination({
         filter,
         skip,
-        limit
+        limit,
+        type
       }),
       PermissionRepo.countDocuments({ filter })
     ])

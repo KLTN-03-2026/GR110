@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  fetchBoardMemberAPI,
+  fetchBoardMemberPageAPI,
   fetchBoardRoleAPI,
   leaveBoardAPI,
   removeBoardMemberAPI,
@@ -12,89 +12,107 @@ import { useDebounceFn } from '~/customHooks/useDebounceFn'
 import { inviteUserToBoardAPI } from '~/apis/invitation.api'
 import { useSelector } from 'react-redux'
 
+const FIXED_ROWS_PER_PAGE = 7
+
 export const useBoardMember = () => {
   const [members, setMembers] = useState([])
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
 
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [inviteCandidates, setInviteCandidates] = useState([])
-
-  const [memberKeyword, setMemberKeyword] = useState('')
   const [inviteKeyword, setInviteKeyword] = useState('')
-
   const [isInviting, setIsInviting] = useState(false)
   const [roles, setRoles] = useState([])
 
   const { boardId } = useParams()
   const board = useSelector((state) => state.activeBoard.board)
-
   const navigate = useNavigate()
 
   const fetchBoardMembers = useCallback(
-    async (searchValue = '') => {
+    async ({ searchValue = '', pageValue = 0 } = {}) => {
       if (!boardId) return
-      const data = await fetchBoardMemberAPI({
+
+      const data = await fetchBoardMemberPageAPI({
         _id: boardId,
-        search: searchValue
+        search: searchValue,
+        page: pageValue + 1,
+        limit: FIXED_ROWS_PER_PAGE
       })
 
-      setMembers(data)
+      setMembers(data.boardMember || [])
+      setTotalCount(data.totalCount || 0)
     },
     [boardId]
   )
 
-  const fetchBoardRole = async () => {
+  const fetchBoardRole = useCallback(async () => {
+    if (!boardId) return
     const data = await fetchBoardRoleAPI({ _id: boardId })
-    setRoles(data)
-  }
+    setRoles(data || [])
+  }, [boardId])
 
-  const debouncefetchBoardMembers = useDebounceFn(fetchBoardMembers, 500)
+  const debounceFetchBoardMembers = useDebounceFn(fetchBoardMembers, 500)
 
   useEffect(() => {
-    fetchBoardMembers('')
+    fetchBoardMembers()
     fetchBoardRole()
-  }, [fetchBoardMembers])
+  }, [fetchBoardMembers, fetchBoardRole])
 
   const handleInputSearchChange = useCallback(
     (event) => {
       const value = event.target.value || ''
       setSearch(value)
-      debouncefetchBoardMembers(value)
+      setPage(0)
+      debounceFetchBoardMembers({ searchValue: value, pageValue: 0 })
     },
-    [debouncefetchBoardMembers]
+    [debounceFetchBoardMembers]
   )
+
+  const handleChangePage = useCallback(
+    (_, newPage) => {
+      setPage(newPage)
+      fetchBoardMembers({ searchValue: search, pageValue: newPage })
+    },
+    [fetchBoardMembers, search]
+  )
+
   const fetchInviteCandidates = useCallback(
     async (keyword = '') => {
       if (!board?.workspaceId) return
 
       const data = await fetchWorkspaceMemberAPI({
         _id: board.workspaceId,
-        search: keyword
+        search: keyword,
+        page: 1
       })
 
-      setInviteCandidates(data || [])
+      setInviteCandidates(data?.workspaceMember || [])
     },
     [board?.workspaceId]
   )
 
-  const handleOpenInviteModal = () => setIsInviteModalOpen(true)
+  const handleOpenInviteModal = useCallback(() => {
+    setIsInviteModalOpen(true)
+  }, [])
 
   const handleCloseInviteModal = useCallback(() => {
     if (isInviting) return
     setIsInviteModalOpen(false)
     setInviteKeyword('')
     setInviteCandidates([])
-  }, [])
+  }, [isInviting])
 
-  const debounceFetchInviteCandidates = useDebounceFn(
-    fetchInviteCandidates,
-    500
-  )
+  const debounceFetchInviteCandidates = useDebounceFn(fetchInviteCandidates, 500)
 
   const handleInviteSearchChange = useCallback(
     (value = '') => {
       setInviteKeyword(value)
-      if (value.trim().length < 3) return
+      if (value.trim().length < 3) {
+        setInviteCandidates([])
+        return
+      }
       debounceFetchInviteCandidates(value.trim())
     },
     [debounceFetchInviteCandidates]
@@ -106,48 +124,55 @@ export const useBoardMember = () => {
         setIsInviting(true)
         await inviteUserToBoardAPI({ payload: { boardId, ...data } })
         handleCloseInviteModal()
-        await fetchBoardMemberAPI(memberKeyword)
+        await fetchBoardMembers({ searchValue: search, pageValue: page })
       } finally {
         setIsInviting(false)
       }
     },
-    [fetchBoardMemberAPI, handleCloseInviteModal, memberKeyword]
+    [boardId, handleCloseInviteModal, fetchBoardMembers, search, page]
   )
 
-  const handleChangeMemberRole = async ({ _id, newRole }) => {
-    const data = await updateBoardMemberRoleAPI({
-      _id,
-      boardId,
-      payload: { roleId: newRole }
-    })
-
-    setMembers((prev) =>
-      prev.map((m) => {
-        if (m._id === data._id) return { ...m, ...data }
-        return m
+  const handleChangeMemberRole = useCallback(
+    async ({ _id, newRole }) => {
+      const data = await updateBoardMemberRoleAPI({
+        _id,
+        boardId,
+        payload: { roleId: newRole }
       })
-    )
-  }
 
-  const handleRemoveMember = async ({ memberId }) => {
-    const data = await removeBoardMemberAPI({ _id: memberId, boardId })
-    setMembers((prev) =>
-      prev.map((m) => {
-        if (m._id === data._id) return { ...m, ...data }
-        return m
-      })
-    )
-  }
+      setMembers((prev) =>
+        prev.map((m) => (m._id === data._id ? { ...m, ...data } : m))
+      )
+    },
+    [boardId]
+  )
 
-  const handleLeaveBoard = async ({ memberId }) => {
-    await leaveBoardAPI({ memberId, boardId })
-    navigate(`/h/workspaces/${board?.workspaceId}/boards`)
-  }
+  const handleRemoveMember = useCallback(
+    async ({ memberId }) => {
+      const data = await removeBoardMemberAPI({ _id: memberId, boardId })
+      setMembers((prev) =>
+        prev.map((m) => (m._id === data._id ? { ...m, ...data } : m))
+      )
+    },
+    [boardId]
+  )
+
+  const handleLeaveBoard = useCallback(
+    async ({ memberId }) => {
+      await leaveBoardAPI({ memberId, boardId })
+      navigate(`/h/workspaces/${board?.workspaceId}/boards`)
+    },
+    [boardId, board?.workspaceId, navigate]
+  )
 
   return {
     members,
     search,
+    page,
+    rowsPerPage: FIXED_ROWS_PER_PAGE,
+    totalCount,
     handleInputSearchChange,
+    handleChangePage,
     handleOpenInviteModal,
     handleChangeMemberRole,
     handleRemoveMember,
