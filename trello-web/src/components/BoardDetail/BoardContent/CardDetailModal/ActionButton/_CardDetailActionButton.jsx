@@ -12,24 +12,36 @@ import { useEffect, useRef } from 'react'
 const cardDetailActionButtonSx = {
   textTransform: 'none',
   minWidth: 'fit-content',
-  px: 1.5,
-  py: 0.75,
-  borderRadius: 1.5,
+  px: 2,
+  py: 1,
+  borderRadius: 2,
+  fontSize: '13px',
+  fontWeight: 600,
   color: 'text.secondary',
   borderColor: (theme) =>
     theme.palette.mode === 'dark'
-      ? 'rgba(255,255,255,0.12)'
-      : 'rgba(9,30,66,0.14)',
-  bgcolor: 'transparent',
+      ? 'rgba(255,255,255,0.15)'
+      : 'rgba(9,30,66,0.2)',
+  bgcolor: (theme) =>
+    theme.palette.mode === 'dark'
+      ? 'rgba(255,255,255,0.04)'
+      : 'rgba(9,30,66,0.02)',
+  border: '1px solid',
+  transition: 'all 0.2s ease',
   '&:hover': {
     borderColor: (theme) =>
       theme.palette.mode === 'dark'
-        ? 'rgba(255,255,255,0.2)'
-        : 'rgba(9,30,66,0.25)',
+        ? 'rgba(255,255,255,0.25)'
+        : 'rgba(9,30,66,0.3)',
     bgcolor: (theme) =>
       theme.palette.mode === 'dark'
-        ? 'rgba(255,255,255,0.04)'
-        : 'rgba(9,30,66,0.04)'
+        ? 'rgba(255,255,255,0.08)'
+        : 'rgba(9,30,66,0.06)',
+    transform: 'translateY(-2px)',
+    boxShadow: (theme) =>
+      theme.palette.mode === 'dark'
+        ? '0 4px 12px rgba(0,0,0,0.2)'
+        : '0 4px 12px rgba(0,0,0,0.08)'
   }
 }
 
@@ -81,7 +93,7 @@ function CardDetailActionButton({ data, handler, activeCard }) {
       <Button
         variant="outlined"
         startIcon={<AttachmentOutlinedIcon fontSize="small" />}
-        sx={cardDetailActionButtonSx}
+        sx={{ ...cardDetailActionButtonSx }}
         component="label"
       >
         Attachment

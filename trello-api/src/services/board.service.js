@@ -12,7 +12,6 @@ import { ObjectId } from 'mongodb'
 import BoardRoleRepo from '~/repo/boardRole.repo'
 import BoardMemberRepo from '~/repo/boardMember.repo'
 import WorkspaceMemberRepo from '~/repo/workspaceMember.repo'
-import { BOARD_MEMBER_STATUS } from '~/constant/enum/boardMember.enum'
 import BoardPermissionRepo from '~/repo/boardPermission.repo'
 import { mongoClientInstance } from '~/config/mongodb'
 import ColumnRepo from '~/repo/column.repo'
@@ -32,7 +31,6 @@ import S3Provider from '~/providers/S3Provider'
 import { emitBoardUpdated } from '~/realtime/realtimeEmitters/boardRealtime.emitter'
 import { emitCardMoved } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
 import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
-import { invokeModel } from '~/providers/BedrockProvider'
 import { invokeOpenAIModel } from '~/providers/OpenAIProvider'
 
 const DEFAULT_BOARD_LABELS = [
@@ -158,7 +156,15 @@ class BoardService {
         options: {
           sort: { createdAt: -1 },
           skip,
-          limit
+          limit,
+          projection: {
+            _id: 1,
+            title: 1,
+            cover: 1,
+            background: 1,
+            visibility: 1,
+            workspaceId: 1
+          }
         }
       }),
 
@@ -185,17 +191,15 @@ class BoardService {
         isDelete: false,
         status: 'active',
         entity: 'board',
-        $or: [
-          { type: 'system' },
-          { type: 'custom', boardId: _id }
-        ]
+        $or: [{ type: 'system' }, { type: 'custom', boardId: _id }]
       },
       options: {}
     })
   }
 
-  static getDetails = async ({ _id }) => {
-    const [board, members, labels] = await Promise.all([
+  static getDetails = async ({ _id, workspaceId, workspaceAccess }) => {
+    console.log('boardID:::', _id)
+    const [board, members, labels, currentMember] = await Promise.all([
       BoardRepo.getDetail({ _id }),
       BoardMemberRepo.getMembersByBoardId({
         boardId: _id,
@@ -204,10 +208,24 @@ class BoardService {
       LabelRepo.findMany({
         filter: { boardId: _id },
         options: { projection: { _id: 1, title: 1, color: 1 } }
+      }),
+      BoardMemberRepo.findOne({
+        filter: {
+          boardId: _id,
+          workspaceMemberId: workspaceAccess.workspaceMember._id,
+          status: 'active'
+        },
+        options: { projection: { _id: 1 } }
       })
     ])
 
-    if (!board) throw new NotFoundErrorResponse('Board not found.')
+    if (!board || board.workspaceId !== workspaceId)
+      throw new NotFoundErrorResponse('Board not found.')
+
+    if (board.visibility === 'private' && !currentMember)
+      throw new ForbiddenErrorResponse(
+        'You do not have permission to access this private board'
+      )
 
     const resBoard = cloneDeep(board)
 

@@ -21,6 +21,7 @@ import IconButton from '@mui/material/IconButton'
 import Box from '@mui/material/Box'
 import useColumn from '~/hooks/column.hook'
 import { useEffect, useState } from 'react'
+import { memo } from 'react'
 import { blue } from '@mui/material/colors'
 import columnBackgroundColor from '~/constant/columnBackgroundColor'
 import columnBackgroundConfig from '~/constant/columnBackgroundConfig'
@@ -48,7 +49,7 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
     addNewCard,
     handleArchiveColumn,
     onUpdateColumnTitle,
-    onUpdateColumnColor,
+    onUpdateColumnColor
   } = useColumn({ column })
 
   const toggleCollapseColumn = (e) => {
@@ -58,18 +59,20 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
   }
 
   useEffect(() => {
-    if (columnCollapseMode === 'collapse') {
-      setIsCollapsed(true)
-    }
+    if (columnCollapseMode === 'collapse') setIsCollapsed(true)
 
-    if (columnCollapseMode === 'expand') {
-      setIsCollapsed(false)
-    }
+    if (columnCollapseMode === 'expand') setIsCollapsed(false)
   }, [columnCollapseMode])
 
   if (isCollapsed) {
     return (
-      <div ref={setNodeRef} style={dndKitColumnStyles} {...attributes}>
+      <div
+        data-column-item="true"
+        ref={setNodeRef}
+        style={dndKitColumnStyles}
+        {...attributes}
+        {...listeners}
+      >
         <Box
           onClick={toggleCollapseColumn}
           sx={{
@@ -130,9 +133,14 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
   }
 
   return (
-    <div ref={setNodeRef} style={dndKitColumnStyles} {...attributes}>
+    <div
+      data-column-item="true"
+      ref={setNodeRef}
+      style={dndKitColumnStyles}
+      {...attributes}
+      {...listeners}
+    >
       <Box
-        {...listeners}
         sx={{
           minWidth: '300px',
           maxWidth: '300px',
@@ -148,7 +156,9 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          minHeight: 0
+          minHeight: 0,
+          transition:
+            'background-color 220ms ease, box-shadow 220ms ease, border-radius 220ms ease'
         }}
       >
         {/* Box Column Header */}
@@ -158,7 +168,9 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
             p: 1,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            cursor: 'grab',
+            '&:active': { cursor: 'grabbing' }
           }}
         >
           <ToggleFocusInput
@@ -469,8 +481,31 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
             minHeight: 0,
             overflowY: 'auto',
             overflowX: 'hidden',
-            '&::-webkit-scrollbar-thumb': { backgroundColor: '#ced0da' },
-            '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#bfc2cf' }
+            mr: 0.75, // đẩy thanh scrollbar xích vào trong
+            transition: 'height 220ms ease, max-height 220ms ease',
+
+            '&::-webkit-scrollbar': {
+              width: '6px'
+            },
+
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'transparent'
+            },
+
+            '&::-webkit-scrollbar-thumb': {
+              borderRadius: '8px',
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.18)'
+                  : 'rgba(9, 30, 66, 0.18)'
+            },
+
+            '&::-webkit-scrollbar-thumb:hover': {
+              backgroundColor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.28)'
+                  : 'rgba(9, 30, 66, 0.28)'
+            }
           }}
         >
           <ListCards cards={orderedCards} />
@@ -500,13 +535,18 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
                 Add new card
               </Button>
               <Tooltip title="Drag to move">
-                <DragHandleIcon
+                <IconButton
+                  size="small"
                   sx={{
-                    cursor: 'pointer',
+                    borderRadius: 2,
                     color: (theme) =>
-                      theme.palette.mode === 'dark' ? '#fff' : '#6b7280'
+                      theme.palette.mode === 'dark' ? '#fff' : '#6b7280',
+                    cursor: 'grab',
+                    '&:active': { cursor: 'grabbing' }
                   }}
-                />
+                >
+                  <DragHandleIcon />
+                </IconButton>
               </Tooltip>
             </Box>
           ) : (
@@ -614,4 +654,6 @@ function Column({ column, columnCollapseMode, clearColumnCollapseMode }) {
   )
 }
 
-export default Column
+const MemoizedColumn = memo(Column)
+
+export default MemoizedColumn

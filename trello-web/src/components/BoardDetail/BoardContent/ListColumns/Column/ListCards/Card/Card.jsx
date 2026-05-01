@@ -4,67 +4,69 @@ import CardMedia from '@mui/material/CardMedia'
 import Typography from '@mui/material/Typography'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked'
-import useCard from '~/hooks/car.hook'
+import useCard from '~/hooks/card.hook'
 import cardCoverColor from '~/constant/cardCoverColor'
 import CardBadge from '~/components/Card/CardBadge'
 import Box from '@mui/material/Box'
-import { useState } from 'react'
+import { memo, useState } from 'react'
 
-function Card({ card }) {
-  const [isHovered, setIsHovered] = useState(false)
+const getCardSx = (enableHoverLift = true) => {
+  const cardSx = {
+    height: 'auto',
+    mt: 1.25,
+    cursor: 'pointer',
+    display: 'block',
+    borderRadius: 2.5,
+    overflow: 'hidden',
+    border: (theme) =>
+      theme.palette.mode === 'dark'
+        ? '1px solid rgba(255,255,255,0.06)'
+        : '1px solid rgba(9,30,66,0.08)',
+    boxShadow: (theme) =>
+      theme.palette.mode === 'dark'
+        ? '0 1px 1px rgba(0,0,0,0.28)'
+        : '0 1px 2px rgba(9,30,66,0.12)',
+    bgcolor: 'background.paper',
+    transition:
+      'transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease'
+  }
 
-  const {
-    setNodeRef,
-    attributes,
-    listeners,
-    dndKitCardStyles,
-    setActiveCard,
-    handleUpdateIsCompleted
-  } = useCard({ card })
+  if (enableHoverLift) {
+    cardSx['&:hover'] = {
+      transform: 'translateY(-1px)',
+      borderColor: (theme) =>
+        theme.palette.mode === 'dark'
+          ? 'rgba(255,255,255,0.18)'
+          : 'rgba(9,30,66,0.2)',
+      boxShadow: (theme) =>
+        theme.palette.mode === 'dark'
+          ? '0 8px 18px rgba(0,0,0,0.38)'
+          : '0 8px 18px rgba(9, 30, 66, 0.16)'
+    }
+  }
 
-  const showCheckbox = isHovered || card?.isCompleted
+  return cardSx
+}
 
+function CardBody({ card, showCheckbox, onToggleCompleted }) {
   const coverImage =
     card?.cover?.type === 'attachment' ? card?.cover?.value : null
 
   const coverColor = card?.cover?.type === 'color' ? card?.cover?.value : null
+  const handleToggleCompleted = (e) => {
+    e.stopPropagation()
+    onToggleCompleted?.()
+  }
 
   return (
-    <MuiCard
-      onClick={setActiveCard}
-      ref={setNodeRef}
-      style={dndKitCardStyles}
-      {...attributes}
-      {...listeners}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      sx={{
-        height: 'auto',
-        mt: 1.5,
-        cursor: 'pointer',
-        display: card?.FE_PlaceholderCard ? 'none' : 'block',
-        borderRadius: 2,
-        overflow: 'hidden',
-        outline: '2px solid transparent',
-        boxShadow: '0 1px 1px rgba(0,0,0,0.12)',
-        bgcolor: 'background.paper',
-        transition: 'outline-color 0.18s ease, box-shadow 0.18s ease',
-        '&:hover': {
-          outlineColor: 'primary.main',
-          boxShadow: (theme) =>
-            theme.palette.mode === 'dark'
-              ? '0 4px 12px rgba(0,0,0,0.35)'
-              : '0 4px 12px rgba(9, 30, 66, 0.15)'
-        }
-      }}
-    >
+    <>
       {coverImage && (
         <CardMedia
           component="img"
           image={coverImage}
           alt="card-cover"
           sx={{
-            height: 140,
+            height: 132,
             width: '100%',
             objectFit: 'cover',
             display: 'block'
@@ -75,7 +77,7 @@ function Card({ card }) {
       {coverColor && (
         <Box
           sx={{
-            height: 45,
+            height: 34,
             bgcolor: (theme) =>
               cardCoverColor?.[coverColor]?.[theme.palette.mode]
           }}
@@ -84,28 +86,29 @@ function Card({ card }) {
 
       <CardContent
         sx={{
-          p: 1.5,
-          '&:last-child': { p: 1.5 }
+          p: 1.25,
+          '&:last-child': { p: 1.25 }
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
           <Box
-            onClick={(e) => {
-              e.stopPropagation()
-              handleUpdateIsCompleted()
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
+            onClick={onToggleCompleted ? handleToggleCompleted : undefined}
+            onMouseDown={
+              onToggleCompleted ? (e) => e.stopPropagation() : undefined
+            }
             data-no-dnd="true"
             sx={{
-              mt: '1px',
+              mt: '2px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
               width: showCheckbox ? 20 : 0,
+              mr: showCheckbox ? 0.85 : 0,
               opacity: showCheckbox ? 1 : 0,
               overflow: 'hidden',
-              transition: 'width 0.16s ease, opacity 0.16s ease',
+              transition:
+                'width 0.16s ease, margin-right 0.16s ease, opacity 0.16s ease',
               color: card?.isCompleted ? '#94C748' : 'text.disabled',
               '&:hover': {
                 color: card?.isCompleted ? '#a5dd50' : 'text.secondary'
@@ -123,8 +126,9 @@ function Card({ card }) {
             variant="body2"
             sx={{
               flex: 1,
-              fontWeight: 500,
-              lineHeight: 1.35,
+              fontWeight: 560,
+              lineHeight: 1.4,
+              letterSpacing: 0.08,
               wordBreak: 'break-word',
               textDecoration: card?.isCompleted ? 'line-through' : 'none',
               color: card?.isCompleted ? 'text.secondary' : 'text.primary',
@@ -139,8 +143,56 @@ function Card({ card }) {
         </Box>
         <CardBadge card={card} />
       </CardContent>
+    </>
+  )
+}
+
+function Card({ card }) {
+  const [isHovered, setIsHovered] = useState(false)
+  const {
+    setNodeRef,
+    attributes,
+    listeners,
+    dndKitCardStyles,
+    setActiveCard,
+    handleUpdateIsCompleted
+  } = useCard({ card })
+
+  if (card?.FE_PlaceholderCard) return null
+
+  return (
+    <MuiCard
+      data-card-item="true"
+      onClick={setActiveCard}
+      ref={setNodeRef}
+      style={dndKitCardStyles}
+      {...attributes}
+      {...listeners}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      sx={getCardSx(true)}
+    >
+      <CardBody
+        card={card}
+        showCheckbox={isHovered || card?.isCompleted}
+        onToggleCompleted={handleUpdateIsCompleted}
+      />
     </MuiCard>
   )
 }
 
-export default Card
+function CardDragOverlay({ card }) {
+  if (!card || card?.FE_PlaceholderCard) return null
+
+  return (
+    <MuiCard sx={getCardSx(false)}>
+      <CardBody card={card} showCheckbox={Boolean(card?.isCompleted)} />
+    </MuiCard>
+  )
+}
+
+const MemoizedCard = memo(Card)
+const MemoizedCardDragOverlay = memo(CardDragOverlay)
+
+export default MemoizedCard
+export { MemoizedCardDragOverlay as CardDragOverlay }

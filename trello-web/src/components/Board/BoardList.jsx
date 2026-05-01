@@ -11,11 +11,12 @@ import Skeleton from '@mui/material/Skeleton'
 import CreateBoardModal from './CreateBoardModal'
 import ViewKanbanRoundedIcon from '@mui/icons-material/ViewKanbanRounded'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import Divider from '@mui/material/Divider'
 import { Link, useParams } from 'react-router-dom'
 import { backgroundBoardList } from '~/constant/backgroundBoard'
 import { alpha, useTheme } from '@mui/material/styles'
 import WorkspacePageHeader from '~/components/Workspace/WorkspacePageHeader'
+import PublicRoundedIcon from '@mui/icons-material/PublicRounded'
+import LockRoundedIcon from '@mui/icons-material/LockRounded'
 
 const truncateText = (text, maxLength) => {
   if (!text) return ''
@@ -29,8 +30,6 @@ function BoardList({ ui, data, handler, isLoading = false }) {
   const { workspaceId } = useParams()
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
-
-  const activeBoards = boards?.filter((b) => b.status === 'active') || []
 
   const renderBoardSkeletons = () => {
     return Array.from({ length: 4 }).map((_, idx) => (
@@ -72,8 +71,8 @@ function BoardList({ ui, data, handler, isLoading = false }) {
         badgeIcon={<ViewKanbanRoundedIcon sx={{ fontSize: 13 }} />}
         badgeLabel="Workspace Boards"
         title="Your Boards"
-        description={`${activeBoards.length} active board${
-          activeBoards.length !== 1 ? 's' : ''
+        description={`${boards.length} board${
+          boards.length !== 1 ? 's' : ''
         } in this workspace`}
       >
         <Chip
@@ -82,14 +81,14 @@ function BoardList({ ui, data, handler, isLoading = false }) {
           sx={(theme) => ({
             height: 32,
             color:
-                theme.palette.mode === 'dark'
-                  ? '#bfdbfe'
-                  : theme.palette.primary.main,
+              theme.palette.mode === 'dark'
+                ? '#bfdbfe'
+                : theme.palette.primary.main,
             fontWeight: 700,
             bgcolor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(255,255,255,0.10)'
-                  : alpha(theme.palette.primary.main, 0.08),
+              theme.palette.mode === 'dark'
+                ? 'rgba(255,255,255,0.10)'
+                : alpha(theme.palette.primary.main, 0.08),
             border: `1px solid ${alpha(theme.palette.primary.main, 0.18)}`,
             '& .MuiChip-icon': { color: 'inherit' }
           })}
@@ -105,36 +104,36 @@ function BoardList({ ui, data, handler, isLoading = false }) {
             px: 2.5,
             py: 1.05,
             bgcolor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(255,255,255,0.12)'
-                  : 'primary.main',
+              theme.palette.mode === 'dark'
+                ? 'rgba(255,255,255,0.12)'
+                : 'primary.main',
             color:
-                theme.palette.mode === 'dark'
-                  ? 'common.white'
-                  : 'primary.contrastText',
+              theme.palette.mode === 'dark'
+                ? 'common.white'
+                : 'primary.contrastText',
             border: `1px solid ${
               theme.palette.mode === 'dark'
                 ? 'rgba(255,255,255,0.18)'
                 : 'transparent'
             }`,
             boxShadow:
-                theme.palette.mode === 'dark'
-                  ? 'none'
-                  : '0 8px 24px rgba(37,99,235,0.24)',
+              theme.palette.mode === 'dark'
+                ? 'none'
+                : '0 8px 24px rgba(37,99,235,0.24)',
             '&:hover': {
               bgcolor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(255,255,255,0.18)'
-                    : 'primary.dark',
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.18)'
+                  : 'primary.dark',
               transform: 'translateY(-1px)',
               boxShadow:
-                  theme.palette.mode === 'dark'
-                    ? 'none'
-                    : '0 12px 30px rgba(37,99,235,0.30)'
+                theme.palette.mode === 'dark'
+                  ? 'none'
+                  : '0 12px 30px rgba(37,99,235,0.30)'
             }
           })}
         >
-            Create Board
+          Create Board
         </Button>
       </WorkspacePageHeader>
 
@@ -144,18 +143,19 @@ function BoardList({ ui, data, handler, isLoading = false }) {
             renderBoardSkeletons()
           ) : (
             <>
-              {activeBoards.map((b) => {
+              {boards.map((b) => {
                 const itemBackground = backgroundBoardList.find(
                   (item) => item.key === b?.cover?.value
                 )?.src
                 const backgroundImage =
                   b?.cover?.type === 'image' ? b?.cover?.value : itemBackground
+                const isPublic = b.visibility === 'public'
 
                 return (
                   <Grid xs={12} sm={6} md={3} key={b._id}>
                     <Box
                       component={Link}
-                      to={`/boards/${b._id}`}
+                      to={`/boards/${b.workspaceId}/${b._id}`}
                       sx={{ display: 'block', textDecoration: 'none' }}
                     >
                       <Card
@@ -237,22 +237,35 @@ function BoardList({ ui, data, handler, isLoading = false }) {
                               px: 1,
                               py: 0.45,
                               borderRadius: '999px',
-                              color: 'rgba(255,255,255,0.88)',
-                              bgcolor: 'rgba(15,23,42,0.32)',
-                              border: '1px solid rgba(255,255,255,0.14)',
-                              backdropFilter: 'blur(8px)'
+                              border: '1px solid',
+                              backdropFilter: 'blur(8px)',
+                              // Public: xanh lá nhạt — Private: vàng/cam nhạt
+                              color: isPublic
+                                ? 'rgba(134,239,172,0.9)'
+                                : 'rgba(253,186,116,0.9)',
+                              bgcolor: isPublic
+                                ? 'rgba(20,83,45,0.35)'
+                                : 'rgba(120,53,15,0.35)',
+                              borderColor: isPublic
+                                ? 'rgba(134,239,172,0.25)'
+                                : 'rgba(253,186,116,0.25)'
                             }}
                           >
-                            <ViewKanbanRoundedIcon sx={{ fontSize: 14 }} />
+                            {isPublic ? (
+                              <PublicRoundedIcon sx={{ fontSize: 13 }} />
+                            ) : (
+                              <LockRoundedIcon sx={{ fontSize: 13 }} />
+                            )}
                             <Typography
                               sx={{
                                 fontSize: 11,
                                 fontWeight: 700,
                                 lineHeight: 1,
-                                letterSpacing: 0
+                                letterSpacing: 0.2,
+                                textTransform: 'capitalize'
                               }}
                             >
-                              Board
+                              {b.visibility}
                             </Typography>
                           </Box>
 
@@ -423,7 +436,6 @@ function BoardList({ ui, data, handler, isLoading = false }) {
       </Box>
 
       <CreateBoardModal ui={ui.createModal} handler={handler.createModal} />
-
     </>
   )
 }

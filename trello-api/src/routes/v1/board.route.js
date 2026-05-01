@@ -58,12 +58,6 @@ Router.route('/roles/:boardId').get(
 )
 
 Router.route('/:boardId')
-  .get(
-    asyncHandler(authMiddleware.isAuthorized),
-    asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
-    asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.VIEW)),
-    asyncHandler(BoardController.getDetails)
-  )
   .put(
     asyncHandler(authMiddleware.isAuthorized),
     asyncHandler(validate(createIdParamSchema('boardId'), 'params')),
@@ -180,4 +174,10 @@ Router.route('/custom-background/:boardId/:backgroundId').delete(
   asyncHandler(BoardController.deleteBackground)
 )
 
+Router.route('/:workspaceId/:boardId').get(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(boardValidation.getBoardDetailParams, 'params')),
+  asyncHandler(workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.VIEW)),
+  asyncHandler(BoardController.getDetails)
+)
 export const boardRoute = Router

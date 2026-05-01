@@ -18,6 +18,7 @@ const useBoardDetail = () => {
   const dispatch = useDispatch()
 
   const { boardId } = useParams()
+  const { workspaceId } = useParams()
   const board = useSelector((state) => state.activeBoard?.board)
   const members = useSelector((state) => state.activeBoard?.members)
 
@@ -91,9 +92,9 @@ const useBoardDetail = () => {
   }, [board])
 
   useEffect(() => {
-    if (!boardId) return
+    if (!boardId || !workspaceId) return
 
-    dispatch(fetchBoardDetailsAPI(boardId))
+    dispatch(fetchBoardDetailsAPI({ workspaceId, boardId }))
 
     const socket = initSocket()
 
@@ -396,7 +397,7 @@ const useBoardDetail = () => {
       socket.off('column:restored', handleColumnRestored)
       dispatch(clearActiveBoard())
     }
-  }, [dispatch, boardId])
+  }, [dispatch, workspaceId, boardId])
 
   const moveColumns = (dndOrderedColumns) => {
     const dndOrderedColumnsIds = dndOrderedColumns.map((c) => c._id)

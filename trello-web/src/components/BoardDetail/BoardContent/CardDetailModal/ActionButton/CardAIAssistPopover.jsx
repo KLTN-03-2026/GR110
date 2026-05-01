@@ -39,7 +39,6 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
     try {
       setIsGenerating(true)
       const result = await handleGenerate(userPrompt.trim())
-      console.log('AI result:', result)
       if (!result || !result.subtasks) return
       setSuggestions(result)
       setSelectedSubtasks(result.subtasks.map((_, i) => i))
@@ -79,25 +78,42 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
   return (
     <>
       <Button
-        variant="outlined"
+        variant="contained"
         startIcon={<AutoAwesomeOutlinedIcon fontSize="small" />}
         sx={{
           ...cardDetailActionButtonSx,
-          borderColor: (theme) =>
+          border: 'none',
+          color: '#fff',
+          background: (theme) =>
             theme.palette.mode === 'dark'
-              ? 'rgba(167, 139, 250, 0.3)'
-              : 'rgba(124, 58, 237, 0.25)',
-          color: (theme) =>
-            theme.palette.mode === 'dark' ? '#a78bfa' : '#7c3aed',
+              ? 'linear-gradient(135deg, #7c3aed 0%, #2563eb 50%, #06b6d4 100%)'
+              : 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #06b6d4 100%)',
+          boxShadow: (theme) =>
+            theme.palette.mode === 'dark'
+              ? '0 8px 18px rgba(37, 99, 235, 0.28)'
+              : '0 8px 18px rgba(59, 130, 246, 0.24)',
+          transition:
+            'transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease',
+
           '&:hover': {
-            borderColor: (theme) =>
+            background: (theme) =>
               theme.palette.mode === 'dark'
-                ? 'rgba(167, 139, 250, 0.5)'
-                : 'rgba(124, 58, 237, 0.4)',
-            bgcolor: (theme) =>
+                ? 'linear-gradient(135deg, #8b5cf6 0%, #3b82f6 50%, #22d3ee 100%)'
+                : 'linear-gradient(135deg, #7c3aed 0%, #2563eb 50%, #0891b2 100%)',
+            boxShadow: (theme) =>
               theme.palette.mode === 'dark'
-                ? 'rgba(167, 139, 250, 0.08)'
-                : 'rgba(124, 58, 237, 0.06)'
+                ? '0 10px 24px rgba(37, 99, 235, 0.36)'
+                : '0 10px 24px rgba(59, 130, 246, 0.32)',
+            transform: 'translateY(-1px)',
+            filter: 'brightness(1.04)'
+          },
+
+          '&:active': {
+            transform: 'translateY(0)',
+            boxShadow: (theme) =>
+              theme.palette.mode === 'dark'
+                ? '0 5px 14px rgba(37, 99, 235, 0.26)'
+                : '0 5px 14px rgba(59, 130, 246, 0.22)'
           }
         }}
         onClick={handleOpen}
@@ -125,7 +141,11 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
           <Stack spacing={2} sx={{ py: 1 }}>
             <Stack alignItems="center" spacing={1}>
               <AutoAwesomeOutlinedIcon
-                sx={{ fontSize: 40, color: '#7c3aed', opacity: 0.7 }}
+                sx={{
+                  fontSize: 40,
+                  color: 'primary.main',
+                  opacity: 0.75
+                }}
               />
               <Typography
                 sx={{
@@ -147,8 +167,14 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
                 sx={{
                   textTransform: 'none',
                   fontSize: 13,
-                  color: '#7c3aed',
-                  alignSelf: 'center'
+                  color: 'primary.main',
+                  alignSelf: 'center',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(25,118,210,0.06)'
+                  }
                 }}
               >
                 + Add extra context
@@ -161,7 +187,14 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
                 placeholder="E.g. Focus on backend tasks, use Vietnamese, include testing steps..."
                 value={userPrompt}
                 onChange={(e) => setUserPrompt(e.target.value)}
-                sx={{ '& .MuiOutlinedInput-root': { fontSize: 13 } }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    fontSize: 13,
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main'
+                    }
+                  }
+                }}
               />
             )}
 
@@ -170,9 +203,20 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
               onClick={onGenerate}
               sx={{
                 textTransform: 'none',
-                bgcolor: '#7c3aed',
-                '&:hover': { bgcolor: '#6d28d9' },
-                alignSelf: 'center'
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                alignSelf: 'center',
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? `0 8px 18px ${theme.palette.primary.main}40`
+                    : `0 8px 18px ${theme.palette.primary.main}30`,
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? `0 10px 24px ${theme.palette.primary.main}55`
+                      : `0 10px 24px ${theme.palette.primary.main}42`
+                }
               }}
             >
               Generate Suggestions
@@ -182,7 +226,12 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
 
         {isGenerating && (
           <Stack spacing={2} alignItems="center" sx={{ py: 4 }}>
-            <CircularProgress size={32} sx={{ color: '#7c3aed' }} />
+            <CircularProgress
+              size={32}
+              sx={{
+                color: 'primary.main'
+              }}
+            />
             <Typography sx={{ fontSize: 14, color: 'text.secondary' }}>
               AI is thinking...
             </Typography>
@@ -204,8 +253,10 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
                   onChange={() => setUseDescription(!useDescription)}
                   sx={{
                     p: 0,
-                    color: '#7c3aed',
-                    '&.Mui-checked': { color: '#7c3aed' }
+                    color: 'primary.main',
+                    '&.Mui-checked': {
+                      color: 'primary.main'
+                    }
                   }}
                 />
                 <Typography
@@ -218,6 +269,7 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
                   Description
                 </Typography>
               </Stack>
+
               <Box
                 sx={{
                   p: 1.5,
@@ -247,6 +299,7 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
                 Subtasks ({selectedSubtasks.length}/
                 {suggestions.subtasks.length})
               </Typography>
+
               <Stack spacing={0.5}>
                 {suggestions.subtasks.map((task, index) => (
                   <Stack
@@ -272,10 +325,13 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
                       checked={selectedSubtasks.includes(index)}
                       sx={{
                         p: 0,
-                        color: '#7c3aed',
-                        '&.Mui-checked': { color: '#7c3aed' }
+                        color: 'primary.main',
+                        '&.Mui-checked': {
+                          color: 'primary.main'
+                        }
                       }}
                     />
+
                     <Typography
                       sx={{
                         fontSize: 13,
@@ -297,10 +353,21 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
                 variant="text"
                 onClick={onGenerate}
                 disabled={isApplying}
-                sx={{ textTransform: 'none', fontSize: 13, color: '#7c3aed' }}
+                sx={{
+                  textTransform: 'none',
+                  fontSize: 13,
+                  color: 'primary.main',
+                  '&:hover': {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255,255,255,0.06)'
+                        : 'rgba(25,118,210,0.06)'
+                  }
+                }}
               >
                 Regenerate
               </Button>
+
               <Stack direction="row" spacing={1}>
                 <Button
                   variant="text"
@@ -311,14 +378,22 @@ function CardAIAssistPopover({ handleGenerate, handleApply }) {
                 >
                   Cancel
                 </Button>
+
                 <Button
                   variant="contained"
                   onClick={onApply}
                   disabled={!hasSelection || isApplying}
                   sx={{
                     textTransform: 'none',
-                    bgcolor: '#7c3aed',
-                    '&:hover': { bgcolor: '#6d28d9' }
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                    '&:hover': {
+                      bgcolor: 'primary.dark'
+                    },
+                    '&.Mui-disabled': {
+                      bgcolor: 'action.disabledBackground',
+                      color: 'action.disabled'
+                    }
                   }}
                 >
                   {isApplying ? 'Applying...' : 'Apply'}

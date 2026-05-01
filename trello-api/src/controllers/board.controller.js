@@ -45,7 +45,9 @@ class BoardController {
   static getDetails = async (req, res) => {
     new OkSuccessResponse({
       metadata: await BoardService.getDetails({
-        _id: req.params.boardId
+        _id: req.params.boardId,
+        workspaceId: req.params.workspaceId,
+        workspaceAccess: req.workspaceAccess
       })
     }).send(res)
   }

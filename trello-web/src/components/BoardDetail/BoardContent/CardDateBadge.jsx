@@ -35,19 +35,19 @@ function CardDateBadge({
         : dayjs(dueAt).format('MMM DD')
 
   const backgroundColor = isCompleted
-    ? '#94C748'
+    ? '#4caf50'
     : isOverdue
-      ? '#c9372c'
+      ? '#d32f2f'
       : isDueToday
-        ? '#f8a11e'
+        ? '#f57c00'
         : 'transparent'
 
   const hoverBackgroundColor = isCompleted
-    ? '#86b63f'
+    ? '#45a049'
     : isOverdue
-      ? '#ae2e24'
+      ? '#c62828'
       : isDueToday
-        ? '#d98c0a'
+        ? '#e65100'
         : 'transparent'
 
   const isHighlighted = backgroundColor !== 'transparent'
@@ -57,33 +57,50 @@ function CardDateBadge({
       <Button
         size="small"
         onClick={handleOpen}
-        startIcon={<AccessTimeOutlinedIcon />}
+        startIcon={<AccessTimeOutlinedIcon sx={{ fontSize: 18 }} />}
         sx={(theme) => ({
           textTransform: 'none',
           minWidth: 'fit-content',
-          px: 1,
-          py: 0.5,
-          borderRadius: 1.5,
-          fontSize: '12px',
-          fontWeight: 500,
+          px: 1.5,
+          py: 0.75,
+          borderRadius: 2,
+          fontSize: '13px',
+          fontWeight: 600,
+          letterSpacing: 0.3,
           color: isHighlighted
-            ? theme.palette.mode === 'dark'
-              ? '#000'
-              : '#fff'
+            ? '#fff'
             : theme.palette.mode === 'dark'
               ? '#c7d1db'
               : '#44546f',
           bgcolor: isHighlighted
             ? backgroundColor
             : theme.palette.mode === 'dark'
-              ? 'rgba(255,255,255,0.06)'
-              : 'rgba(9,30,66,0.06)',
+              ? 'rgba(255,255,255,0.08)'
+              : 'rgba(9,30,66,0.08)',
+          border: isHighlighted ? 'none' : '1px solid',
+          borderColor: isHighlighted
+            ? 'transparent'
+            : theme.palette.mode === 'dark'
+              ? 'rgba(255,255,255,0.1)'
+              : 'rgba(9,30,66,0.1)',
+          transition: 'all 0.2s ease',
+          boxShadow: isHighlighted
+            ? theme.palette.mode === 'dark'
+              ? '0 2px 8px rgba(0,0,0,0.3)'
+              : '0 2px 8px rgba(0,0,0,0.1)'
+            : 'none',
           '&:hover': {
             bgcolor: isHighlighted
               ? hoverBackgroundColor
               : theme.palette.mode === 'dark'
-                ? 'rgba(255,255,255,0.1)'
-                : 'rgba(9,30,66,0.1)'
+                ? 'rgba(255,255,255,0.12)'
+                : 'rgba(9,30,66,0.12)',
+            transform: isHighlighted ? 'translateY(-1px)' : 'none',
+            boxShadow: isHighlighted
+              ? theme.palette.mode === 'dark'
+                ? '0 4px 12px rgba(0,0,0,0.4)'
+                : '0 4px 12px rgba(0,0,0,0.15)'
+              : 'none'
           }
         })}
       >

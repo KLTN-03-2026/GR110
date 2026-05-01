@@ -64,6 +64,7 @@ function ToggleFocusInput({
         {...props}
       >
         <Typography
+          variant="span"
           sx={{
             fontSize: inputFontSize,
             fontWeight,
@@ -84,8 +85,8 @@ function ToggleFocusInput({
     <TextField
       fullWidth
       autoFocus
-      variant='outlined'
-      size='small'
+      variant="outlined"
+      size="small"
       multiline={false}
       minRows={1}
       maxRows={4}

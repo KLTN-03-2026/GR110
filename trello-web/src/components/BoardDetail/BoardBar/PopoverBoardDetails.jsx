@@ -4,7 +4,6 @@ import Button from '@mui/material/Button'
 import BoardModal from '../BoardModal/BoardModal'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { Box, IconButton, Divider } from '@mui/material'
-import AddToPhotosOutlinedIcon from '@mui/icons-material/AddToPhotosOutlined'
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined'
 import CloseIcon from '@mui/icons-material/Close'
@@ -61,6 +60,10 @@ export default function PopoverBoardDetails({
         theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f2f4'
     }
   }
+
+  const { open } = boardModal
+
+  console.log('open board modal::', open)
 
   return (
     <div>
@@ -154,7 +157,7 @@ export default function PopoverBoardDetails({
           }}
         />
 
-        <Box sx={{ p: 1.5 }}>
+        <Box sx={{ p: 1.5, bgcolor: 'background.paper' }}>
           <Button
             onClick={handleOpenModal}
             sx={{
@@ -284,7 +287,7 @@ export default function PopoverBoardDetails({
         </Box>
       </Popover>
 
-      <BoardModal boardModal={boardModal} />
+      {open && <BoardModal boardModal={boardModal} />}
     </div>
   )
 }

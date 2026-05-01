@@ -14,10 +14,10 @@ const initialState = {
 
 export const fetchBoardDetailsAPI = createAsyncThunk(
   'activeBoard/fetchBoardDetailsAPI',
-  async (boardId, { rejectWithValue }) => {
+  async ({ workspaceId, boardId }, { rejectWithValue }) => {
     try {
       const response = await authorizeAxiosInstance.get(
-        `${API_ROOT}/v1/boards/${boardId}`
+        `${API_ROOT}/v1/boards/${workspaceId}/${boardId}`
       )
       return response.data.metadata
     } catch (error) {

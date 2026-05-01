@@ -191,17 +191,17 @@ export const deleteColumnAPI = async ({ columnId, boardId }) => {
 
 export const createBackground = async ({ boardId, payload }) => {
   const response = await authorizeAxiosInstance.post(
-    `${API_ROOT}/v1/boards/custom-background/${boardId}`, payload
+    `${API_ROOT}/v1/boards/custom-background/${boardId}`,
+    payload
   )
   toast.success('Upload background success')
   return response.data.metadata
 }
 
-export const deleteBackground = async ({boardId, backgroundId }) => {
+export const deleteBackground = async ({ boardId, backgroundId }) => {
   const response = await authorizeAxiosInstance.delete(
     `${API_ROOT}/v1/boards/custom-background/${boardId}/${backgroundId}`
   )
   toast.success('Delete background success')
   return response.data.metadata
 }
-

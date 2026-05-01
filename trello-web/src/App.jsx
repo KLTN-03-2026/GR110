@@ -77,12 +77,12 @@ function App() {
         {/* <Outlet /> của react-router-dom sẽ chạy vào các child route trong này */}
 
         {/* Board details  */}
-        <Route path="/boards/:boardId" element={<BoardDetail />} />
+        <Route path="/boards/:workspaceId/:boardId" element={<BoardDetail />} />
 
         {/* Board list  */}
         <Route path="/h" element={<HomeLayout />}>
           <Route path="tickets" element={<TicketPage />} />
-          <Route path="introduction" element={<Introduction/>} />
+          <Route path="introduction" element={<Introduction />} />
 
           <Route path="workspaces" element={<WorkspaceLayout />}>
             <Route

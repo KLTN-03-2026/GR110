@@ -1,7 +1,5 @@
-import CardActions from '@mui/material/CardActions'
 import Typography from '@mui/material/Typography'
 import Tooltip from '@mui/material/Tooltip'
-import Button from '@mui/material/Button'
 import SubjectRoundedIcon from '@mui/icons-material/SubjectRounded'
 import CardDateBadge from '~/components/BoardDetail/BoardContent/CardDateBadge'
 import ChatOutlinedIcon from '@mui/icons-material/ChatOutlined'
@@ -11,6 +9,7 @@ import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined'
 import { useSelector } from 'react-redux'
 import BoardMemberGroup from '../BoardDetail/BoardBar/BoardMemberGroup'
 import { BOARD_LABEL_COLORS } from '~/constant/labelBackgroundColor'
+import { memo, useMemo } from 'react'
 
 function CardBadge({ card }) {
   const hasDateBadge = !!(card?.startedAt || card?.dueAt)
@@ -32,32 +31,60 @@ function CardBadge({ card }) {
   const boardMember = useSelector((state) => state.activeBoard.members)
   const boardLabel = useSelector((state) => state.activeBoard.labels)
 
+  const cardMember = useMemo(() => {
+    if (!hasMember) return []
+    return card.memberIds
+      .map((id) =>
+        boardMember.find((item) => item._id?.toString() === id?.toString())
+      )
+      .filter(Boolean)
+  }, [hasMember, card.memberIds, boardMember])
+
+  const cardLabel = useMemo(() => {
+    if (!hasLabels) return []
+    return card.labelIds
+      .map((id) =>
+        boardLabel.find((item) => item._id?.toString() === id?.toString())
+      )
+      .filter(Boolean)
+  }, [hasLabels, card.labelIds, boardLabel])
+
   if (!hasBadges) return null
 
-  const cardMember = hasMember
-    ? card.memberIds
-        .map((id) =>
-          boardMember.find((item) => item._id?.toString() === id?.toString())
-        )
-        .filter(Boolean)
-    : []
-
-  const cardLabel = hasLabels
-    ? card.labelIds
-        .map((id) =>
-          boardLabel.find((item) => item._id?.toString() === id?.toString())
-        )
-        .filter(Boolean)
-    : []
+  const neutralBadgeSx = (theme) => ({
+    height: 24,
+    px: 0.85,
+    borderRadius: 1.5,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 0.5,
+    color: theme.palette.mode === 'dark' ? '#c7d1db' : '#44546f',
+    bgcolor:
+      theme.palette.mode === 'dark'
+        ? 'rgba(255,255,255,0.06)'
+        : 'rgba(9,30,66,0.06)',
+    border:
+      theme.palette.mode === 'dark'
+        ? '1px solid rgba(255,255,255,0.05)'
+        : '1px solid rgba(9,30,66,0.08)',
+    transition: 'background-color 0.16s ease, border-color 0.16s ease',
+    '&:hover': {
+      bgcolor:
+        theme.palette.mode === 'dark'
+          ? 'rgba(255,255,255,0.11)'
+          : 'rgba(9,30,66,0.1)'
+    }
+  })
 
   return (
-    <CardActions
+    <Box
       sx={{
-        mt: 1,
-        ml: -1,
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        rowGap: 1
+        mt: 1.05,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: 0.65
       }}
     >
       {hasLabels && (
@@ -66,9 +93,7 @@ function CardBadge({ card }) {
             display: 'flex',
             flexWrap: 'wrap',
             gap: 0.5,
-            width: '100%',
-            pr: 1,
-            pl: 1
+            width: '100%'
           }}
         >
           {cardLabel.map((label) => {
@@ -80,10 +105,10 @@ function CardBadge({ card }) {
               <Tooltip key={label._id} title={labelTitle || label.color}>
                 <Box
                   sx={(theme) => ({
-                    minWidth: 55,
+                    minWidth: 50,
                     maxWidth: 238,
-                    height: 20,
-                    px: labelTitle ? 1.25 : 0,
+                    height: 18,
+                    px: labelTitle ? 1 : 0,
                     borderRadius: 1.5,
                     display: 'flex',
                     alignItems: 'center',
@@ -91,14 +116,18 @@ function CardBadge({ card }) {
                     bgcolor: colorConfig[theme.palette.mode],
                     color: label.color === 'yellow' ? '#172b4d' : '#ffffff',
                     overflow: 'hidden',
-                    padding: 1
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? 'inset 0 0 0 1px rgba(255,255,255,0.08)'
+                        : 'inset 0 0 0 1px rgba(0,0,0,0.05)'
                   })}
                 >
                   {labelTitle && (
                     <Typography
-                      variant="span"
+                      component="span"
                       sx={{
-                        fontSize: 12,
+                        fontSize: 11.5,
+                        fontWeight: 600,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
@@ -113,110 +142,120 @@ function CardBadge({ card }) {
           })}
         </Box>
       )}
-      {hasDateBadge && (
-        <Box>
-          <CardDateBadge
-            startedAt={card?.startedAt}
-            dueAt={card?.dueAt}
-            isCompleted={card?.isCompleted}
-            clickable={false}
-          />
-        </Box>
-      )}
-
-      {hasTaskBadge && (
-        <Tooltip title="Checklist items">
-          <Button
-            size="small"
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 0.55
+        }}
+      >
+        {hasDateBadge && (
+          <Box
             sx={(theme) => ({
-              display: 'flex',
-              px: 1,
-              py: 0.5,
-              borderRadius: 1.5,
-              alignItems: 'center',
-              gap: 0.5,
-              color:
-                card.completedTaskCount === card.taskCount
-                  ? theme.palette.mode === 'dark'
-                    ? '#000'
-                    : '#fff'
-                  : theme.palette.mode === 'dark'
-                    ? '#c7d1db'
-                    : '#44546f',
-              bgcolor:
-                card.completedTaskCount === card.taskCount
-                  ? '#94C748'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(255,255,255,0.06)'
-                    : 'rgba(9,30,66,0.06)',
-              '&:hover': {
-                bgcolor:
-                  card.completedTaskCount === card.taskCount
-                    ? '#86b63f'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(255,255,255,0.1)'
-                      : 'rgba(9,30,66,0.1)'
+              '& .MuiButton-root': {
+                height: 24,
+                borderRadius: 1.5,
+                px: 0.85,
+                py: 0,
+                lineHeight: 1,
+                fontSize: 12,
+                border:
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(255,255,255,0.05)'
+                    : '1px solid rgba(9,30,66,0.08)'
               }
             })}
           >
-            <CheckBoxOutlinedIcon sx={{ fontSize: 16 }} />
-            {card.completedTaskCount}/{card.taskCount}
-          </Button>
-        </Tooltip>
-      )}
-
-      {hasDescriptionBadge && (
-        <Tooltip title="This card has a description.">
-          <SubjectRoundedIcon
-            sx={{
-              color: (theme) =>
-                theme.palette.mode === 'dark' ? '#c7d1db' : '#44546f'
-            }}
-          />
-        </Tooltip>
-      )}
-
-      {hasCommentBadge && (
-        <Tooltip title="Comments">
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              color: (theme) =>
-                theme.palette.mode === 'dark' ? '#c7d1db' : '#44546f'
-            }}
-          >
-            <ChatOutlinedIcon fontSize="small" />
-            <Typography component="span" sx={{ fontSize: 15 }}>
-              {card.commentCount}
-            </Typography>
+            <CardDateBadge
+              startedAt={card?.startedAt}
+              dueAt={card?.dueAt}
+              isCompleted={card?.isCompleted}
+              clickable={false}
+            />
           </Box>
-        </Tooltip>
-      )}
+        )}
 
-      {hasAttachment && (
-        <Tooltip title="Comments">
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              color: (theme) =>
-                theme.palette.mode === 'dark' ? '#c7d1db' : '#44546f'
-            }}
-          >
-            <AttachFileOutlinedIcon fontSize="small" />
-            <Typography component="span" sx={{ fontSize: 15 }}>
-              {card.attachmentCount}
-            </Typography>
+        {hasTaskBadge && (
+          <Tooltip title="Checklist items">
+            <Box
+              sx={(theme) => ({
+                ...neutralBadgeSx(theme),
+                fontWeight: 600,
+                color:
+                  card.completedTaskCount === card.taskCount
+                    ? theme.palette.mode === 'dark'
+                      ? '#000'
+                      : '#fff'
+                    : theme.palette.mode === 'dark'
+                      ? '#c7d1db'
+                      : '#44546f',
+                bgcolor:
+                  card.completedTaskCount === card.taskCount
+                    ? '#94C748'
+                    : neutralBadgeSx(theme).bgcolor,
+                border:
+                  card.completedTaskCount === card.taskCount ? 'none' : null,
+                '&:hover': {
+                  bgcolor:
+                    card.completedTaskCount === card.taskCount
+                      ? '#86b63f'
+                      : neutralBadgeSx(theme).bgcolor
+                }
+              })}
+            >
+              <CheckBoxOutlinedIcon sx={{ fontSize: 15 }} />
+              {card.completedTaskCount}/{card.taskCount}
+            </Box>
+          </Tooltip>
+        )}
+
+        {hasDescriptionBadge && (
+          <Tooltip title="This card has a description.">
+            <Box sx={(theme) => neutralBadgeSx(theme)}>
+              <SubjectRoundedIcon sx={{ fontSize: 15 }} />
+            </Box>
+          </Tooltip>
+        )}
+
+        {hasCommentBadge && (
+          <Tooltip title="Comments">
+            <Box sx={(theme) => neutralBadgeSx(theme)}>
+              <ChatOutlinedIcon sx={{ fontSize: 15 }} />
+              <Typography
+                component="span"
+                sx={{ fontSize: 12.5, fontWeight: 600 }}
+              >
+                {card.commentCount}
+              </Typography>
+            </Box>
+          </Tooltip>
+        )}
+
+        {hasAttachment && (
+          <Tooltip title="Attachments">
+            <Box sx={(theme) => neutralBadgeSx(theme)}>
+              <AttachFileOutlinedIcon sx={{ fontSize: 15 }} />
+              <Typography
+                component="span"
+                sx={{ fontSize: 12.5, fontWeight: 600 }}
+              >
+                {card.attachmentCount}
+              </Typography>
+            </Box>
+          </Tooltip>
+        )}
+
+        {hasMember && (
+          <Box sx={{ ml: 'auto' }}>
+            <BoardMemberGroup members={cardMember} limit={4} />
           </Box>
-        </Tooltip>
-      )}
-
-      {hasMember && <BoardMemberGroup members={cardMember} limit={4} />}
-    </CardActions>
+        )}
+      </Box>
+    </Box>
   )
 }
 
-export default CardBadge
+const MemoizedCardBadge = memo(CardBadge)
+
+export default MemoizedCardBadge

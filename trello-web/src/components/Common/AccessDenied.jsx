@@ -21,10 +21,7 @@ function AccessDenied() {
         alignItems: 'center',
         justifyContent: 'center',
         px: 2,
-        background: (theme) =>
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, #0f172a 0%, #111827 100%)'
-            : 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%)'
+        background: 'transparent'
       }}
     >
       <Paper
@@ -38,10 +35,7 @@ function AccessDenied() {
           textAlign: 'center',
           border: '1px solid',
           borderColor: 'divider',
-          bgcolor: (theme) =>
-            theme.palette.mode === 'dark'
-              ? 'rgba(15, 23, 42, 0.9)'
-              : 'rgba(255,255,255,0.9)',
+          background: 'transparent',
           backdropFilter: 'blur(10px)'
         }}
       >
