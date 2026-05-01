@@ -4,6 +4,7 @@ import {
   MenuItem,
   Paper,
   Select,
+  Skeleton,
   Stack,
   Table,
   TableBody,
@@ -16,6 +17,7 @@ import {
 } from '@mui/material'
 import MemberActionButton from '~/components/Workspace/workspaceMember/MemberActionButton'
 import { useSelector } from 'react-redux'
+import { useTheme } from '@emotion/react'
 
 function formatDate(dateString) {
   if (!dateString) return '--'
@@ -58,9 +60,91 @@ function BoardMemberTable({
   onPageChange,
   handleChangeMemberRole,
   handleRemoveMember,
-  handleLeaveWorkspace
+  handleLeaveWorkspace,
+  isLoading
 }) {
+  const theme = useTheme()
   const currentUser = useSelector((state) => state.user.currentUser)
+
+  const renderMemberSkeletons = () => {
+    return Array.from({ length: 5 }).map((_, idx) => (
+      <TableRow
+        key={`skeleton-${idx}`}
+        sx={{
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          '& .MuiTableCell-root': {
+            borderBottom: 'none',
+            py: 1.65,
+            px: 2.5
+          }
+        }}
+      >
+        {/* Member Column */}
+        <TableCell>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Skeleton variant="circular" width={42} height={42} />
+            <Stack spacing={0.5} sx={{ flex: 1 }}>
+              <Skeleton variant="text" width="80%" height={18} />
+              <Skeleton variant="text" width="60%" height={14} />
+            </Stack>
+          </Stack>
+        </TableCell>
+
+        {/* Invited By Column */}
+        <TableCell>
+          <Stack spacing={0.5}>
+            <Skeleton variant="text" width="70%" height={18} />
+            <Skeleton variant="text" width="50%" height={14} />
+          </Stack>
+        </TableCell>
+
+        {/* Role Column */}
+        <TableCell>
+          <Skeleton
+            variant="rounded"
+            width={148}
+            height={36}
+            sx={{
+              borderRadius: '999px'
+            }}
+          />
+        </TableCell>
+
+        {/* Status Column */}
+        <TableCell>
+          <Skeleton
+            variant="rounded"
+            width={70}
+            height={26}
+            sx={{
+              borderRadius: '4px'
+            }}
+          />
+        </TableCell>
+
+        {/* Joined Column */}
+        <TableCell>
+          <Stack direction="row" spacing={0.75} alignItems="center">
+            <Skeleton variant="circular" width={16} height={16} />
+            <Skeleton variant="text" width={80} height={18} />
+          </Stack>
+        </TableCell>
+
+        {/* Action Column */}
+        <TableCell align="center">
+          <Skeleton
+            variant="rounded"
+            width={104}
+            height={36}
+            sx={{
+              borderRadius: '999px',
+              mx: 'auto'
+            }}
+          />
+        </TableCell>
+      </TableRow>
+    ))
+  }
 
   return (
     <TableContainer
@@ -92,9 +176,11 @@ function BoardMemberTable({
         </TableHead>
 
         <TableBody>
-          {members.length === 0 ? (
+          {isLoading ? (
+            renderMemberSkeletons()
+          ) : members.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} align="center" sx={{ py: 6 }}>
+              <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
                 <Typography variant="body1" color="text.secondary">
                   There are no members yet
                 </Typography>
@@ -170,6 +256,7 @@ function BoardMemberTable({
                       {formatDate(joinAt)}
                     </Typography>
                   </TableCell>
+
                   <TableCell align="center">
                     <MemberActionButton
                       member={member}

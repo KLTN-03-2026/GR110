@@ -1028,7 +1028,7 @@ class WorkspaceService {
       }),
 
       WorkspaceRoleRepo.count({
-        filter: { workspaceId }
+        filter: { workspaceId, isDefault: false }
       }),
 
       AttachmentRepo.sumFileSizeByWorkspaceId({

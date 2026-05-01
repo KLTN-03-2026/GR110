@@ -21,7 +21,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import MailOutlineIcon from '@mui/icons-material/MailOutline'
 import MessageOutlinedIcon from '@mui/icons-material/MessageOutlined'
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1'
-import { useEffect } from 'react'
+import { alpha } from '@mui/material'
+import { useTheme } from '@emotion/react'
 
 function InviteUserBoardModal({
   isOpen,
@@ -46,6 +47,8 @@ function InviteUserBoardModal({
   })
 
   const submitting = loading || isSubmitting
+  const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
 
   const handleClose = () => {
     if (submitting) return
@@ -61,13 +64,9 @@ function InviteUserBoardModal({
     }
 
     await onSubmit?.(payload)
-      reset()
-      onClose?.()
-    }
-//   useEffect(()=> {
-//     console.log(users);
-    
-//   })
+    reset()
+    onClose?.()
+  }
 
   return (
     <Dialog
@@ -89,7 +88,10 @@ function InviteUserBoardModal({
             py: 2,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            background: isDark
+              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.18)}, transparent 100%)`
+              : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
@@ -163,21 +165,21 @@ function InviteUserBoardModal({
                   onChange={(_, newValue) => {
                     field.onChange(newValue)
                   }}
-                 renderTags={(value, getTagProps) =>
-  value.map((user, index) => {
-    const { key, ...tagProps } = getTagProps({ index })
+                  renderTags={(value, getTagProps) =>
+                    value.map((user, index) => {
+                      const { key, ...tagProps } = getTagProps({ index })
 
-    return (
-      <Chip
-        key={key}
-        label={user.user?.email}
-        {...tagProps}
-        color="primary"
-        sx={{ borderRadius: 2, fontWeight: 500 }}
-      />
-    )
-  })
-}
+                      return (
+                        <Chip
+                          key={key}
+                          label={user.user?.email}
+                          {...tagProps}
+                          color="primary"
+                          sx={{ borderRadius: 2, fontWeight: 500 }}
+                        />
+                      )
+                    })
+                  }
                   renderOption={(props, option) => (
                     <Box component="li" {...props} key={option?.userId}>
                       <Stack direction="row" spacing={1.5} alignItems="center">
@@ -323,7 +325,7 @@ function InviteUserBoardModal({
               minWidth: 150,
               textTransform: 'none',
               fontWeight: 700,
-              borderRadius: 2
+              borderRadius: 5
             }}
           >
             {submitting ? 'Sending...' : 'Send invitations'}

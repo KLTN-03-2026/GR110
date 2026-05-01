@@ -24,16 +24,6 @@ import { createTicketApi } from '~/apis/ticket.api'
 import { useSelector } from 'react-redux'
 import { selectCurrentUser } from '~/redux/user/userSlice'
 
-/* ── dot pattern ── */
-const dotPatternSx = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1px)',
-  backgroundSize: '20px 20px',
-  pointerEvents: 'none'
-}
-
 export default function CreateTicketDialog({
   open,
   onClose,
@@ -72,7 +62,12 @@ export default function CreateTicketDialog({
 
   const onSubmit = async (data) => {
     await createTicketApi({ ticketData: data })
-    reset({ email: currentUser?.email, title: '', type: 'support', content: '' })
+    reset({
+      email: currentUser?.email,
+      title: '',
+      type: 'support',
+      content: ''
+    })
     refetchTickets()
     onClose?.()
   }
@@ -85,7 +80,7 @@ export default function CreateTicketDialog({
       borderRadius: '12px',
       transition: 'box-shadow 0.2s',
       '&.Mui-focused': {
-        boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.10)}`
+        boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`
       }
     }
   }
@@ -107,39 +102,48 @@ export default function CreateTicketDialog({
       }}
     >
       {/* ── Gradient header ── */}
-      <DialogTitle sx={{ p: 0 }}>
+      <DialogTitle
+        sx={{
+          p: 0,
+          background: isDark
+            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.16)}, transparent 48%)`
+            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
+        }}
+      >
         <Box
           sx={{
             position: 'relative',
             overflow: 'hidden',
-            background: 'linear-gradient(145deg, #0f172a 0%, #1e3a8a 55%, #1d4ed8 100%)',
-            color: 'white',
             px: 3.5,
             py: 3
           }}
         >
-          <Box sx={dotPatternSx} />
           {/* glow orb */}
           <Box
             sx={{
               position: 'absolute',
-              top: -40, right: -40,
-              width: 180, height: 180,
+              top: -40,
+              right: -40,
+              width: 180,
+              height: 180,
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(56,189,248,0.22) 0%, transparent 70%)',
               pointerEvents: 'none'
             }}
           />
 
           <Box sx={{ position: 'relative', zIndex: 1 }}>
             <Chip
-              icon={<ConfirmationNumberRoundedIcon sx={{ fontSize: 13, color: '#93c5fd !important' }} />}
+              icon={
+                <ConfirmationNumberRoundedIcon
+                  sx={{ fontSize: 13, color: '#53a1fa !important' }}
+                />
+              }
               label="New Ticket"
               size="small"
               sx={{
                 mb: 1.5,
                 backgroundColor: 'rgba(255,255,255,0.10)',
-                color: '#bfdbfe',
+                // color: '#bfdbfe',
                 fontWeight: 600,
                 fontSize: '0.7rem',
                 letterSpacing: 1,
@@ -147,7 +151,14 @@ export default function CreateTicketDialog({
                 backdropFilter: 'blur(6px)'
               }}
             />
-            <Typography sx={{ fontSize: '1.25rem', fontWeight: 800, lineHeight: 1.2, mb: 0.5 }}>
+            <Typography
+              sx={{
+                fontSize: '1.25rem',
+                fontWeight: 800,
+                lineHeight: 1.2,
+                mb: 0.5
+              }}
+            >
               Create a Ticket
             </Typography>
             <Typography sx={{ fontSize: '0.82rem', opacity: 0.72 }}>
@@ -169,7 +180,10 @@ export default function CreateTicketDialog({
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <MailRoundedIcon fontSize="small" sx={{ color: 'text.disabled' }} />
+                    <MailRoundedIcon
+                      fontSize="small"
+                      sx={{ color: 'text.disabled' }}
+                    />
                   </InputAdornment>
                 )
               }}
@@ -202,8 +216,14 @@ export default function CreateTicketDialog({
               }}
               {...register('title', {
                 required: 'Title is required',
-                minLength: { value: 3, message: 'Title must be at least 3 characters' },
-                maxLength: { value: 200, message: 'Title must not exceed 200 characters' }
+                minLength: {
+                  value: 3,
+                  message: 'Title must be at least 3 characters'
+                },
+                maxLength: {
+                  value: 200,
+                  message: 'Title must not exceed 200 characters'
+                }
               })}
               error={!!errors.title}
               helperText={errors.title?.message}
@@ -236,7 +256,11 @@ export default function CreateTicketDialog({
                   sx={fieldSx}
                 >
                   {TICKET_TYPES.map((item) => (
-                    <MenuItem key={item.value} value={item.value} sx={{ fontWeight: 600 }}>
+                    <MenuItem
+                      key={item.value}
+                      value={item.value}
+                      sx={{ fontWeight: 600 }}
+                    >
                       {item.label}
                     </MenuItem>
                   ))}
@@ -266,8 +290,14 @@ export default function CreateTicketDialog({
               }}
               {...register('content', {
                 required: 'Content is required',
-                minLength: { value: 10, message: 'Content must be at least 10 characters' },
-                maxLength: { value: 5000, message: 'Content must not exceed 5000 characters' }
+                minLength: {
+                  value: 10,
+                  message: 'Content must be at least 10 characters'
+                },
+                maxLength: {
+                  value: 5000,
+                  message: 'Content must not exceed 5000 characters'
+                }
               })}
               error={!!errors.content}
               helperText={errors.content?.message}
@@ -275,7 +305,12 @@ export default function CreateTicketDialog({
             />
 
             {/* Actions */}
-            <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ pt: 0.5 }}>
+            <Stack
+              direction="row"
+              spacing={1.5}
+              justifyContent="flex-end"
+              sx={{ pt: 0.5 }}
+            >
               <Button
                 variant="text"
                 onClick={onClose}
@@ -300,25 +335,28 @@ export default function CreateTicketDialog({
                 variant="contained"
                 disabled={busy}
                 startIcon={
-                  busy
-                    ? <CircularProgress size={15} sx={{ color: 'inherit' }} />
-                    : <ConfirmationNumberRoundedIcon fontSize="small" />
+                  busy ? (
+                    <CircularProgress size={15} sx={{ color: 'inherit' }} />
+                  ) : (
+                    <ConfirmationNumberRoundedIcon fontSize="small" />
+                  )
                 }
                 sx={{
                   minWidth: 150,
                   textTransform: 'none',
                   fontWeight: 700,
-                  borderRadius: '999px',
+                  borderRadius: 5,
                   px: 3,
-                  background: 'linear-gradient(135deg, #1d4ed8, #2563eb)',
-                  boxShadow: '0 8px 22px rgba(37,99,235,0.30)',
+                  bgcolor: 'primary.main',
+                  color: 'primary.contrastText',
+                  boxShadow: 'none',
                   transition: 'all 0.2s',
                   '&:hover': {
-                    boxShadow: '0 12px 30px rgba(37,99,235,0.44)',
-                    transform: 'translateY(-1px)'
+                    bgcolor: 'primary.dark',
+                    transform: 'translateY(-1px)',
+                    boxShadow: 'none'
                   },
                   '&:disabled': {
-                    background: 'rgba(0,0,0,0.08)',
                     boxShadow: 'none'
                   }
                 }}

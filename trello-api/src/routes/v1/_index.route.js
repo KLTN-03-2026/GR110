@@ -22,6 +22,7 @@ import { adminPermission } from './adminPermission.route'
 import { adminPaymentRoute } from './adminPayment.route'
 import { ticketRouter } from './ticket.route'
 import { adminTicketRoute } from './adminTicket.route'
+import { ladingRouter } from './landing.route'
 const Router = express.Router()
 
 /** Check APIs v1/status */
@@ -94,5 +95,8 @@ Router.use('/subscriptions', subscriptionsRouter)
 
 // /Ticket
 Router.use('/tickets', ticketRouter)
+
+//Landing
+Router.use('/landing-page', ladingRouter)
 
 export const APIs_V1 = Router

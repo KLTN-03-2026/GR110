@@ -46,10 +46,6 @@ function TabInfo() {
     [type.PRIVATE]: {
       severity: 'info',
       message: descriptionType.PRIVATE
-    },
-    [type.WORKSPACE]: {
-      severity: 'success',
-      message: descriptionType.WORKSPACE
     }
   }
 
@@ -442,20 +438,6 @@ function TabInfo() {
                     }}
                   />
 
-                  <FormControlLabel
-                    value={type.WORKSPACE}
-                    control={<Radio size="small" />}
-                    label="Workspace"
-                    sx={{
-                      m: 0,
-                      p: 0,
-                      borderColor:
-                        field.value === type.WORKSPACE
-                          ? 'success.main'
-                          : 'divider',
-                      minWidth: 140
-                    }}
-                  />
                 </RadioGroup>
 
                 {field.value && (
@@ -477,6 +459,9 @@ function TabInfo() {
             type="submit"
             variant="contained"
             color="primary"
+            sx={{
+              borderRadius: '40px'
+            }}
           >
             Save Change
           </Button>

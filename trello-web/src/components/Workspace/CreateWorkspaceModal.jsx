@@ -67,7 +67,10 @@ function CreateWorkspaceModal({ isOpen, loading, onClose, onSubmit }) {
                 sx={{
                   px: { xs: 2.5, sm: 3 },
                   py: 2.5,
-                  borderBottom: `1px solid ${theme.palette.divider}`
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  background: isDark
+                                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.16)}, transparent 48%)`
+                                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
                 }}
               >
                 <Stack direction="row" spacing={1.5} alignItems="center">
@@ -238,15 +241,6 @@ function CreateWorkspaceModal({ isOpen, loading, onClose, onSubmit }) {
                   'linear-gradient(145deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%)'
               }}
             >
-              <Box
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  backgroundImage:
-                    'radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1px)',
-                  backgroundSize: '22px 22px'
-                }}
-              />
 
               <IconButton
                 onClick={onClose}

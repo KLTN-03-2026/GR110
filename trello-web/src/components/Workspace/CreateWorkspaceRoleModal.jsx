@@ -68,8 +68,8 @@ function CreateWorkspaceRoleModal({ ui, data, handler }) {
           pr: 7,
           borderBottom: `1px solid ${theme.palette.divider}`,
           background: isDark
-            ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.18)}, transparent 58%)`
-            : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, transparent 62%)`
+              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.16)}, transparent 48%)`
+              : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
         }}
       >
         <Stack direction="row" spacing={1.5} alignItems="center">
@@ -126,7 +126,6 @@ function CreateWorkspaceRoleModal({ ui, data, handler }) {
       <DialogContent
         sx={{
           p: 0,
-          bgcolor: isDark ? '#0f1623' : '#f6f8fc'
         }}
       >
         <Stack

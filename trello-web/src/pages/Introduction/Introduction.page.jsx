@@ -21,7 +21,6 @@ import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined'
 import LaunchRoundedIcon from '@mui/icons-material/LaunchRounded'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
 import SupportAgentRoundedIcon from '@mui/icons-material/SupportAgentRounded'
 import SmartToyRoundedIcon from '@mui/icons-material/SmartToyRounded'
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded'
@@ -31,18 +30,10 @@ import TipsAndUpdatesRoundedIcon from '@mui/icons-material/TipsAndUpdatesRounded
 import { useSelector } from 'react-redux'
 import { selectCurrentUser } from '~/redux/user/userSlice'
 import { useNavigate } from 'react-router-dom'
+import WorkspacePageHeader from '~/components/Workspace/WorkspacePageHeader'
 
 const TELEGRAM_SUPPORT_LINK =
   'https://web.telegram.org/k/#@taskio_support_demo_bot'
-
-const dotPatternSx = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1px)',
-  backgroundSize: '22px 22px',
-  pointerEvents: 'none'
-}
 
 function IntroductionPage() {
   const theme = useTheme()
@@ -199,95 +190,40 @@ function IntroductionPage() {
 
   return (
     <Stack spacing={2.5}>
-      <Box
-        sx={{
-          position: 'relative',
-          overflow: 'hidden',
-          borderRadius: '24px',
-          background:
-            'linear-gradient(145deg, #0f172a 0%, #1e3a8a 55%, #1d4ed8 100%)',
-          color: 'white',
-          px: { xs: 3, md: 5 },
-          py: { xs: 3.5, md: 4 },
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 2
-        }}
+
+      <WorkspacePageHeader
+        badgeIcon={<AutoAwesomeRoundedIcon sx={{ fontSize: 13 }} />}
+        badgeLabel="Welcome"
+        title={`Welcome back, ${displayName}`}
+        description="Manage workspaces, monitor quotas, and keep delivery moving."
       >
-        <Box sx={dotPatternSx} />
-
-        <Box sx={{ position: 'relative', zIndex: 1, minWidth: 0 }}>
-          <Chip
-            icon={
-              <AutoAwesomeRoundedIcon
-                sx={{ fontSize: 13, color: '#93c5fd !important' }}
-              />
+        <Button
+          variant="contained"
+          startIcon={<RocketLaunchRoundedIcon />}
+          onClick={() =>
+            firstWorkspace
+              ? navigate(`/h/workspaces/${firstWorkspace._id}/boards`)
+              : navigate('/h/tickets')
+          }
+          sx={{
+            textTransform: 'none',
+            fontWeight: 700,
+            borderRadius: '999px',
+            px: 3,
+            py: 1.15,
+            backgroundColor: 'white',
+            color: '#1d4ed8',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.20)',
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.92)',
+              transform: 'translateY(-1px)',
+              boxShadow: '0 10px 28px rgba(0,0,0,0.25)'
             }
-            label="Welcome"
-            size="small"
-            sx={{
-              mb: 1.5,
-              backgroundColor: 'rgba(255,255,255,0.10)',
-              color: '#bfdbfe',
-              fontWeight: 600,
-              fontSize: '0.7rem',
-              letterSpacing: 1,
-              border: '1px solid rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(6px)'
-            }}
-          />
-
-          <Typography
-            sx={{
-              fontSize: { xs: 22, md: 30 },
-              fontWeight: 800,
-              lineHeight: 1.2,
-              mb: 0.5
-            }}
-          >
-            Welcome back, {displayName}
-          </Typography>
-
-          <Typography sx={{ opacity: 0.75, fontSize: '0.92rem' }}>
-            Manage workspaces, monitor quotas, and keep delivery moving.
-          </Typography>
-        </Box>
-
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={1.5}
-          sx={{ position: 'relative', zIndex: 1 }}
+          }}
         >
-          <Button
-            variant="contained"
-            startIcon={<RocketLaunchRoundedIcon />}
-            onClick={() =>
-              firstWorkspace
-                ? navigate(`/h/workspaces/${firstWorkspace._id}/boards`)
-                : navigate('/h/tickets')
-            }
-            sx={{
-              textTransform: 'none',
-              fontWeight: 700,
-              borderRadius: '999px',
-              px: 3,
-              py: 1.15,
-              backgroundColor: 'white',
-              color: '#1d4ed8',
-              boxShadow: '0 6px 20px rgba(0,0,0,0.20)',
-              '&:hover': {
-                backgroundColor: 'rgba(255,255,255,0.92)',
-                transform: 'translateY(-1px)',
-                boxShadow: '0 10px 28px rgba(0,0,0,0.25)'
-              }
-            }}
-          >
-            {firstWorkspace ? 'Go to Workspace' : 'Open Tickets'}
-          </Button>
-        </Stack>
-      </Box>
+          {firstWorkspace ? 'Go to Workspace' : 'Open Tickets'}
+        </Button>
+      </WorkspacePageHeader>
 
       <Box
         sx={{
