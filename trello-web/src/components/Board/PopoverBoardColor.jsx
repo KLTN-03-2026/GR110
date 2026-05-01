@@ -23,7 +23,7 @@ export function PopoverBoardColor({
   showCustom = true
 }) {
   const dispatch = useDispatch()
-  const { boardId } = useParams()
+  const { boardId, workspaceId } = useParams()
   const board = useSelector((state) => state.activeBoard.board)
 
   const [menuAnchorEl, setMenuAnchorEl] = useState(null)
@@ -77,7 +77,9 @@ export function PopoverBoardColor({
 
     await deleteBackground({ boardId: boardId, backgroundId: selectedCustomBackground._id })
 
-    dispatch(fetchBoardDetailsAPI(boardId))
+    if (workspaceId && boardId) {
+      dispatch(fetchBoardDetailsAPI({ workspaceId, boardId }))
+    }
 
     await getBackground?.()
 

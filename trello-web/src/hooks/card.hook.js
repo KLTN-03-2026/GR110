@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { updateCardInBoard } from '~/redux/activeBoard/activeBoardSlice'
 import {
   fetchCardDetailAPI,
@@ -19,7 +19,12 @@ const useCard = ({ card }) => {
     isDragging
   } = useSortable({
     id: card._id,
-    data: { ...card }
+    // Chỉ truyền data cần cho DnD để giảm payload lúc drag nhiều card nặng
+    data: { _id: card._id, columnId: card.columnId },
+    transition: {
+      duration: 260,
+      easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
+    }
   })
   const dndKitCardStyles = {
     // touchAction: 'none', // Dành cho sensor default dạng PointerSensor

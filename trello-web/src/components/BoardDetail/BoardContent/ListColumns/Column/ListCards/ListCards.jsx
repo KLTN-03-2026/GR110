@@ -1,6 +1,7 @@
 import Card from './Card/Card'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import Box from '@mui/material/Box'
+import { memo } from 'react'
 
 function ListCards({ cards }) {
   return (
@@ -9,28 +10,11 @@ function ListCards({ cards }) {
       strategy={verticalListSortingStrategy}
     >
       <Box
-        // sx={{
-        //   p: '0 5px 5px 5px',
-        //   m: '0 5px',
-        //   display: 'flex',
-        //   flexDirection: 'column',
-        //   overflowX: 'hidden',
-        //   overflowY: 'auto',
-        //   maxHeight: (theme) => `calc(
-        //   ${theme.trello.boardContentHeight} -
-        //   ${theme.spacing(5)} -
-        //   ${theme.trello.columnHeaderHeight} -
-        //   ${theme.trello.columnFooterHeight}
-        // )`,
-        //   '&::-webkit-scrollbar-thumb': { backgroundColor: '#ced0da' },
-        //   '&::-webkit-scrollbar-thumb:hover': { backgroundColor: '#bfc2cf' }
-        // }}
         sx={{
           p: '0 5px 5px 5px',
           m: '0 5px',
           display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
+          flexDirection: 'column'
         }}
       >
         {cards?.map((card) => (
@@ -41,4 +25,6 @@ function ListCards({ cards }) {
   )
 }
 
-export default ListCards
+const MemoizedListCards = memo(ListCards)
+
+export default MemoizedListCards

@@ -59,7 +59,7 @@ function CardDescriptionMdEditor({
   }
 
   return (
-    <Box sx={{ mt: 1 }}>
+    <Box sx={{ mt: 1.5 }}>
       {markdownEditMode ? (
         <Stack spacing={1.5}>
           <Box
@@ -68,12 +68,17 @@ function CardDescriptionMdEditor({
               '& .w-md-editor': {
                 borderRadius: 2,
                 overflow: 'hidden',
-                border: '1px solid',
-                borderColor: 'divider'
+                border: '2px solid',
+                borderColor: 'primary.main',
+                transition: 'all 0.2s ease'
               },
               '& .w-md-editor-toolbar': {
                 borderBottom: '1px solid',
-                borderColor: 'divider'
+                borderColor: 'divider',
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255,255,255,0.02)'
+                    : 'rgba(0,0,0,0.01)'
               }
             }}
           >
@@ -83,17 +88,18 @@ function CardDescriptionMdEditor({
               previewOptions={{ rehypePlugins: [[rehypeSanitize]] }}
               height={320}
               preview="edit"
+              visibleDragbar={false}
             />
           </Box>
 
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             <Button
               type="button"
-              variant="text"
+              variant="outlined"
               color="inherit"
               onClick={handleCancel}
               disabled={isSaving}
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: 'none', borderRadius: 1.5 }}
             >
               Cancel
             </Button>
@@ -104,9 +110,9 @@ function CardDescriptionMdEditor({
               variant="contained"
               onClick={handleSave}
               disabled={!isChanged || isSaving}
-              sx={{ textTransform: 'none' }}
+              sx={{ textTransform: 'none', borderRadius: 1.5 }}
             >
-              Save
+              Save changes
             </Button>
           </Stack>
         </Stack>
@@ -116,13 +122,28 @@ function CardDescriptionMdEditor({
             <Box
               data-color-mode={mode}
               sx={{
-                px: 1.5,
-                py: 1.25,
+                px: 1.75,
+                py: 1.5,
                 borderRadius: 2,
                 border: '1px solid',
                 borderColor: 'divider',
-                bgcolor: 'background.paper',
-                cursor: 'pointer'
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255,255,255,0.03)'
+                    : 'rgba(0,0,0,0.01)',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'rgba(0,0,0,0.02)',
+                  borderColor: 'primary.main',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '0 2px 8px rgba(0,0,0,0.2)'
+                      : '0 2px 8px rgba(0,0,0,0.06)'
+                }
               }}
               onClick={handleEdit}
             >
@@ -131,7 +152,9 @@ function CardDescriptionMdEditor({
                 style={{
                   whiteSpace: 'pre-wrap',
                   background: 'transparent',
-                  color: 'inherit'
+                  color: 'inherit',
+                  fontSize: '14px',
+                  lineHeight: '1.6'
                 }}
               />
             </Box>
@@ -140,27 +163,37 @@ function CardDescriptionMdEditor({
               onClick={handleEdit}
               sx={{
                 px: 2,
-                py: 1.75,
-                minHeight: 120,
-                borderRadius: 1.5,
-                border: '1px solid',
+                py: 2.5,
+                minHeight: 100,
+                borderRadius: 2,
+                border: '2px dashed',
                 borderColor: 'divider',
-                bgcolor: 'transparent',
+                bgcolor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255,255,255,0.03)'
+                    : 'rgba(0,0,0,0.01)',
                 color: 'text.secondary',
                 cursor: 'pointer',
                 display: 'flex',
-                alignItems: 'flex-start',
+                alignItems: 'center',
+                justifyContent: 'center',
                 transition: 'all 0.2s ease',
                 '&:hover': {
+                  borderColor: 'primary.main',
                   bgcolor: (theme) =>
                     theme.palette.mode === 'dark'
-                      ? 'rgba(255,255,255,0.03)'
-                      : 'rgba(9,30,66,0.04)',
-                  borderColor: 'text.secondary'
+                      ? 'rgba(255,255,255,0.06)'
+                      : 'rgba(0,0,0,0.02)',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '0 2px 8px rgba(0,0,0,0.2)'
+                      : '0 2px 8px rgba(0,0,0,0.06)'
                 }
               }}
             >
-              Add a more detailed description...
+              <Typography sx={{ fontSize: 15, fontWeight: 500 }}>
+                Add a more detailed description...
+              </Typography>
             </Box>
           )}
         </Stack>

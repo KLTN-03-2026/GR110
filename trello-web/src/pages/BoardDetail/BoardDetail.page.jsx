@@ -42,6 +42,7 @@ function BoardDetail() {
 
   const bgValue =
     board?.cover?.type === 'image' ? board?.cover?.value : itemBackground
+  const bgOverlay = board?.cover?.type === 'image' ? 0.02 : 0.04
 
   if (isDenied) {
     return (
@@ -64,7 +65,7 @@ function BoardDetail() {
         height: '100vh',
         width: '100%',
         backgroundImage: bgValue
-          ? `linear-gradient(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.08)), url("${bgValue}")`
+          ? `linear-gradient(rgba(0, 0, 0, ${bgOverlay}), rgba(0, 0, 0, ${bgOverlay})), url("${bgValue}")`
           : 'none',
         backgroundSize: 'cover',
         backgroundPosition: 'center',

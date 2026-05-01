@@ -11,7 +11,12 @@ import {
   horizontalListSortingStrategy
 } from '@dnd-kit/sortable'
 
-function ListColumns({ columns, columnCollapseMode, clearColumnCollapseMode }) {
+function ListColumns({
+  columns,
+  columnCollapseMode,
+  clearColumnCollapseMode,
+  scrollContainerRef
+}) {
   const {
     openNewColumnForm,
     toggleOpenNewColumnForm,
@@ -19,17 +24,20 @@ function ListColumns({ columns, columnCollapseMode, clearColumnCollapseMode }) {
     setNewColumnTitle,
     addNewColumn
   } = useListColum()
+
   return (
     <SortableContext
       items={columns?.map((c) => c._id)}
       strategy={horizontalListSortingStrategy}
     >
       <Box
+        ref={scrollContainerRef}
         sx={{
           bgcolor: 'inherit',
           width: '100%',
           height: '100%',
           display: 'flex',
+          alignItems: 'flex-start',
           overflowX: 'auto',
           overflowY: 'hidden',
           '&::-webkit-scrollbar-track': { m: 2 }

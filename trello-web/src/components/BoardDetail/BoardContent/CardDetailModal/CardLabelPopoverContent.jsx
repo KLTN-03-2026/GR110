@@ -53,13 +53,14 @@ function CardLabelPopoverContent({
       slotProps={{
         paper: {
           sx: (theme) => ({
+            bgcolor: 'background.paper',
             mt: 1,
             width: 362,
             maxWidth: 'calc(100vw - 24px)',
             borderRadius: 3,
             overflow: 'hidden',
             color: theme.palette.mode === 'dark' ? '#f1f2f4' : '#172b4d',
-            boxShadow: (theme) =>
+            boxShadow:
               theme.palette.mode === 'dark'
                 ? '0 12px 28px rgba(0,0,0,0.45)'
                 : '0 12px 28px rgba(9,30,66,0.18)'

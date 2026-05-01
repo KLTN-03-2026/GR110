@@ -1,8 +1,9 @@
 import { setServers } from 'node:dns/promises'
 import { MongoClient, ServerApiVersion } from 'mongodb'
 import { env } from '~/config/environment'
+import { INIT_DB_INDEXES } from '~/config/mongodb.indexes'
 
-setServers(['1.1.1.1', '8.8.8.8']) // FIX LỖI querySrv ECONNREFUSED
+// setServers(['1.1.1.1', '8.8.8.8']) // FIX LỖI querySrv ECONNREFUSED
 
 // Khởi tạo một đối tượng trelloDatabaseInstance ban đầu là null (vì chúng ta chưa connect)
 let trelloDatabaseInstance = null
@@ -25,6 +26,9 @@ export const CONNECT_DB = async () => {
 
   // Kết nối thành công thì lấy ra Database theo tên và gán ngược nó lại vào biến trelloDatabaseInstance ở trên của chúng ta
   trelloDatabaseInstance = mongoClientInstance.db(env.DATABASE_NAME)
+
+  // Đồng bộ index theo các truy vấn đang dùng trong repo/service.
+  await INIT_DB_INDEXES(trelloDatabaseInstance)
 }
 
 // Đóng kết nối tới Database khi cần, nếu muốn catch lỗi nếu có thì các bạn có thể thêm try catch tùy nhé. Không thì cứ giữ nguyên code như mình để là được

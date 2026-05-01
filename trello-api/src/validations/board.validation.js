@@ -116,9 +116,15 @@ const customBackgroundParams = Joi.object({
   backgroundId: idSchema
 })
 
+const getBoardDetailParams = Joi.object({
+  workspaceId: idSchema,
+  boardId: idSchema
+})
+
 export const boardValidation = {
   create,
   update,
   moveCardToDifferentColumn,
-  customBackgroundParams
+  customBackgroundParams,
+  getBoardDetailParams
 }

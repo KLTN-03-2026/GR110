@@ -31,7 +31,7 @@ function CardMemberGroup({ memberIds = [], handler }) {
 
   return (
     <Box
-      sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}
+      sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}
     >
       {/* Selected members */}
       {selectedMembers.map((member) => (
@@ -47,6 +47,7 @@ function CardMemberGroup({ memberIds = [], handler }) {
               </Typography>
             </Box>
           }
+          placement="top"
         >
           <Box
             sx={{
@@ -62,13 +63,21 @@ function CardMemberGroup({ memberIds = [], handler }) {
               alt={member?.user?.displayName}
               src={member?.user?.avatar}
               sx={{
-                width: 34,
-                height: 34,
+                width: 40,
+                height: 40,
                 cursor: 'pointer',
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '0 2px 8px rgba(0,0,0,0.4)'
-                    : '0 2px 8px rgba(9,30,66,0.12)'
+                    : '0 2px 8px rgba(9,30,66,0.12)',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  transform: 'scale(1.08)',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '0 4px 12px rgba(0,0,0,0.6)'
+                      : '0 4px 12px rgba(9,30,66,0.18)'
+                }
               }}
             >
               {member?.user?.displayName?.charAt(0)?.toUpperCase()}
@@ -78,23 +87,23 @@ function CardMemberGroup({ memberIds = [], handler }) {
       ))}
 
       {/* Add member button */}
-      <Tooltip title="Add or remove members">
+      <Tooltip title="Add or remove members" placement="top">
         <Box
           aria-describedby={popoverId}
           onClick={handleOpenPopover}
           sx={{
-            width: 34,
-            height: 34,
+            width: 40,
+            height: 40,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: '50%',
-            border: '1px dashed',
+            border: '2px dashed',
             borderColor: (theme) =>
               theme.palette.mode === 'dark'
-                ? 'rgba(255,255,255,0.18)'
-                : 'rgba(9,30,66,0.14)',
+                ? 'rgba(255,255,255,0.2)'
+                : 'rgba(9,30,66,0.2)',
             color: (theme) =>
               theme.palette.mode === 'dark' ? '#90caf9' : '#0c66e4',
             bgcolor: (theme) =>
@@ -103,15 +112,23 @@ function CardMemberGroup({ memberIds = [], handler }) {
                 : '#e9f2ff',
             transition: 'all 0.2s ease',
             '&:hover': {
-              transform: 'translateY(-1px)',
+              transform: 'scale(1.1) translateY(-2px)',
+              borderColor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.3)'
+                  : 'rgba(9,30,66,0.3)',
               bgcolor: (theme) =>
                 theme.palette.mode === 'dark'
                   ? 'rgba(144,202,249,0.18)'
-                  : '#dbeafe'
+                  : '#dbeafe',
+              boxShadow: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? '0 4px 12px rgba(0,0,0,0.3)'
+                  : '0 4px 12px rgba(0,0,0,0.08)'
             }
           }}
         >
-          <AddIcon fontSize="small" />
+          <AddIcon fontSize="small" sx={{ fontSize: 20 }} />
         </Box>
       </Tooltip>
 

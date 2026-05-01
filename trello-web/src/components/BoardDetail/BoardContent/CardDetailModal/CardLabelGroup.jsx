@@ -18,9 +18,9 @@ function CardLabelGroup({ labelIds = [] }) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <LocalOfferOutlinedIcon />
-        <Typography variant="span" sx={{ fontWeight: 600, fontSize: 20 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+        <LocalOfferOutlinedIcon sx={{ fontSize: 22 }} />
+        <Typography variant="span" sx={{ fontWeight: 700, fontSize: '16px' }}>
           Labels
         </Typography>
       </Box>
@@ -28,9 +28,8 @@ function CardLabelGroup({ labelIds = [] }) {
         sx={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: 0.5,
-          width: '100%',
-          mt: 2
+          gap: 1,
+          width: '100%'
         }}
       >
         {cardLabel.map((label) => {
@@ -42,25 +41,38 @@ function CardLabelGroup({ labelIds = [] }) {
             <Tooltip key={label._id} title={labelTitle || label.color}>
               <Box
                 sx={(theme) => ({
-                  minWidth: 55,
-                  maxWidth: 238,
-                  height: 20,
-                  px: labelTitle ? 1.25 : 0,
-                  borderRadius: 1.5,
+                  minWidth: 'fit-content',
+                  maxWidth: '100%',
+                  height: 32,
+                  px: 1.5,
+                  borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: labelTitle ? 'flex-start' : 'center',
+                  justifyContent: 'center',
                   bgcolor: colorConfig[theme.palette.mode],
                   color: label.color === 'yellow' ? '#172b4d' : '#ffffff',
                   overflow: 'hidden',
-                  padding: 1
+                  transition: 'all 0.2s ease',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? 'none'
+                      : '0 1px 3px rgba(0,0,0,0.08)',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 2px 8px rgba(0,0,0,0.2)'
+                        : '0 2px 8px rgba(0,0,0,0.12)',
+                    cursor: 'default'
+                  }
                 })}
               >
                 {labelTitle && (
                   <Typography
                     variant="span"
                     sx={{
-                      fontSize: 12,
+                      fontSize: 13,
+                      fontWeight: 500,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap'

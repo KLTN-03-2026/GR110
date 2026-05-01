@@ -139,28 +139,36 @@ function CardAttachment({ data, handler }) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          mb: 2
+          mb: 2.5
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <AttachFileOutlinedIcon />
-          <Typography variant="span" sx={{ fontWeight: 600, fontSize: 20 }}>
-            Attachments
+          <AttachFileOutlinedIcon sx={{ fontSize: 22 }} />
+          <Typography variant="span" sx={{ fontWeight: 700, fontSize: '16px' }}>
+            Attachments ({attachments?.length || 0})
           </Typography>
         </Box>
 
         <Button
           component="label"
-          variant="contained"
+          variant="outlined"
           size="small"
-          sx={{ textTransform: 'none', borderRadius: 2, boxShadow: 'none' }}
+          sx={{
+            textTransform: 'none',
+            borderRadius: 2,
+            boxShadow: 'none',
+            fontSize: '12px',
+            fontWeight: 600,
+            py: 0.5,
+            px: 1.5
+          }}
         >
           Add
           <input hidden type="file" multiple onChange={handleUploadFiles} />
         </Button>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
         {attachments?.map((attachment) => (
           <Box
             key={attachment._id}
@@ -168,14 +176,28 @@ function CardAttachment({ data, handler }) {
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
-              p: 1,
+              p: 1.5,
               borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.02)'
+                  : 'rgba(0,0,0,0.01)',
               transition: 'all 0.2s ease',
               '&:hover': {
                 bgcolor:
                   theme.palette.mode === 'dark'
-                    ? 'rgba(255,255,255,0.04)'
-                    : 'rgba(9,30,66,0.04)'
+                    ? 'rgba(255,255,255,0.06)'
+                    : 'rgba(0,0,0,0.03)',
+                borderColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255,255,255,0.1)'
+                    : 'rgba(0,0,0,0.1)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 2px 8px rgba(0,0,0,0.2)'
+                    : '0 2px 8px rgba(0,0,0,0.06)'
               }
             })}
           >
@@ -185,7 +207,7 @@ function CardAttachment({ data, handler }) {
               <Typography
                 sx={{
                   fontWeight: 600,
-                  fontSize: 15,
+                  fontSize: 14,
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap'
@@ -195,9 +217,9 @@ function CardAttachment({ data, handler }) {
               </Typography>
 
               <Box
-                sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}
+                sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
               >
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                <Typography variant="body2" sx={{ fontSize: 12, color: 'text.secondary' }}>
                   {formatDate(attachment.createdAt)} ·{' '}
                   {formatFileSize(attachment.fileSize)}
                 </Typography>
@@ -207,6 +229,15 @@ function CardAttachment({ data, handler }) {
             <IconButton
               size="small"
               onClick={() => window.open(attachment.url, '_blank')}
+              sx={{
+                color: 'text.secondary',
+                '&:hover': {
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.1)'
+                      : 'rgba(0,0,0,0.05)'
+                }
+              }}
             >
               <OpenInNewOutlinedIcon fontSize="small" />
             </IconButton>
@@ -214,6 +245,15 @@ function CardAttachment({ data, handler }) {
             <IconButton
               size="small"
               onClick={(event) => handleOpenMenu(event, attachment)}
+              sx={{
+                color: 'text.secondary',
+                '&:hover': {
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.1)'
+                      : 'rgba(0,0,0,0.05)'
+                }
+              }}
             >
               <MoreHorizOutlinedIcon fontSize="small" />
             </IconButton>
