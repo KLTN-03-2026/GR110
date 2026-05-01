@@ -16,7 +16,6 @@ import {
   Chip
 } from '@mui/material'
 
-import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import MailIcon from '@mui/icons-material/Mail'
 import AccountBoxIcon from '@mui/icons-material/AccountBox'
 import AssignmentIndIcon from '@mui/icons-material/AssignmentInd'
@@ -30,14 +29,6 @@ import VisuallyHiddenInput from '~/components/Form/VisuallyHiddenInput'
 import { selectCurrentUser, updateUserAPI } from '~/redux/user/userSlice'
 
 /* ─── Subtle animated background dots ─── */
-const dotPatternSx = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)',
-  backgroundSize: '22px 22px',
-  pointerEvents: 'none'
-}
 
 function AccountTab() {
   const dispatch = useDispatch()
@@ -134,8 +125,6 @@ function AccountTab() {
               color: 'white'
             }}
           >
-            {/* dot texture */}
-            <Box sx={dotPatternSx} />
 
             {/* Header label */}
             <Box sx={{ position: 'relative', zIndex: 1 }}>

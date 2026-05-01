@@ -27,16 +27,6 @@ import { toast } from 'react-toastify'
 import { updateUserAPI, logoutUserApi } from '~/redux/user/userSlice'
 import { useDispatch } from 'react-redux'
 
-/* ── shared dot-pattern background ── */
-const dotPatternSx = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px)',
-  backgroundSize: '22px 22px',
-  pointerEvents: 'none'
-}
-
 const tips = [
   'Use a mix of uppercase, lowercase, numbers, and special characters.',
   'Avoid reusing old passwords or anything easily guessable.',
@@ -136,8 +126,6 @@ function SecurityTab() {
               color: 'white'
             }}
           >
-            <Box sx={dotPatternSx} />
-
             {/* Header */}
             <Box sx={{ position: 'relative', zIndex: 1 }}>
               <Chip

@@ -69,15 +69,6 @@ const visibilityOptions = [
   }
 ]
 
-const dotPatternSx = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1px)',
-  backgroundSize: '22px 22px',
-  pointerEvents: 'none'
-}
-
 function CreateBoardModal({ ui, handler }) {
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
@@ -658,14 +649,14 @@ function CreateBoardModal({ ui, handler }) {
             sx={{ pt: 0.5 }}
           >
             <Button
-              type="button"
-              variant="outlined"
+              type="submit"
               onClick={handleClose}
               sx={{
                 minWidth: 110,
-                borderRadius: '999px',
+                borderRadius: 5,
                 textTransform: 'none',
-                fontWeight: 700
+                fontWeight: 700,
+                color:'inherit'
               }}
             >
               Cancel
@@ -677,7 +668,7 @@ function CreateBoardModal({ ui, handler }) {
               disabled={isSubmitting}
               sx={{
                 minWidth: 132,
-                borderRadius: '999px',
+                borderRadius: 5,
                 textTransform: 'none',
                 fontWeight: 800,
                 boxShadow: '0 8px 20px rgba(37,99,235,0.24)'
@@ -716,75 +707,87 @@ function CreateBoardModal({ ui, handler }) {
               sx={{
                 position: 'relative',
                 overflow: 'hidden',
-                px: { xs: 2.25, sm: 3 },
-                py: 2.25,
-                color: 'white',
-                background: 'linear-gradient(135deg, #0f172a, #1d4ed8)'
+                px: { xs: 2.5, md: 3 },
+                py: 2.5,
+                pr: 7,
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                background: isDark
+                  ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.18)}, transparent 58%)`
+                  : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, transparent 62%)`
               }}
             >
-              <Box sx={dotPatternSx} />
-
               <Stack
                 direction="row"
-                alignItems="flex-start"
-                justifyContent="space-between"
-                spacing={2}
+                spacing={1.5}
+                alignItems="center"
                 sx={{ position: 'relative', zIndex: 1 }}
               >
-                <Stack direction="row" spacing={1.25} alignItems="center">
-                  <Box
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: '12px',
-                      display: 'grid',
-                      placeItems: 'center',
-                      bgcolor: 'rgba(255,255,255,0.12)',
-                      border: '1px solid rgba(255,255,255,0.16)'
-                    }}
-                  >
-                    <ViewKanbanRoundedIcon
-                      sx={{ color: '#93c5fd', fontSize: 22 }}
-                    />
-                  </Box>
-
-                  <Box>
-                    <Typography
-                      id="board-modal-title"
-                      sx={{
-                        fontWeight: 800,
-                        fontSize: '1.1rem',
-                        lineHeight: 1.3
-                      }}
-                    >
-                      Create board
-                    </Typography>
-                    <Typography
-                      sx={{
-                        mt: 0.25,
-                        color: 'rgba(255,255,255,0.72)',
-                        fontSize: '0.82rem',
-                        lineHeight: 1.5
-                      }}
-                    >
-                      Choose a cover, add the board details, and set who can
-                      access it.
-                    </Typography>
-                  </Box>
-                </Stack>
-
-                <IconButton
-                  onClick={handleClose}
-                  size="small"
+                <Box
                   sx={{
-                    color: 'white',
-                    bgcolor: 'rgba(255,255,255,0.10)',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.18)' }
+                    width: 46,
+                    height: 46,
+                    borderRadius: '14px',
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: 'primary.contrastText',
+                    bgcolor: 'primary.main',
+                    boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.26)}`,
+                    flexShrink: 0
                   }}
                 >
-                  <CloseIcon />
-                </IconButton>
+                  <ViewKanbanRoundedIcon sx={{ fontSize: 22 }} />
+                </Box>
+
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    id="board-modal-title"
+                    sx={{
+                      fontSize: 18,
+                      fontWeight: 900,
+                      lineHeight: 1.25,
+                      color: 'text.primary'
+                    }}
+                  >
+                    Create board
+                  </Typography>
+
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: 'text.secondary',
+                      mt: 0.25,
+                      lineHeight: 1.5
+                    }}
+                  >
+                    Choose a cover, add the board details, and set who can
+                    access it.
+                  </Typography>
+                </Box>
               </Stack>
+
+              <IconButton
+                onClick={handleClose}
+                size="small"
+                sx={{
+                  position: 'absolute',
+                  right: 16,
+                  top: 16,
+                  color: 'text.secondary',
+                  bgcolor: alpha(
+                    theme.palette.text.primary,
+                    isDark ? 0.1 : 0.05
+                  ),
+                  '&:hover': {
+                    color: 'text.primary',
+                    bgcolor: alpha(
+                      theme.palette.text.primary,
+                      isDark ? 0.16 : 0.08
+                    )
+                  }
+                }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
             </Box>
 
             {renderCreateBoardContent()}

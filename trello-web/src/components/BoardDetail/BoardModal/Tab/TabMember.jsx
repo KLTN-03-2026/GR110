@@ -18,7 +18,8 @@ function TabMember() {
     handleOpenInviteModal,
     handleRemoveMember,
     handleLeaveBoard,
-    inviteModal
+    inviteModal,
+    isLoading
   } = useBoardMember()
 
   return (
@@ -84,6 +85,7 @@ function TabMember() {
         handleChangeMemberRole={handleChangeMemberRole}
         handleRemoveMember={handleRemoveMember}
         handleLeaveWorkspace={handleLeaveBoard}
+        isLoading={isLoading}
       />
       <InviteUserBoardModal {...inviteModal} />
     </>

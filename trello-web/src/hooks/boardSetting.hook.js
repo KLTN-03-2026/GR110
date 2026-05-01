@@ -21,23 +21,35 @@ export const useBoardSetting = () => {
   const [isUpdating, setIsUpdating] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [isDeletingBoard, setIsDeletingBoard] = useState(false)
   const board = useSelector((state) => state.activeBoard.board)
   const navigate = useNavigate()
 
   useEffect(() => {
-    const fetchBoardRole = async () => {
-      const data = await fetchBoardRoleAPI({ _id: boardId })
-      setRoles(data)
+    const fetchBoardSettingsData = async () => {
+      if (!boardId) return
+
+      setIsLoading(true)
+
+      try {
+        const [rolesData, permissionsData] = await Promise.all([
+          fetchBoardRoleAPI({ _id: boardId }),
+          fetchBoardPermissionAPI()
+        ])
+
+        setRoles(rolesData || [])
+        setPermissions(permissionsData || [])
+      } catch (error) {
+        console.error('Failed to fetch board settings data:', error)
+        setRoles([])
+        setPermissions([])
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    const fetchBoardPermission = async () => {
-      const data = await fetchBoardPermissionAPI()
-      setPermissions(data)
-    }
-
-    fetchBoardRole()
-    fetchBoardPermission()
+    fetchBoardSettingsData()
   }, [boardId])
 
   const handleChangeRolePermissions = ({ roleId, permissionCode, action }) => {
@@ -176,6 +188,7 @@ export const useBoardSetting = () => {
   return {
     ui: {
       isUpdating,
+      isLoading,
       isDeletingBoard,
       createModal: {
         open: openCreateModal,

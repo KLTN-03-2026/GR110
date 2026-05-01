@@ -19,6 +19,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import MailOutlineIcon from '@mui/icons-material/MailOutline'
 import MessageOutlinedIcon from '@mui/icons-material/MessageOutlined'
 import PersonAddAlt1Icon from '@mui/icons-material/PersonAddAlt1'
+import { alpha } from '@mui/material'
+import { useTheme } from '@emotion/react'
 
 function InviteUserWorkspaceModal({
   isOpen,
@@ -41,8 +43,9 @@ function InviteUserWorkspaceModal({
       message: ''
     }
   })
-
+  const theme = useTheme()
   const submitting = loading || isSubmitting
+  const isDark = theme.palette.mode === 'dark'
 
   const handleClose = () => {
     if (submitting) return
@@ -82,7 +85,10 @@ function InviteUserWorkspaceModal({
             py: 2,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'space-between',
+            background: isDark
+                        ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.18)}, transparent 58%)`
+                        : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, transparent 62%)`
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
@@ -295,7 +301,7 @@ function InviteUserWorkspaceModal({
             sx={{
               textTransform: 'none',
               fontWeight: 600,
-              borderRadius: 2
+              borderRadius: 5
             }}
           >
             Cancel
@@ -312,7 +318,7 @@ function InviteUserWorkspaceModal({
               minWidth: 150,
               textTransform: 'none',
               fontWeight: 700,
-              borderRadius: 2
+              borderRadius: 5
             }}
           >
             {submitting ? 'Sending...' : 'Send invitations'}

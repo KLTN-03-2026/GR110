@@ -25,14 +25,6 @@ import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates'
 import { alpha, useTheme } from '@mui/material/styles'
 import { summarizeWorkspaceAPI } from '~/apis/workspace.api'
 
-const dotPatternSx = {
-  position: 'absolute',
-  inset: 0,
-  backgroundImage:
-    'radial-gradient(circle, rgba(255,255,255,0.16) 1px, transparent 1px)',
-  backgroundSize: '22px 22px',
-  pointerEvents: 'none'
-}
 
 function SummarizeModal({ isOpen, onClose, workspaceId }) {
   const theme = useTheme()
@@ -490,10 +482,11 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
               px: { xs: 2.25, sm: 3 },
               py: 2.25,
               color: 'white',
-              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`
+              background: isDark
+              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.20)}, transparent 48%)`
+              : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
             }}
           >
-            <Box sx={dotPatternSx} />
 
             <Stack
               direction="row"

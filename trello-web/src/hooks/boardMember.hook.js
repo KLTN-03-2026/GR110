@@ -25,6 +25,7 @@ export const useBoardMember = () => {
   const [inviteKeyword, setInviteKeyword] = useState('')
   const [isInviting, setIsInviting] = useState(false)
   const [roles, setRoles] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const { boardId } = useParams()
   const board = useSelector((state) => state.activeBoard.board)
@@ -34,15 +35,25 @@ export const useBoardMember = () => {
     async ({ searchValue = '', pageValue = 0 } = {}) => {
       if (!boardId) return
 
-      const data = await fetchBoardMemberPageAPI({
-        _id: boardId,
-        search: searchValue,
-        page: pageValue + 1,
-        limit: FIXED_ROWS_PER_PAGE
-      })
+      setIsLoading(true)
 
-      setMembers(data.boardMember || [])
-      setTotalCount(data.totalCount || 0)
+      try {
+        const data = await fetchBoardMemberPageAPI({
+          _id: boardId,
+          search: searchValue,
+          page: pageValue + 1,
+          limit: FIXED_ROWS_PER_PAGE
+        })
+
+        setMembers(data.boardMember || [])
+        setTotalCount(data.totalCount || 0)
+      } catch (error) {
+        console.error('Failed to fetch board members:', error)
+        setMembers([])
+        setTotalCount(0)
+      } finally {
+        setIsLoading(false)
+      }
     },
     [boardId]
   )
@@ -177,6 +188,7 @@ export const useBoardMember = () => {
     handleChangeMemberRole,
     handleRemoveMember,
     handleLeaveBoard,
+    isLoading,
     roles,
     inviteModal: {
       isOpen: isInviteModalOpen,
