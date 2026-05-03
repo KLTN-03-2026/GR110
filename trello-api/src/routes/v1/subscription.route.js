@@ -27,7 +27,6 @@ Router.route('/captureOrderPal/paypal')
     asyncHandler(SubscriptionController.captureOrderPaypal)
   )
 
-
 Router.route('/:workspaceId/payment/:planId')
   .post(
     asyncHandler(authMiddleware.isAuthorized),

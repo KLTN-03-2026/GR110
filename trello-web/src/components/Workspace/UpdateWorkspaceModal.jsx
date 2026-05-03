@@ -13,13 +13,17 @@ import Box from '@mui/material/Box'
 import AbcIcon from '@mui/icons-material/Abc'
 import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
 import { useUpdateWorkspaceForm } from '~/hooks/updateWorkspaceForm.hook'
-import { InputAdornment } from '@mui/material'
+import { alpha, Divider, InputAdornment } from '@mui/material'
+import { useTheme } from '@emotion/react'
 
 function UpdateWorkspaceModal({ data, loading, isOpen, onClose, onSubmit }) {
   const { register, errors, handleSubmit } = useUpdateWorkspaceForm({
     isOpen,
     data
   })
+
+  const theme = useTheme()
+  const isDark = theme.palette.mode === 'dark'
 
   return (
     <Dialog
@@ -33,14 +37,62 @@ function UpdateWorkspaceModal({ data, loading, isOpen, onClose, onSubmit }) {
         }
       }}
     >
-      <DialogTitle sx={{ pb: 1.5, position: 'relative' }}>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <EditOutlinedIcon color="primary" />
-          <Box>
-            <Typography variant="h6" fontWeight={700}>
+      <DialogTitle
+        sx={{
+          px: 3,
+          py: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          background: isDark
+            ? `linear-gradient(135deg, ${alpha(
+              theme.palette.primary.main,
+              0.18
+            )}, transparent 58%)`
+            : `linear-gradient(135deg, ${alpha(
+              theme.palette.primary.main,
+              0.08
+            )}, transparent 62%)`
+        }}
+      >
+        <Stack direction="row" spacing={1.5} alignItems="center">
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              boxShadow: `0 10px 24px ${alpha(theme.palette.primary.main, 0.26)}`,
+              flexShrink: 0
+            }}
+          >
+            <EditOutlinedIcon />
+          </Box>
+
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                color: 'text.primary',
+                lineHeight: 1.25
+              }}
+            >
               Update workspace
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'text.secondary',
+                mt: 0.25
+              }}
+            >
               Update title and description for your workspace.
             </Typography>
           </Box>
@@ -51,12 +103,10 @@ function UpdateWorkspaceModal({ data, loading, isOpen, onClose, onSubmit }) {
           disabled={loading}
           size="small"
           sx={{
-            position: 'absolute',
-            top: 12,
-            right: 16,
             color: 'text.secondary',
+            bgcolor: alpha(theme.palette.text.primary, isDark ? 0.1 : 0.05),
             '&:hover': {
-              bgcolor: 'action.hover',
+              bgcolor: alpha(theme.palette.text.primary, isDark ? 0.16 : 0.08),
               color: 'text.primary'
             }
           }}
@@ -66,7 +116,7 @@ function UpdateWorkspaceModal({ data, loading, isOpen, onClose, onSubmit }) {
       </DialogTitle>
 
       <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-        <DialogContent sx={{ pt: 1 }}>
+        <DialogContent sx={{ pt: 3 }}>
           <Stack spacing={2.5}>
             <TextField
               InputProps={{
@@ -131,7 +181,9 @@ function UpdateWorkspaceModal({ data, loading, isOpen, onClose, onSubmit }) {
             Cancel
           </Button>
 
-          <Button type="submit" variant="contained" disabled={loading}>
+          <Button sx={{
+            borderRadius: 5
+          }} type="submit" variant="contained" disabled={loading}>
             {loading ? 'Updating...' : 'Update'}
           </Button>
         </DialogActions>

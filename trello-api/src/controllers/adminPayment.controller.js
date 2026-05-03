@@ -9,5 +9,13 @@ class AdminPaymentController {
       metadata: await AdminPaymentService.fetchByPayment({ data: req.query })
     }).send(res)
   }
+
+  static fetchPaymentTransaction = async (req, res) => {
+    new OkSuccessResponse({
+      metadata: await AdminPaymentService.fetchPaymentTransaction({
+        paymentId: req.params.paymentId
+      })
+    }).send(res)
+  }
 }
 export default AdminPaymentController

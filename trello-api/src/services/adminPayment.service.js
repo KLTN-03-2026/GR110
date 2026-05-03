@@ -1,3 +1,8 @@
+import { ObjectId } from 'mongodb'
+import {
+  BadRequestErrorResponse,
+  NotFoundErrorResponse
+} from '~/core/error.response'
 import AdminPaymentRepo from '~/repo/adminPayment.repo'
 
 class AdminPaymentService {
@@ -14,7 +19,7 @@ class AdminPaymentService {
       ...(keyword
         ? {
             $or: [
-              { workSpaceTile: { $regex: escapedKeyword, $options: 'i' } },
+              { workspaceTitle: { $regex: escapedKeyword, $options: 'i' } },
               { gateway: { $regex: escapedKeyword, $options: 'i' } },
               { planTitle: { $regex: escapedKeyword, $options: 'i' } }
             ]
@@ -38,6 +43,22 @@ class AdminPaymentService {
       page,
       limit
     }
+  }
+
+  static fetchPaymentTransaction = async ({ paymentId }) => {
+    if (!paymentId || !ObjectId.isValid(paymentId)) {
+      throw new BadRequestErrorResponse('Invalid payment id')
+    }
+
+    const transactionDetail = await AdminPaymentRepo.findTransactionByPaymentId({
+      paymentId
+    })
+
+    if (!transactionDetail) {
+      throw new NotFoundErrorResponse('Payment not found')
+    }
+
+    return transactionDetail
   }
 }
 

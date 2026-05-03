@@ -12,9 +12,8 @@ import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded'
 import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded'
 import PaymentRoundedIcon from '@mui/icons-material/PaymentRounded'
 import PaypalCheckout from './ButtonPaypal'
-
-const formatCurrency = (value = 0) =>
-  new Intl.NumberFormat('vi-VN').format(Number(value || 0))
+import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded'
+import { formatPrice } from '~/helpers/formatPrice'
 
 export default function PaymentCheckoutCard({
   payment,
@@ -44,6 +43,12 @@ export default function PaymentCheckoutCard({
       severity: 'success',
       icon: <CheckCircleRoundedIcon />,
       message: 'Payment successful. Your workspace package will be updated automatically.'
+    },
+    failed: {
+      label: 'Payment failed',
+      severity: 'error',
+      icon: <ErrorOutlineRoundedIcon />,
+      message: 'Payment failed. Your workspace package has not been updated.'
     }
   }
 
@@ -245,7 +250,7 @@ export default function PaymentCheckoutCard({
                     Number(payment?.discountAmount || 0) > 0 ? 'line-through' : 'none'
                 })}
               >
-                ₫ {formatCurrency(payment?.originPrice || 0)}
+                {formatPrice(payment?.originPrice) || 0}
               </Typography>
             </Stack>
 
@@ -263,7 +268,7 @@ export default function PaymentCheckoutCard({
                       : theme.palette.text.secondary
                 })}
               >
-                - ₫ {formatCurrency(payment?.discountAmount || 0)}
+                - {formatPrice(payment?.discountAmount) || 0}
               </Typography>
             </Stack>
 
@@ -286,7 +291,7 @@ export default function PaymentCheckoutCard({
                   color: theme.palette.text.primary
                 })}
               >
-                ₫ {formatCurrency(payment?.totalAmount || 0)}
+                {formatPrice(payment?.totalAmount) || 0}
               </Typography>
             </Stack>
           </Stack>

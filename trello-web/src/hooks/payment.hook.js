@@ -17,9 +17,15 @@ export default function usePayment() {
     const fetchPaymentDetail = async () => {
       try {
         const res = await fetchPayment({ subscriptionId })
-        setLocalStatus(res.status === 'active' ? 'success' : 'idle')
-        
-        const socket =initSocket()
+        const mappingStatus = {
+          pending: 'idle',
+          active: 'success',
+          failed: 'failed',
+          checking: 'checking'
+        }
+        setLocalStatus(mappingStatus[res.status] || 'idle')
+
+        const socket = initSocket()
 
         const join = () => socket.emit('workspace:join', { workspaceId })
 
@@ -48,6 +54,6 @@ export default function usePayment() {
     dataPayment,
     selectedGateway,
     setSelectedGateway,
-    localStatus,
+    localStatus
   }
 }

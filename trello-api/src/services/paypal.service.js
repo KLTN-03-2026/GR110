@@ -6,10 +6,15 @@ import {
   BadRequestErrorResponse,
   NotFoundErrorResponse
 } from '~/core/error.response'
+import { sendUpgradePaymentSuccessMail } from '~/helpers/sendMailPayment'
+import { deleteActiveSubscriptionCache } from '~/helpers/subscription.cache'
+import { sendEmailService } from '~/providers/NodeMailer'
 import { emitPayment } from '~/realtime/realtimeEmitters/payment.emitter'
 import PaymentRepo from '~/repo/payment.repo'
 import SubscriptionRepo from '~/repo/subscription.repo'
 import TransactionRepo from '~/repo/transaction.repo'
+import UserRepo from '~/repo/user.repo'
+import WorkspaceRepo from '~/repo/workspace.repo'
 
 class PaypalService {
   static createOrderPaypal = async ({ subscriptionId, payment }) => {
@@ -41,7 +46,6 @@ class PaypalService {
 
     const accessToken = await generateAccessToken()
 
-    const paypalAmount = await convertVndToUsd(totalAmount)
 
     try {
       const orderPayload = {
@@ -64,17 +68,17 @@ class PaypalService {
                 quantity: '1',
                 unit_amount: {
                   currency_code: 'USD',
-                  value: paypalAmount
+                  value: totalAmount
                 }
               }
             ],
             amount: {
               currency_code: 'USD',
-              value: paypalAmount,
+              value: totalAmount,
               breakdown: {
                 item_total: {
                   currency_code: 'USD',
-                  value: paypalAmount
+                  value: totalAmount
                 }
               }
             }
@@ -116,9 +120,6 @@ class PaypalService {
   static captureOrderPaypal = async (event) => {
     const capture = event?.resource
 
-    console.log(capture);
-    
-
     if (!capture) {
       throw new BadRequestErrorResponse('PayPal webhook resource not found')
     }
@@ -143,54 +144,89 @@ class PaypalService {
     }
 
     const subscriptionId = capture?.custom_id
-    const orderID = capture?.supplementary_data?.related_ids?.order_id
     const providerTransactionId = capture?.id
-    const paidAmount = Number(capture?.amount?.value || 0)
     const paidCurrency = capture?.amount?.currency_code || 'USD'
+    const amount = Number(capture?.amount?.value)
     const paidAt = capture?.create_time
       ? new Date(capture.create_time)
       : new Date()
 
-    if (!subscriptionId || !ObjectId.isValid(subscriptionId)) {
-      throw new BadRequestErrorResponse(
-        'Invalid subscription id from PayPal webhook'
-      )
-    }
-
-    if (!providerTransactionId) {
-      throw new BadRequestErrorResponse('Missing PayPal capture id')
-    }
-
-    const subscription = await SubscriptionRepo.findOne({
-      filter: { _id: new ObjectId(subscriptionId) }
-    })
-
-    if (!subscription) {
-      throw new NotFoundErrorResponse('Subscription not found')
-    }
-
-    const existingPayment = await PaymentRepo.findOne({
-      filter: { providerTransactionId }
-    })
-
-    if (existingPayment) {
-      return {
-        status: paypalStatus,
-        paymentStatus,
-        providerTransactionId,
-        paidCurrency
-      }
-    }
-
     const session = await mongoClientInstance.startSession()
+
+    let subscription = null
+    let transaction = null
+    let payment = null
+    let shouldEmitSuccess = false
+    let successMailPayload = null
 
     try {
       await session.withTransaction(async () => {
+        if (!subscriptionId || !ObjectId.isValid(subscriptionId)) {
+          throw new BadRequestErrorResponse(
+            'Invalid subscription id from PayPal webhook'
+          )
+        }
+
+        if (!providerTransactionId) {
+          throw new BadRequestErrorResponse('Missing PayPal capture id')
+        }
+
+        subscription = await SubscriptionRepo.findOne({
+          filter: { _id: new ObjectId(subscriptionId) },
+          options: { session }
+        })
+
+        if (!subscription) {
+          throw new NotFoundErrorResponse('Subscription not found')
+        }
+
         emitPayment({
           workspaceId: subscription.workspaceId.toString(),
           subscriptionId: subscriptionId.toString(),
           status: 'checking'
         })
+
+        if (subscription.status === 'active') {
+          throw new BadRequestErrorResponse('Subscription already paid.')
+        }
+
+        transaction = await TransactionRepo.findOne({
+          filter: {
+            code: `UPWS${subscriptionId}`,
+            status: 'pending'
+          },
+          options: { session }
+        })
+
+        if (!transaction) {
+          throw new NotFoundErrorResponse('Transaction not found')
+        }
+
+        if (amount < Number(transaction.transferAmount)) {
+          await payFail({
+            subscriptionId,
+            transactionId: transaction._id,
+            providerTransactionId,
+            paidAt,
+            description: 'Not enough money',
+            workspaceId: subscription.workspaceId.toString(),
+            session
+          })
+          return
+        }
+        
+        payment = await PaymentRepo.findOne({
+          filter: {
+            transactionId: transaction._id.toString(),
+            status: 'pending'
+          },
+          options: { session }
+        })
+
+        if (!payment) {
+          throw new NotFoundErrorResponse('Payment not found')
+        }
+
         if (paypalStatus === 'COMPLETED') {
           await SubscriptionRepo.updateMany({
             filter: {
@@ -219,71 +255,75 @@ class PaypalService {
             },
             session
           })
-        } else if (paypalStatus === 'DENIED') {
-          await SubscriptionRepo.updateOne({
-            filter: { _id: new ObjectId(subscriptionId) },
+
+          const transactionResult = await TransactionRepo.updateOne({
+            filter: {
+              _id: new ObjectId(transaction._id)
+            },
             data: {
               $set: {
-                status: 'pending',
-                updatedAt: new Date()
+                gateway: 'paypal',
+                transactionId: providerTransactionId,
+                status: 'paid'
               }
             },
             session
           })
-        } else if (paypalStatus === 'PENDING') {
-          await SubscriptionRepo.updateOne({
-            filter: { _id: new ObjectId(subscriptionId) },
+
+          await PaymentRepo.updateOne({
+            filter: {
+              transactionId: transactionResult._id.toString()
+            },
             data: {
               $set: {
-                status: 'pending',
-                updatedAt: new Date()
+                gateway: 'paypal',
+                status: 'paid',
+                paidAt
               }
             },
             session
+          })
+
+          shouldEmitSuccess = true
+          successMailPayload = {
+            subscriptionId: subscriptionId.toString(),
+            providerTransactionId,
+            paidCurrency,
+            amount,
+            paidAt
+          }
+        } else {
+          await payFail({
+            subscriptionId,
+            transactionId: transaction._id,
+            providerTransactionId,
+            paidAt,
+            description: '',
+            workspaceId: subscription.workspaceId.toString(),
+            session
+          })
+          return
+        }
+      })
+
+      if (shouldEmitSuccess) {
+        emitPayment({
+          workspaceId: subscription.workspaceId.toString(),
+          subscriptionId: subscriptionId.toString(),
+          status: 'success'
+        })
+
+        await deleteActiveSubscriptionCache({
+          workspaceId: subscription.workspaceId.toString()
+        })
+
+        if (successMailPayload) {
+          await sendUpgradePaymentSuccessMail({
+            ...successMailPayload,
+            workspaceId: subscription.workspaceId.toString()
           })
         }
-
-        const transactionResult = await TransactionRepo.createOne({
-          data: {
-            gateway: 'paypal',
-            transactionDate: capture?.create_time || new Date().toISOString(),
-            accountNumber: null,
-            subAccount: null,
-            code: capture?.invoice_id || '',
-            content: `PayPal payment for subscription ${subscriptionId}`,
-            transferType: 'in',
-            description: `PayPal payment for subscription ${subscriptionId}`,
-            transferAmount: paidAmount,
-            referenceCode:
-              orderID || capture?.invoice_id || providerTransactionId,
-            accumulated: 0,
-            transactionId: providerTransactionId
-          },
-          session
-        })
-
-        const transactionId =
-          transactionResult?.insertedId?.toString?.() ||
-          transactionResult?._id?.toString?.()
-
-        await PaymentRepo.createOne({
-          data: {
-            subscriptionId,
-            gateway: 'paypal',
-            status: paymentStatus,
-            providerTransactionId: transactionId,
-            amount: paidAmount,
-            paidAt: paypalStatus === 'COMPLETED' ? paidAt : null
-          },
-          session
-        })
-      })
-
-      emitPayment({
-        workspaceId: subscription.workspaceId.toString(),
-        subscriptionId: subscriptionId.toString(),
-        status: 'success'
-      })
+      }
 
       return {
         status: paypalStatus,
@@ -295,6 +335,76 @@ class PaypalService {
       await session.endSession()
     }
   }
+}
+
+const payFail = async ({
+  subscriptionId,
+  transactionId,
+  providerTransactionId,
+  paidAt,
+  description,
+  workspaceId,
+  session
+}) => {
+  await SubscriptionRepo.updateOne({
+    filter: { _id: new ObjectId(subscriptionId) },
+    data: {
+      $set: {
+        status: 'pending',
+        updatedAt: new Date()
+      }
+    },
+    session
+  })
+
+  const transactionResult = await TransactionRepo.updateOne({
+    filter: {
+      _id: new ObjectId(transactionId)
+    },
+    data: {
+      $set: {
+        gateway: 'paypal',
+        transactionId: providerTransactionId,
+        status: 'failed',
+        description
+      }
+    },
+    session
+  })
+
+  await PaymentRepo.updateOne({
+    filter: {
+      transactionId: transactionResult._id.toString()
+    },
+    data: {
+      $set: {
+        gateway: 'paypal',
+        status: 'failed',
+        failedAt: paidAt
+      }
+    },
+    session
+  })
+
+  await SubscriptionRepo.updateOne({
+    filter: {
+      _id: new ObjectId(subscriptionId)
+    },
+    data: {
+      $set: {
+        status: 'failed'
+      }
+    },
+    session
+  })
+
+  emitPayment({
+    workspaceId,
+    subscriptionId: subscriptionId.toString(),
+    status: 'failed'
+  })
+  
+  
 }
 
 const generateAccessToken = async () => {
@@ -322,32 +432,9 @@ const generateAccessToken = async () => {
   }
 }
 
-const convertVndToUsd = async (amountVnd) => {
-  const response = await axios.get(
-    'https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=10',
-    {
-      responseType: 'text'
-    }
-  )
 
-  const xml = response.data
-  const match = xml.match(
-    /<Exrate[^>]*CurrencyCode="USD"[^>]*Sell="([\d,\.]+)"/
-  )
 
-  if (!match || !match[1]) {
-    throw new BadRequestErrorResponse(
-      'Không lấy được tỷ giá USD từ Vietcombank'
-    )
-  }
 
-  const usdSellRate = Number(match[1].replace(/,/g, ''))
 
-  if (!usdSellRate || usdSellRate <= 0) {
-    throw new BadRequestErrorResponse('Tỷ giá USD không hợp lệ')
-  }
-
-  return (Number(amountVnd) / usdSellRate).toFixed(2)
-}
 
 export default PaypalService

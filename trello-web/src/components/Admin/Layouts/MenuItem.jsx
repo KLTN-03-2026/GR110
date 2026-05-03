@@ -6,11 +6,17 @@ import WallpaperOutlinedIcon from '@mui/icons-material/WallpaperOutlined'
 import WorkspacesOutlinedIcon from '@mui/icons-material/WorkspacesOutlined'
 import CreditCardOutlinedIcon from '@mui/icons-material/CreditCardOutlined'
 import WorkspacePremiumOutlinedIcon from '@mui/icons-material/WorkspacePremiumOutlined'
+import SpaceDashboardOutlinedIcon from '@mui/icons-material/SpaceDashboardOutlined'
 
 export const menuSections = [
   {
     title: 'Main',
     items: [
+      {
+        label: 'Dashboard',
+        path: '/admin/dashboard',
+        icon: <SpaceDashboardOutlinedIcon />
+      },
       {
         label: 'User',
         path: '/admin/user',

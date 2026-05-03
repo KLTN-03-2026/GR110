@@ -21,7 +21,7 @@ function TabBoardSettings() {
   const { handleOpenCreateModal, handleUpdateRole } = handler
 
   const theme = useTheme()
-  const isDark = (theme.palette.mode = 'dark')
+  const isDark = theme.palette.mode === 'dark'
 
   const renderRoleSkeletons = () => {
     return Array.from({ length: 3 }).map((_, idx) => (
