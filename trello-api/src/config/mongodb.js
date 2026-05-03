@@ -3,7 +3,7 @@ import { MongoClient, ServerApiVersion } from 'mongodb'
 import { env } from '~/config/environment'
 import { INIT_DB_INDEXES } from '~/config/mongodb.indexes'
 
-// setServers(['1.1.1.1', '8.8.8.8']) // FIX LỖI querySrv ECONNREFUSED
+setServers(['1.1.1.1', '8.8.8.8']) // FIX LỖI querySrv ECONNREFUSED
 
 // Khởi tạo một đối tượng trelloDatabaseInstance ban đầu là null (vì chúng ta chưa connect)
 let trelloDatabaseInstance = null

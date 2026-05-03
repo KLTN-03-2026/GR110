@@ -1,5 +1,11 @@
+import { useState } from 'react'
 import {
+  Button,
+  CircularProgress,
   Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Paper,
   Stack,
   Table,
@@ -11,15 +17,8 @@ import {
   TableRow,
   Typography
 } from '@mui/material'
+import { formatPrice } from '~/helpers/formatPrice'
 
-function formatCurrency(value) {
-  if (value === null || value === undefined) return '0 ₫'
-
-  return Number(value).toLocaleString('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
-  })
-}
 
 function formatDateTime(value) {
   if (!value) return '-'
@@ -86,8 +85,68 @@ export default function PaymentTable({
   rowsPerPage,
   totalCount,
   onPageChange,
-  onRowsPerPageChange
+  onRowsPerPageChange,
+  onFetchTransactionDetail
 }) {
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [selectedPayment, setSelectedPayment] = useState(null)
+  const [isDetailLoading, setIsDetailLoading] = useState(false)
+
+  const handleOpenDetail = async (payment) => {
+    setSelectedPayment(payment || null)
+    setIsDetailOpen(true)
+
+    if (!onFetchTransactionDetail || !payment?._id) return
+
+    try {
+      setIsDetailLoading(true)
+      const transactionDetail = await onFetchTransactionDetail(payment._id)
+
+      if (transactionDetail) {
+        setSelectedPayment((prev) => ({
+          ...prev,
+          ...transactionDetail
+        }))
+      }
+    } finally {
+      setIsDetailLoading(false)
+    }
+  }
+
+  const handleCloseDetail = () => {
+    setIsDetailOpen(false)
+    setSelectedPayment(null)
+    setIsDetailLoading(false)
+  }
+
+  const transactionDetailRows = [
+    { label: 'Gateway', value: selectedPayment?.gateway },
+    {
+      label: 'Provider Transaction ID',
+      value: selectedPayment?.providerTransactionId
+    },
+    { label: 'Internal Transaction Record ID', value: selectedPayment?.transactionId },
+    { label: 'Status', value: selectedPayment?.status },
+    { label: 'Transaction Date', value: formatDateTime(selectedPayment?.transactionDate) },
+    { label: 'Account Number', value: selectedPayment?.accountNumber },
+    { label: 'Sub Account', value: selectedPayment?.subAccount },
+    { label: 'Code', value: selectedPayment?.code },
+    { label: 'Content', value: selectedPayment?.content },
+    { label: 'Transfer Type', value: selectedPayment?.transferType },
+    { label: 'Description', value: selectedPayment?.description },
+    {
+      label: 'Transfer Amount',
+      value:
+        selectedPayment?.transferAmount != null
+          ? formatPrice(selectedPayment.transferAmount)
+          : formatPrice(selectedPayment?.amount || 0)
+    },
+    { label: 'Reference Code', value: selectedPayment?.referenceCode },
+    { label: 'Accumulated', value: selectedPayment?.accumulated },
+    { label: 'Paid At', value: formatDateTime(selectedPayment?.paidAt) },
+    { label: 'Failed At', value: formatDateTime(selectedPayment?.failedAt) }
+  ]
+
   return (
     <Paper
       elevation={0}
@@ -126,6 +185,9 @@ export default function PaymentTable({
               </TableCell>
               <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
                 Failed At
+              </TableCell>
+              <TableCell sx={{ fontSize: '16px', color: '#111827' }}>
+                Actions
               </TableCell>
             </TableRow>
           </TableHead>
@@ -168,11 +230,13 @@ export default function PaymentTable({
                     </TableCell>
 
                     <TableCell sx={{ fontSize: '15px', color: '#1f2937' }}>
-                      {truncateText(payment.providerTransactionId, 24)}
+                      <span title={payment.providerTransactionId || '-'}>
+                        {payment.providerTransactionId}
+                      </span>
                     </TableCell>
 
                     <TableCell sx={{ fontSize: '15px', color: '#1f2937', fontWeight: 600 }}>
-                      {formatCurrency(payment.amount)}
+                      {formatPrice(payment.amount)}
                     </TableCell>
 
                     <TableCell>
@@ -196,12 +260,30 @@ export default function PaymentTable({
                       {formatDateTime(payment.failedAt)}
                     </TableCell>
 
+                    <TableCell>
+                      <Button
+                        size='small'
+                        variant='outlined'
+                        onClick={() => handleOpenDetail(payment)}
+                        sx={{
+                          textTransform: 'none',
+                          borderColor: '#d1d5db',
+                          color: '#111827',
+                          '&:hover': {
+                            borderColor: '#9ca3af',
+                            backgroundColor: '#f9fafb'
+                          }
+                        }}
+                      >
+                        Details
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 )
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={10} align='center' sx={{ py: 4 }}>
+                <TableCell colSpan={11} align='center' sx={{ py: 4 }}>
                   <Typography sx={{ fontSize: '15px', color: '#6b7280' }}>
                     No payment history found.
                   </Typography>
@@ -257,6 +339,79 @@ export default function PaymentTable({
           }}
         />
       </Stack>
+
+      <Dialog
+        open={isDetailOpen}
+        onClose={handleCloseDetail}
+        fullWidth
+        maxWidth='sm'
+        PaperProps={{
+          sx: {
+            backgroundColor: '#ffffff',
+            color: '#111827',
+            border: '1px solid #e5e7eb'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontSize: '18px',
+            fontWeight: 600,
+            backgroundColor: '#ffffff',
+            color: '#111827',
+            borderBottom: '1px solid #e5e7eb'
+          }}
+        >
+          Transaction Details
+        </DialogTitle>
+
+        <DialogContent
+          dividers
+          sx={{
+            backgroundColor: '#ffffff',
+            color: '#111827',
+            borderTop: 'none',
+            borderBottom: 'none'
+          }}
+        >
+          <Stack spacing={1.25}>
+            {transactionDetailRows.map((row) => (
+              <Stack
+                key={row.label}
+                direction='row'
+                justifyContent='space-between'
+                alignItems='flex-start'
+                sx={{
+                  py: 0.75,
+                  borderBottom: '1px dashed #e5e7eb',
+                  '&:last-of-type': { borderBottom: 'none' }
+                }}
+              >
+                <Typography sx={{ fontSize: '14px', color: '#6b7280' }}>
+                  {row.label}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '14px',
+                    color: '#111827',
+                    fontWeight: 500,
+                    textAlign: 'right',
+                    maxWidth: '58%',
+                    wordBreak: 'break-word'
+                  }}
+                >
+                  {row.value ?? '-'}
+                </Typography>
+              </Stack>
+            ))}
+          </Stack>
+          {isDetailLoading && (
+            <Stack alignItems='center' sx={{ py: 2 }}>
+              <CircularProgress size={24} sx={{ color: '#111827' }} />
+            </Stack>
+          )}
+        </DialogContent>
+      </Dialog>
     </Paper>
   )
 }

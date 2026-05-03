@@ -18,9 +18,7 @@ const PAYMENT_COLLECTION_SCHEMA = Joi.object({
     .valid(...PAYMENT_STATUS)
     .default('pending'),
 
-  providerTransactionId: Joi.string().trim().strict().allow(null).default(null),
-
-  amount: Joi.number().required().min(0),
+  transactionId: Joi.string().trim().strict().allow(null).default(null),
 
   paidAt: Joi.date().allow(null).default(null),
   failedAt: Joi.date().allow(null).default(null),

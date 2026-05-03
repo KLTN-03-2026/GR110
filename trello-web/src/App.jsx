@@ -37,6 +37,7 @@ import TicketPage from './pages/Tickets/Tickets.page'
 import AdminTicketPage from './pages/Admin/Ticket/Ticket.page'
 import { WorkspaceQuotaPage } from './pages/Home/WorkspaceQuota.page'
 import Introduction from './pages/Introduction/Introduction.page'
+import DashboardPage from './pages/Admin/Dashboard/Dashboard.page'
 const ProtectedRoute = ({ user }) => {
   if (!user) return <Navigate to="/auth/login" replace={true} />
   return <Outlet />
@@ -138,6 +139,8 @@ function App() {
 
       <Route element={<ProtectedRouteAdmin admin={currentAdmin} />}>
         <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
 
           <Route path="ticket" element={<AdminTicketPage />} />

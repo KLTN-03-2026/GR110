@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb'
 import { NotFoundErrorResponse } from '~/core/error.response'
+import { deleteActiveSubscriptionCache } from '~/helpers/subscription.cache'
 import AdminSubscriptionRepo from '~/repo/adminSubscription.repo'
 
 class AdminSubscriptionService {
@@ -46,6 +47,9 @@ class AdminSubscriptionService {
       _id: new ObjectId(_id),
       data: data
     })
+
+    await deleteActiveSubscriptionCache({workspaceId: subscription.workspaceId})
+
     return updatedSubscription
   }
 

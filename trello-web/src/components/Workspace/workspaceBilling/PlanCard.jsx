@@ -152,9 +152,7 @@ export function PlanCard({ plan, selected, onSelect }) {
         >
           <PlanPrice
             price={plan.price}
-            unit={plan.currency}
             interval={plan.interval}
-            selected={selected}
           />
         </Box>
 

@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { fetchAdminPaymentAPI } from '~/apis/adminPayment.api'
+import {
+  fetchAdminPaymentAPI,
+  fetchAdminPaymentTransactionAPI
+} from '~/apis/adminPayment.api'
 
 export default function useAdminPayment() {
   const [payments, setPayments] = useState([])
@@ -104,6 +107,12 @@ export default function useAdminPayment() {
     [updateQueryParams]
   )
 
+  const fetchPaymentTransactionDetail = useCallback(async (paymentId) => {
+    if (!paymentId) return null
+
+    return await fetchAdminPaymentTransactionAPI({ paymentId })
+  }, [])
+
   return {
     payments,
     totalCount,
@@ -112,6 +121,7 @@ export default function useAdminPayment() {
     gateway,
     page: page - 1,
     rowsPerPage,
+    fetchPaymentTransactionDetail,
     handleSearchChange,
     handleChangeGateway,
     handleChangePage,

@@ -333,9 +333,7 @@ export default function AdminTicketTable({
             ) : (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                  <Typography
-                    sx={{ fontSize: '15px', color: '#6b7280' }}
-                  >
+                  <Typography sx={{ fontSize: '15px', color: '#6b7280' }}>
                     No tickets found.
                   </Typography>
                 </TableCell>
@@ -397,14 +395,31 @@ export default function AdminTicketTable({
       </Stack>
 
       {/* DIABLOG CHI TIẾT  */}
-      <Dialog open={detailOpen} onClose={handleCloseDetail} fullWidth maxWidth="md">
-        <DialogTitle>
-          <Typography sx={{ fontSize: 22, fontWeight: 700 }}>
+      <Dialog
+        open={detailOpen}
+        onClose={handleCloseDetail}
+        fullWidth
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            backgroundColor: '#fff',
+            color: '#111827',
+            borderRadius: '12px'
+          }
+        }}
+      >
+        <DialogTitle
+          sx={{
+            backgroundColor: '#fff',
+            color: '#111827'
+          }}
+        >
+          <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#111827' }}>
             Chi tiết ticket
           </Typography>
         </DialogTitle>
 
-        <Divider />
+        <Divider sx={{ borderColor: '#e5e7eb' }} />
 
         <DialogContent sx={{ pt: '20px !important' }}>
           {detailTicket ? (

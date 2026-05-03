@@ -20,6 +20,7 @@ import { subscriptionsRouter } from './subscription.route'
 import { adminSubscriptionRoute } from './adminSubscription.route'
 import { adminPermission } from './adminPermission.route'
 import { adminPaymentRoute } from './adminPayment.route'
+import { adminDashboardRoute } from './adminDashboard.route'
 import { ticketRouter } from './ticket.route'
 import { adminTicketRoute } from './adminTicket.route'
 import { ladingRouter } from './landing.route'
@@ -89,6 +90,9 @@ Router.use('/admin/tickets', adminTicketRoute)
 
 //Admin Payment
 Router.use('/admin/payments', adminPaymentRoute)
+
+//Admin Dashboard
+Router.use('/admin/dashboard', adminDashboardRoute)
 
 //Subscription
 Router.use('/subscriptions', subscriptionsRouter)

@@ -9,7 +9,7 @@ const TRANSACTION_COLLECTION_SCHEMA = Joi.object({
 
   accountNumber: Joi.when('gateway', {
     is: 'sepay',
-    then: Joi.string().required().trim().strict(),
+    then: Joi.string().trim().strict(),
     otherwise: Joi.string().allow(null, '').default(null)
   }),
 
@@ -30,6 +30,8 @@ const TRANSACTION_COLLECTION_SCHEMA = Joi.object({
   accumulated: Joi.number().allow(null).default(null),
 
   transactionId: Joi.string().required().trim().strict(),
+
+  status: Joi.string().required(),
 
   createdAt: Joi.date().default(() => new Date()),
   updatedAt: Joi.date().allow(null).default(null)

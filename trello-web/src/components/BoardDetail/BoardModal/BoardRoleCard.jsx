@@ -70,16 +70,20 @@ function BoardRoleCard({ role, data, handler }) {
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar
-            sx={{
+            sx={(theme) => ({
               width: 38,
               height: 38,
               fontSize: 13,
               fontWeight: 600,
-              bgcolor: (theme) =>
-                theme.palette.mode === 'dark' ? '#1e3a5f' : '#e3f0fb',
-              color: (theme) =>
-                theme.palette.mode === 'dark' ? '#90caf9' : '#1565c0'
-            }}
+              bgcolor:
+                theme.palette.mode === 'dark'
+                  ? theme.palette.primary.dark
+                  : theme.palette.primary.light,
+              color:
+                theme.palette.mode === 'dark'
+                  ? theme.palette.primary.contrastText
+                  : theme.palette.primary.dark
+            })}
           >
             {getInitials(role.name)}
           </Avatar>

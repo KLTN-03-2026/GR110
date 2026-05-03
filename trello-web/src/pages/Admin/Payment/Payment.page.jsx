@@ -22,6 +22,7 @@ export default function PaymentPage() {
     gateway,
     page,
     rowsPerPage,
+    fetchPaymentTransactionDetail,
     handleSearchChange,
     handleChangeGateway,
     handleChangePage,
@@ -182,6 +183,7 @@ export default function PaymentPage() {
         totalCount={totalCount}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
+        onFetchTransactionDetail={fetchPaymentTransactionDetail}
       />
     </Box>
   )

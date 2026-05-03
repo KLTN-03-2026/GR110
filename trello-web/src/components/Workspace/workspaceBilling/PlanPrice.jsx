@@ -1,23 +1,7 @@
 import { Box, Typography } from '@mui/material'
-import { alpha, useTheme } from '@mui/material/styles'
+import { formatPrice } from '~/helpers/formatPrice'
 
-function formatPrice(value, locale = 'en-US') {
-  if (typeof value === 'number') {
-    return new Intl.NumberFormat(locale).format(value)
-  }
-
-  if (typeof value === 'string') {
-    const numeric = Number(String(value).replace(/[^\d]/g, ''))
-    return new Intl.NumberFormat(locale).format(numeric || 0)
-  }
-
-  return '0'
-}
-
-export function PlanPrice({ price, unit, interval, selected = false }) {
-  const theme = useTheme()
-  const isDark = theme.palette.mode === 'dark'
-
+export function PlanPrice({ price, interval}) {
   return (
     <Box>
       <Box
@@ -28,22 +12,6 @@ export function PlanPrice({ price, unit, interval, selected = false }) {
           flexWrap: 'nowrap'
         }}
       >
-        <Typography
-          component="span"
-          sx={{
-            fontSize: '14px !important',
-            fontWeight: 800,
-            color: selected
-              ? theme.palette.primary.main
-              : isDark
-                ? alpha(theme.palette.text.primary, 0.72)
-                : theme.palette.text.secondary,
-            lineHeight: 1,
-            flexShrink: 0
-          }}
-        >
-          {unit}
-        </Typography>
 
         <Typography
           component="span"

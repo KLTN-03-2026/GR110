@@ -15,11 +15,11 @@ import ConfirmDeleteModal from '../ModalDelete/ConfirmDeleteModal'
 import { FeatureCell } from './FeatureCell'
 
 function formatCurrency(value) {
-  if (value === null || value === undefined) return '0 ₫'
+  if (value === null || value === undefined) return '$0.00'
 
-  return Number(value).toLocaleString('vi-VN', {
+  return Number(value).toLocaleString('en-US', {
     style: 'currency',
-    currency: 'VND'
+    currency: 'USD'
   })
 }
 

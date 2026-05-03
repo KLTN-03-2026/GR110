@@ -12,3 +12,11 @@ export const fetchAdminPaymentAPI = async ({ search, page, limit, gateway }) => 
   })
   return response.data.metadata
 }
+
+export const fetchAdminPaymentTransactionAPI = async ({ paymentId }) => {
+  const response = await authorizeAdminAxiosInstance.get(
+    `${API_ROOT}/v1/admin/payments/${paymentId}/transaction`
+  )
+
+  return response.data.metadata
+}
