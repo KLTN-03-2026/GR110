@@ -130,6 +130,12 @@ class TaskRepo {
     return result[0]?.total || 0
   }
 
+  static count = async ({ filter = {}, options = {} }) => {
+    return await GET_DB()
+      .collection(taskModel.TASK_COLLECTION_NAME)
+      .countDocuments(filter, options)
+  }
+
   static aggregateTaskStats = async (boardId) => {
     const result = await GET_DB()
       .collection('tasks')
@@ -156,7 +162,6 @@ class TaskRepo {
       done: result[0]?.done || 0
     }
   }
-
 }
 
 export default TaskRepo

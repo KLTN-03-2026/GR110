@@ -133,6 +133,7 @@ Router.route('/quota/:workspaceId').get(
 Router.route('/summarize/:workspaceId').get(
   asyncHandler(authMiddleware.isAuthorized),
   asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+  asyncHandler(workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.VIEW)),
   asyncHandler(WorkspaceController.summarize)
 )
 

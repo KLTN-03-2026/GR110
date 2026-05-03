@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 import Modal from '@mui/material/Modal'
 import Box from '@mui/material/Box'
 import Stack from '@mui/material/Stack'
@@ -10,21 +11,66 @@ import Backdrop from '@mui/material/Backdrop'
 import Alert from '@mui/material/Alert'
 import Skeleton from '@mui/material/Skeleton'
 import Paper from '@mui/material/Paper'
-import List from '@mui/material/List'
-import ListItem from '@mui/material/ListItem'
-import ListItemIcon from '@mui/material/ListItemIcon'
-import ListItemText from '@mui/material/ListItemText'
-import Divider from '@mui/material/Divider'
 import CloseIcon from '@mui/icons-material/Close'
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline'
-import LightbulbIcon from '@mui/icons-material/Lightbulb'
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'
-import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
 import { alpha, useTheme } from '@mui/material/styles'
 import { summarizeWorkspaceAPI } from '~/apis/workspace.api'
 
+const MarkdownComponents = (theme, isDark) => ({
+  h2: ({ children }) => (
+    <Typography
+      variant="h6"
+      sx={{
+        fontWeight: 800,
+        fontSize: '0.95rem',
+        mt: 2.5,
+        mb: 1,
+        pb: 0.5,
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        color: 'text.primary'
+      }}
+    >
+      {children}
+    </Typography>
+  ),
+  p: ({ children }) => (
+    <Typography
+      sx={{
+        fontSize: '0.9rem',
+        lineHeight: 1.8,
+        color: 'text.secondary',
+        mb: 1
+      }}
+    >
+      {children}
+    </Typography>
+  ),
+  ul: ({ children }) => (
+    <Box component="ul" sx={{ pl: 2.5, mb: 1, mt: 0.5 }}>
+      {children}
+    </Box>
+  ),
+  li: ({ children }) => (
+    <Box
+      component="li"
+      sx={{
+        fontSize: '0.9rem',
+        lineHeight: 1.8,
+        color: 'text.secondary',
+        mb: 0.5
+      }}
+    >
+      {children}
+    </Box>
+  ),
+  strong: ({ children }) => (
+    <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>
+      {children}
+    </Box>
+  )
+})
 
 function SummarizeModal({ isOpen, onClose, workspaceId }) {
   const theme = useTheme()
@@ -43,12 +89,10 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
     setLoading(true)
     setError(null)
     setSummary(null)
-
     try {
       const result = await summarizeWorkspaceAPI(workspaceId)
       setSummary(result)
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Error summarizing workspace:', err)
       setError(
         err?.response?.data?.message ||
@@ -67,55 +111,25 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
     onClose()
   }
 
-  const handleRetry = () => {
-    fetchSummary()
-  }
-
-  const modalConfig = {
-    'aria-labelledby': 'summarize-modal-title',
-    closeAfterTransition: true,
-    slots: { backdrop: Backdrop },
-    slotProps: {
-      backdrop: {
-        timeout: 400
-      }
-    }
-  }
-
   const renderSkeletons = () => (
     <Stack spacing={1.5}>
-      <Typography>
+      <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
         This AI summary may take up to a minute. Please wait while we analyze
         your workspace…
       </Typography>
-      <Skeleton variant="text" height={32} width="60%" />
-      <Skeleton variant="text" height={20} width="100%" />
-      <Skeleton variant="text" height={20} width="95%" />
-      <Skeleton variant="text" height={20} width="85%" />
-      <Box sx={{ pt: 1 }}>
-        <Skeleton variant="text" height={20} width="70%" />
-      </Box>
-      <Skeleton variant="text" height={32} width="60%" />
-      <Skeleton variant="text" height={20} width="100%" />
-      <Skeleton variant="text" height={20} width="95%" />
-      <Skeleton variant="text" height={20} width="85%" />
-      <Box sx={{ pt: 1 }}>
-        <Skeleton variant="text" height={20} width="70%" />
-      </Box>
-      <Skeleton variant="text" height={32} width="60%" />
-      <Skeleton variant="text" height={20} width="100%" />
-      <Skeleton variant="text" height={20} width="95%" />
-      <Skeleton variant="text" height={20} width="85%" />
-      <Box sx={{ pt: 1 }}>
-        <Skeleton variant="text" height={20} width="70%" />
-      </Box>
+      {[60, 100, 95, 85, 70, 60, 100, 90, 75].map((w, i) => (
+        <Skeleton
+          key={i}
+          variant="text"
+          height={i % 3 === 0 ? 32 : 20}
+          width={`${w}%`}
+        />
+      ))}
     </Stack>
   )
 
   const renderContent = () => {
-    if (loading) {
-      return renderSkeletons()
-    }
+    if (loading) return renderSkeletons()
 
     if (error) {
       return (
@@ -129,7 +143,7 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
           </Alert>
           <Button
             variant="contained"
-            onClick={handleRetry}
+            onClick={fetchSummary}
             sx={{
               borderRadius: '12px',
               textTransform: 'none',
@@ -143,15 +157,11 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
     }
 
     if (summary) {
-      const summaryData = typeof summary === 'string' ? { summary } : summary
-      const { summary: summaryText, insights, risks, suggestions } = summaryData
-
       return (
-        <Stack spacing={2.5}>
-          {/* Success Alert */}
+        <Stack spacing={2}>
           <Stack
             direction="row"
-            alignItems="flex-start"
+            alignItems="center"
             spacing={1.5}
             sx={{
               p: 2,
@@ -163,289 +173,28 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
             }}
           >
             <CheckCircleOutlineIcon
-              sx={{
-                color: 'success.main',
-                mt: 0.5,
-                flexShrink: 0
-              }}
+              sx={{ color: 'success.main', flexShrink: 0 }}
             />
-            <Typography
-              sx={{
-                color: 'success.dark',
-                fontSize: '0.95rem',
-                lineHeight: 1.6
-              }}
-            >
+            <Typography sx={{ color: 'success.dark', fontSize: '0.9rem' }}>
               Summary generated successfully
             </Typography>
           </Stack>
 
-          {/* Summary Section */}
-          {summaryText && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2.5,
-                borderRadius: '12px',
-                bgcolor: isDark
-                  ? alpha(theme.palette.common.white, 0.04)
-                  : alpha(theme.palette.primary.main, 0.02),
-                border: `1px solid ${theme.palette.divider}`
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: '0.95rem',
-                  color: 'text.primary',
-                  mb: 1.5
-                }}
-              >
-                📋 Summary
-              </Typography>
-              <Typography
-                sx={{
-                  fontSize: '0.9rem',
-                  lineHeight: 1.8,
-                  color: 'text.secondary',
-                  whiteSpace: 'pre-wrap',
-                  wordBreak: 'break-word'
-                }}
-              >
-                {summaryText}
-              </Typography>
-            </Paper>
-          )}
-
-          {/* Insights Section */}
-          {insights && Array.isArray(insights) && insights.length > 0 && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2.5,
-                borderRadius: '12px',
-                bgcolor: isDark
-                  ? alpha(theme.palette.info.main, 0.05)
-                  : alpha(theme.palette.info.main, 0.03),
-                border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: '0.95rem',
-                  color: 'text.primary',
-                  mb: 1.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <LightbulbIcon sx={{ fontSize: 20, color: 'info.main' }} />
-                Insights
-              </Typography>
-              <List sx={{ p: 0 }}>
-                {insights.map((insight, idx) => (
-                  <Box key={idx}>
-                    <ListItem
-                      sx={{
-                        py: 1.5,
-                        px: 0,
-                        alignItems: 'flex-start'
-                      }}
-                    >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 32,
-                          mt: 0.25,
-                          color: 'info.main'
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: '50%',
-                            bgcolor: 'info.main'
-                          }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Typography
-                            sx={{
-                              fontSize: '0.9rem',
-                              lineHeight: 1.6,
-                              color: 'text.primary'
-                            }}
-                          >
-                            {insight}
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                    {idx < insights.length - 1 && <Divider sx={{ my: 0 }} />}
-                  </Box>
-                ))}
-              </List>
-            </Paper>
-          )}
-
-          {/* Risks Section */}
-          {risks && Array.isArray(risks) && risks.length > 0 && (
-            <Paper
-              elevation={0}
-              sx={{
-                p: 2.5,
-                borderRadius: '12px',
-                bgcolor: isDark
-                  ? alpha(theme.palette.warning.main, 0.05)
-                  : alpha(theme.palette.warning.main, 0.03),
-                border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`
-              }}
-            >
-              <Typography
-                sx={{
-                  fontWeight: 800,
-                  fontSize: '0.95rem',
-                  color: 'text.primary',
-                  mb: 1.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1
-                }}
-              >
-                <WarningAmberIcon
-                  sx={{ fontSize: 20, color: 'warning.main' }}
-                />
-                Risks
-              </Typography>
-              <List sx={{ p: 0 }}>
-                {risks.map((risk, idx) => (
-                  <Box key={idx}>
-                    <ListItem
-                      sx={{
-                        py: 1.5,
-                        px: 0,
-                        alignItems: 'flex-start'
-                      }}
-                    >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 32,
-                          mt: 0.25,
-                          color: 'warning.main'
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 6,
-                            height: 6,
-                            borderRadius: '50%',
-                            bgcolor: 'warning.main'
-                          }}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Typography
-                            sx={{
-                              fontSize: '0.9rem',
-                              lineHeight: 1.6,
-                              color: 'text.primary'
-                            }}
-                          >
-                            {risk}
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                    {idx < risks.length - 1 && <Divider sx={{ my: 0 }} />}
-                  </Box>
-                ))}
-              </List>
-            </Paper>
-          )}
-
-          {/* Suggestions Section */}
-          {suggestions &&
-            Array.isArray(suggestions) &&
-            suggestions.length > 0 && (
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2.5,
-                  borderRadius: '12px',
-                  bgcolor: isDark
-                    ? alpha(theme.palette.success.main, 0.05)
-                    : alpha(theme.palette.success.main, 0.03),
-                  border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    color: 'text.primary',
-                    mb: 1.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1
-                  }}
-                >
-                  <TipsAndUpdatesIcon
-                    sx={{ fontSize: 20, color: 'success.main' }}
-                  />
-                  Suggestions
-                </Typography>
-                <List sx={{ p: 0 }}>
-                  {suggestions.map((suggestion, idx) => (
-                    <Box key={idx}>
-                      <ListItem
-                        sx={{
-                          py: 1.5,
-                          px: 0,
-                          alignItems: 'flex-start'
-                        }}
-                      >
-                        <ListItemIcon
-                          sx={{
-                            minWidth: 32,
-                            mt: 0.25,
-                            color: 'success.main'
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: '50%',
-                              bgcolor: 'success.main'
-                            }}
-                          />
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={
-                            <Typography
-                              sx={{
-                                fontSize: '0.9rem',
-                                lineHeight: 1.6,
-                                color: 'text.primary'
-                              }}
-                            >
-                              {suggestion}
-                            </Typography>
-                          }
-                        />
-                      </ListItem>
-                      {idx < suggestions.length - 1 && (
-                        <Divider sx={{ my: 0 }} />
-                      )}
-                    </Box>
-                  ))}
-                </List>
-              </Paper>
-            )}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: '12px',
+              bgcolor: isDark
+                ? alpha(theme.palette.common.white, 0.04)
+                : alpha(theme.palette.primary.main, 0.02),
+              border: `1px solid ${theme.palette.divider}`
+            }}
+          >
+            <ReactMarkdown components={MarkdownComponents(theme, isDark)}>
+              {summary}
+            </ReactMarkdown>
+          </Paper>
         </Stack>
       )
     }
@@ -454,7 +203,14 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
   }
 
   return (
-    <Modal open={isOpen} onClose={handleClose} {...modalConfig}>
+    <Modal
+      open={isOpen}
+      onClose={handleClose}
+      aria-labelledby="summarize-modal-title"
+      closeAfterTransition
+      slots={{ backdrop: Backdrop }}
+      slotProps={{ backdrop: { timeout: 400 } }}
+    >
       <Fade in={isOpen}>
         <Box
           sx={{
@@ -483,17 +239,15 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
               py: 2.25,
               color: 'white',
               background: isDark
-              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.20)}, transparent 48%)`
-              : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
+                ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, transparent 48%)`
+                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
             }}
           >
-
             <Stack
               direction="row"
               alignItems="flex-start"
               justifyContent="space-between"
               spacing={2}
-              sx={{ position: 'relative', zIndex: 1 }}
             >
               <Stack direction="row" spacing={1.25} alignItems="center">
                 <Box
@@ -509,7 +263,6 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                 >
                   <AutoAwesomeIcon sx={{ color: '#f0f4ff', fontSize: 22 }} />
                 </Box>
-
                 <Box>
                   <Typography
                     id="summarize-modal-title"
@@ -525,8 +278,7 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                     sx={{
                       mt: 0.25,
                       color: 'rgba(255,255,255,0.72)',
-                      fontSize: '0.82rem',
-                      lineHeight: 1.5
+                      fontSize: '0.82rem'
                     }}
                   >
                     {loading
@@ -535,7 +287,6 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                   </Typography>
                 </Box>
               </Stack>
-
               <IconButton
                 onClick={handleClose}
                 size="small"
@@ -568,12 +319,10 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                 px: { xs: 2.25, sm: 3 },
                 pb: { xs: 2.25, sm: 3 },
                 display: 'flex',
-                gap: 1.5,
                 justifyContent: 'flex-end'
               }}
             >
               <Button
-                type="button"
                 variant="outlined"
                 onClick={handleClose}
                 sx={{

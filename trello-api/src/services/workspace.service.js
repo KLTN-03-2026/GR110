@@ -71,36 +71,40 @@ const generateWorkspaceViewerRole = ({ workspaceId }) => {
 }
 
 const buildWorkspaceSummaryPrompt = (workspaceName, boards) => `
-You are a project management analyst.
-
-Return the result in JSON.
+You are a project management analyst for TaskIO, a Trello-like task management app.
 
 Workspace: "${workspaceName}"
 
-Boards overview:
+Boards:
 ${boards
   .map(
-    (b, i) => `
-Board ${i + 1}:
-- Title: ${b.title}
-- Columns: ${b.columnCount}
-- Cards: ${b.cardCount}
-- Cards with description: ${b.describedCards}
-- Cards without description: ${b.undocumentedCards}
-- Tasks completed: ${b.tasksDone}/${b.tasksTotal}
-- Overdue cards: ${b.overdueCards}
-- Sample cards: ${b.sampleCards.join(', ')}
-`
+    (b, i) =>
+      `${i + 1}. ${b.title} — ${b.cardCount} cards, ${b.tasksDone}/${b.tasksTotal} tasks done, ${b.overdueCards} overdue cards, ${b.overdueTasksCount} overdue tasks, ${b.undocumentedCards} undocumented`
   )
   .join('\n')}
 
-JSON format:
-{
-  "summary": "...",
-  "insights": ["..."],
-  "risks": ["..."],
-  "suggestions": ["..."]
-}
+Write a detailed workspace summary in English using exactly these sections:
+
+## Overview
+2–3 sentences. Describe what this workspace is about based on the board titles, the overall scale (number of boards and cards), and the general state of work.
+
+## Progress
+Break down task completion per board and overall. Include done/total counts and percentages. Highlight boards that are ahead or behind.
+
+## Overdue Cards
+List boards that have overdue cards with their counts. If none, write "No overdue cards."
+
+## Key Insights
+3–5 bullet points covering notable patterns, risks, or opportunities. Examples: boards with low documentation, high overdue rates, stalled progress, or boards close to completion.
+
+## Suggestions
+3 concrete, actionable recommendations based on the data to help the team improve.
+
+Rules:
+- ~300 words total
+- No emojis or icons
+- Do not invent data not present in the input
+- Professional, concise tone suitable for a team lead
 `
 
 const WORKSPACE_SUMMARY_SCHEMA = Joi.object({
@@ -833,74 +837,66 @@ class WorkspaceService {
     return updatedMember
   }
 
-  static summarize = async ({ workspaceId }) => {
+  static summarize = async ({ workspaceAccess, workspaceId }) => {
     const boards = await BoardRepo.findMany({ filter: { workspaceId } })
 
-    const signals = []
+    const signals = await Promise.all(
+      boards.map(async (board) => {
+        const boardId = board._id.toString()
 
-    for (const board of boards) {
-      const boardId = board._id.toString()
+        const [columnCount, cards, taskAgg, overdueCards, overdueTasksCount] =
+          await Promise.all([
+            ColumnRepo.count({ filter: { boardId } }),
+            CardRepo.findMany({
+              filter: { boardId, status: 'active' },
+              options: { limit: 50 }
+            }),
+            TaskRepo.aggregateTaskStats([
+              { $match: { boardId } },
+              {
+                $group: {
+                  _id: null,
+                  total: { $sum: 1 },
+                  done: { $sum: { $cond: ['$isCompleted', 1, 0] } }
+                }
+              }
+            ]),
+            CardRepo.count({
+              filter: { boardId, dueAt: { $lt: new Date() }, status: 'active' }
+            }),
+            TaskRepo.count({
+              filter: {
+                boardId,
+                dueAt: { $lt: new Date() },
+                isCompleted: false
+              }
+            })
+          ])
 
-      const columnCount = await ColumnRepo.count({ filter: { boardId } })
+        const cardCount = cards.length
+        const describedCards = cards.filter((c) => c.isHasDescription).length
 
-      const cards = await CardRepo.findMany({
-        filter: { boardId, status: 'active' },
-        options: { limit: 50 }
-      })
-
-      const cardCount = cards.length
-      const describedCards = cards.filter((c) => c.isHasDescription).length
-      const undocumentedCards = cardCount - describedCards
-      const sampleCards = cards.slice(0, 5).map((c) => c.title)
-
-      const taskAgg = await TaskRepo.aggregateTaskStats([
-        { $match: { boardId } },
-        {
-          $group: {
-            _id: null,
-            total: { $sum: 1 },
-            done: { $sum: { $cond: ['$isCompleted', 1, 0] } }
-          }
+        return {
+          title: board.title,
+          columnCount,
+          cardCount,
+          describedCards,
+          undocumentedCards: cardCount - describedCards,
+          tasksDone: taskAgg[0]?.done || 0,
+          tasksTotal: taskAgg[0]?.total || 0,
+          overdueCards,
+          overdueTasksCount,
+          sampleCards: cards.slice(0, 5).map((c) => c.title)
         }
-      ])
-
-      const tasksTotal = taskAgg[0]?.total || 0
-      const tasksDone = taskAgg[0]?.done || 0
-
-      const overdueCards = await CardRepo.count({
-        filter: {
-          boardId,
-          dueAt: { $lt: new Date() },
-          status: 'active'
-        }
       })
-
-      signals.push({
-        title: board.title,
-        columnCount,
-        cardCount,
-        describedCards,
-        undocumentedCards,
-        tasksDone,
-        tasksTotal,
-        overdueCards,
-        sampleCards
-      })
-    }
-
-    const prompt = buildWorkspaceSummaryPrompt('Workspace', signals)
-
-    const raw = await invokeOpenAIModel({ prompt, json: true })
-    const parsed = JSON.parse(raw)
-
-    const summarizeContent = await WORKSPACE_SUMMARY_SCHEMA.validateAsync(
-      parsed,
-      {
-        abortEarly: false
-      }
     )
 
-    return summarizeContent
+    const prompt = buildWorkspaceSummaryPrompt(
+      workspaceAccess.workspace.title,
+      signals
+    )
+
+    return invokeOpenAIModel({ prompt, json: false })
   }
 
   static fetchPlans = async ({ workspaceId }) => {
@@ -1037,30 +1033,30 @@ class WorkspaceService {
 
       boardIds.length
         ? BoardRoleRepo.findMany({
-          filter: { boardId: { $in: boardIds }, isDefault: false },
-          options: { projection: { boardId: 1 } }
-        })
+            filter: { boardId: { $in: boardIds }, isDefault: false },
+            options: { projection: { boardId: 1 } }
+          })
         : [],
 
       boardIds.length
         ? ColumnRepo.findMany({
-          filter: { boardId: { $in: boardIds } },
-          options: { projection: { boardId: 1 } }
-        })
+            filter: { boardId: { $in: boardIds } },
+            options: { projection: { boardId: 1 } }
+          })
         : [],
 
       boardIds.length
         ? CardRepo.findMany({
-          filter: { boardId: { $in: boardIds } },
-          options: {
-            projection: {
-              _id: 1,
-              boardId: 1,
-              commentCount: 1,
-              taskCount: 1
+            filter: { boardId: { $in: boardIds } },
+            options: {
+              projection: {
+                _id: 1,
+                boardId: 1,
+                commentCount: 1,
+                taskCount: 1
+              }
             }
-          }
-        })
+          })
         : []
     ])
 
