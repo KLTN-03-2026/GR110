@@ -19,28 +19,28 @@ function getAccent(confirmColor, theme) {
     case 'error':
       return {
         icon: <ErrorRoundedIcon sx={{ fontSize: 28 }} />,
-        bgColor: alpha(theme.palette.error.main, isDark ? 0.18 : 0.10),
+        bgColor: alpha(theme.palette.error.main, isDark ? 0.18 : 0.1),
         iconColor: theme.palette.error.main,
         stripColor: theme.palette.error.main
       }
     case 'warning':
       return {
         icon: <WarningAmberRoundedIcon sx={{ fontSize: 28 }} />,
-        bgColor: alpha(theme.palette.warning.main, isDark ? 0.18 : 0.10),
+        bgColor: alpha(theme.palette.warning.main, isDark ? 0.18 : 0.1),
         iconColor: theme.palette.warning.main,
         stripColor: theme.palette.warning.main
       }
     case 'success':
       return {
         icon: <CheckCircleRoundedIcon sx={{ fontSize: 28 }} />,
-        bgColor: alpha(theme.palette.success.main, isDark ? 0.18 : 0.10),
+        bgColor: alpha(theme.palette.success.main, isDark ? 0.18 : 0.1),
         iconColor: theme.palette.success.main,
         stripColor: theme.palette.success.main
       }
     default:
       return {
         icon: <InfoRoundedIcon sx={{ fontSize: 28 }} />,
-        bgColor: alpha(theme.palette.primary.main, isDark ? 0.18 : 0.10),
+        bgColor: alpha(theme.palette.primary.main, isDark ? 0.18 : 0.1),
         iconColor: theme.palette.primary.main,
         stripColor: `linear-gradient(90deg, #1d4ed8, #38bdf8)`
       }
@@ -64,23 +64,23 @@ function ConfirmDialog({
 
   /* Confirm button gradient per color */
   const confirmGradient = {
-    error:   'linear-gradient(135deg, #b91c1c, #ef4444)',
+    error: 'linear-gradient(135deg, #b91c1c, #ef4444)',
     warning: 'linear-gradient(135deg, #b45309, #f59e0b)',
     success: 'linear-gradient(135deg, #15803d, #22c55e)',
     primary: 'linear-gradient(135deg, #1d4ed8, #2563eb)',
-    info:    'linear-gradient(135deg, #0369a1, #0ea5e9)'
+    info: 'linear-gradient(135deg, #0369a1, #0ea5e9)'
   }
 
   const confirmShadow = {
-    error:   'rgba(239,68,68,0.35)',
+    error: 'rgba(239,68,68,0.35)',
     warning: 'rgba(245,158,11,0.35)',
     success: 'rgba(34,197,94,0.35)',
     primary: 'rgba(37,99,235,0.35)',
-    info:    'rgba(14,165,233,0.35)'
+    info: 'rgba(14,165,233,0.35)'
   }
 
   const gradient = confirmGradient[confirmColor] || confirmGradient.primary
-  const shadow   = confirmShadow[confirmColor]   || confirmShadow.primary
+  const shadow = confirmShadow[confirmColor] || confirmShadow.primary
 
   return (
     <Dialog
@@ -102,12 +102,16 @@ function ConfirmDialog({
       <Box
         sx={{
           height: 5,
-          background: typeof accent.stripColor === 'string' && accent.stripColor.startsWith('linear')
-            ? accent.stripColor
-            : accent.stripColor,
-          bgcolor: typeof accent.stripColor === 'string' && !accent.stripColor.startsWith('linear')
-            ? accent.stripColor
-            : undefined
+          background:
+            typeof accent.stripColor === 'string' &&
+            accent.stripColor.startsWith('linear')
+              ? accent.stripColor
+              : accent.stripColor,
+          bgcolor:
+            typeof accent.stripColor === 'string' &&
+            !accent.stripColor.startsWith('linear')
+              ? accent.stripColor
+              : undefined
         }}
       />
 
@@ -178,9 +182,9 @@ function ConfirmDialog({
           disabled={loading}
           variant="contained"
           startIcon={
-            loading
-              ? <CircularProgress size={15} sx={{ color: 'inherit' }} />
-              : null
+            loading ? (
+              <CircularProgress size={15} sx={{ color: 'inherit' }} />
+            ) : null
           }
           sx={{
             textTransform: 'none',

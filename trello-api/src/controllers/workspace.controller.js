@@ -146,6 +146,7 @@ class WorkspaceController {
   static summarize = async (req, res) => {
     new OkSuccessResponse({
       metadata: await WorkspaceService.summarize({
+        workspaceAccess: req.workspaceAccess,
         workspaceId: req.params.workspaceId
       })
     }).send(res)
