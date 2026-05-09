@@ -50,7 +50,7 @@ function LoginForm() {
         pending: 'Logging in ...'
       })
       .then((res) => {
-        if (!res.error) navigate('/h')
+        if (!res.error) navigate('/h/introduction')
       })
   }
 

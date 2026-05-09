@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { fetchAdminUsersAPI, updateBlockUserAPI } from '~/apis/adminUser.api'
+import { deleteAdminAccountAPI, fetchAdminUsersAPI, updateBlockUserAPI } from '~/apis/adminUser.api'
 
 export const useAdminUser = () => {
   const navigate = useNavigate()
@@ -115,9 +115,9 @@ export const useAdminUser = () => {
     setSelectedUser(null)
   }, [])
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!selectedUser) return
-
+    await deleteAdminAccountAPI({userId: selectedUser._id})
     setUsers((prev) => prev.filter((item) => item._id !== selectedUser._id))
     setDeleteModalOpen(false)
     setSelectedUser(null)

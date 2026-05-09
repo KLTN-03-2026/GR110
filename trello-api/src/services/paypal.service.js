@@ -8,13 +8,10 @@ import {
 } from '~/core/error.response'
 import { sendUpgradePaymentSuccessMail } from '~/helpers/sendMailPayment'
 import { deleteActiveSubscriptionCache } from '~/helpers/subscription.cache'
-import { sendEmailService } from '~/providers/NodeMailer'
 import { emitPayment } from '~/realtime/realtimeEmitters/payment.emitter'
 import PaymentRepo from '~/repo/payment.repo'
 import SubscriptionRepo from '~/repo/subscription.repo'
 import TransactionRepo from '~/repo/transaction.repo'
-import UserRepo from '~/repo/user.repo'
-import WorkspaceRepo from '~/repo/workspace.repo'
 
 class PaypalService {
   static createOrderPaypal = async ({ subscriptionId, payment }) => {

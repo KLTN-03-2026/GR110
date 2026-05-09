@@ -100,7 +100,6 @@ class AdminAuthService {
     }
     return pickUser(updatedAdmin)
   }
-
 }
 
 export default AdminAuthService

@@ -1,7 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import ms from 'ms'
 import { env } from '~/config/environment'
-import UserService from '~/services/user.service'
 import {
   OkSuccessResponse
 } from '~/core/success.response'
@@ -14,14 +13,14 @@ class AdminAuthController {
     res.cookie('accessTokenAdmin', result.accessTokenAdmin, {
       httpOnly: true,
       secure: true,
-      sampleSite: 'none',
+      sameSite: 'none',
       maxAge: ms(env.ACCESS_TOKEN_LIFE)
     })
 
     res.cookie('refreshTokenAdmin', result.refreshTokenAdmin, {
       httpOnly: true,
       secure: true,
-      sampleSite: 'none',
+      sameSite: 'none',
       maxAge: ms(env.REFRESH_TOKEN_LIFE)
     })
 
@@ -45,7 +44,7 @@ class AdminAuthController {
     res.cookie('accessTokenAdmin', result.accessTokenAdmin, {
       httpOnly: true,
       secure: true,
-      sampleSite: 'none',
+      sameSite: 'none',
       maxAge: ms(env.REFRESH_TOKEN_LIFE)
     })
     res.status(StatusCodes.OK).json({ result })

@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  Avatar,
   Box,
   Button,
   FormControl,
@@ -12,28 +11,15 @@ import {
   Typography
 } from '@mui/material'
 import { Controller, useForm } from 'react-hook-form'
-import { styled } from '@mui/material/styles'
-import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
 import { updateAdminUserApi } from '~/apis/adminUser.api'
 import { useParams } from 'react-router-dom'
+import { FIELD_REQUIRED_MESSAGE, PASSWORD_RULE, PASSWORD_RULE_MESSAGE } from '~/utils/validators'
 
 const roleOptions = [
   { label: 'Client', value: 'client' },
   { label: 'Admin', value: 'admin' }
 ]
-
-const VisuallyHiddenInput = styled('input')({
-  clip: 'rect(0 0 0 0)',
-  clipPath: 'inset(50%)',
-  height: 1,
-  overflow: 'hidden',
-  position: 'absolute',
-  bottom: 0,
-  left: 0,
-  whiteSpace: 'nowrap',
-  width: 1
-})
 
 const inputSx = {
   '& .MuiInputLabel-root': {
@@ -82,7 +68,6 @@ export default function UpdateUserForm({ initialData }) {
     register,
     handleSubmit,
     control,
-    watch,
     reset,
     formState: { errors }
   } = useForm({
@@ -196,10 +181,8 @@ export default function UpdateUserForm({ initialData }) {
             variant="outlined"
             error={!!errors.password}
             {...register('password', {
-              minLength: {
-                value: 6,
-                message: 'Password must be at least 6 characters'
-              }
+              required: FIELD_REQUIRED_MESSAGE,
+              pattern: { value: PASSWORD_RULE, message: PASSWORD_RULE_MESSAGE }
             })}
             sx={inputSx}
           />

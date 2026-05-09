@@ -23,7 +23,7 @@ export default class AdminTicketController {
       metadata: await AdminTicketService.replyTicket({
         ticketId,
         replyContent: req.body.replyContent,
-        adminId: req.user?._id?.toString?.() || ''
+        adminId: req.userContex?._id?.toString?.() || ''
       })
     }).send(res)
   }

@@ -33,6 +33,11 @@ const update = Joi.object({
   if (!hasCurrent) return helpers.message('Current password is required')
   if (!hasNew) return helpers.message('New password is required')
   if (!hasConfirm) return helpers.message('Confirm password is required')
+
+  if (!PASSWORD_RULE.test(data.newPassword)) {
+    return helpers.message(PASSWORD_RULE_MESSAGE)
+  }
+
   if (data.newPassword !== data.confirmPassword) {
     return helpers.message('Confirm password does not match')
   }

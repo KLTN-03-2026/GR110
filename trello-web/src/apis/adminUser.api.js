@@ -31,3 +31,9 @@ export const createAdminAccountAPI = async ({ userData }) => {
   toast.success('Admin account created successfully!')
   return response.data.metadata
 }
+
+export const deleteAdminAccountAPI = async ({ userId }) => {
+  const response = await authorizeAdminAxiosInstance.delete(`${API_ROOT}/v1/admin/users/${userId}`)
+  toast.success('Admin account deleted successfully!')
+  return response.data.metadata
+}

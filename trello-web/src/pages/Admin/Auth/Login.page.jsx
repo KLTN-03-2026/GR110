@@ -21,6 +21,7 @@ import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
 import { loginAdminApi } from '~/redux/adminUser/adminSlice'
 import { toast } from 'react-toastify'
 import { useDispatch } from 'react-redux'
+import { FIELD_REQUIRED_MESSAGE, PASSWORD_RULE, PASSWORD_RULE_MESSAGE } from '~/utils/validators'
 
 /* ── Brand token ── */
 const ORANGE = '#ea6b3d'
@@ -73,7 +74,7 @@ export default function LoginPage() {
       toast
         .promise(dispatch(loginAdminApi(data)), { pending: 'Signing in…' })
         .then((res) => {
-          if (!res.error) navigate('/admin/user')
+          if (!res.error) navigate('/admin/dashboard')
         })
     } catch {
       setSubmitError('Invalid email or password')
@@ -327,8 +328,11 @@ export default function LoginPage() {
                     )
                   }}
                   {...register('password', {
-                    required: 'Password is required',
-                    minLength: { value: 6, message: 'Password must be at least 6 characters' }
+                    required: FIELD_REQUIRED_MESSAGE,
+                    pattern: {
+                      value: PASSWORD_RULE,
+                      message: PASSWORD_RULE_MESSAGE
+                    }
                   })}
                   sx={inputSx}
                 />

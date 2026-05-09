@@ -13,7 +13,7 @@ const BOARD_MEMBER_COLLECTION_SCHEMA = Joi.object({
   workspaceMemberId: Joi.string()
     .pattern(OBJECT_ID_RULE)
     .message(OBJECT_ID_RULE_MESSAGE)
-    .default(null),
+    .required(),
 
   boardRoleId: Joi.string()
     .pattern(OBJECT_ID_RULE)
