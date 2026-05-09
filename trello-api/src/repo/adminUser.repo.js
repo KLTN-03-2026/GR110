@@ -81,6 +81,14 @@ class UserRepo {
       .limit(limit)
       .toArray()
   }
+
+  static deleteById = async ({ _id }) => {
+    const result = await GET_DB()
+      .collection(userModel.USER_COLLECTION_NAME)
+      .deleteOne({ _id: new ObjectId(_id) })
+
+    return result
+  }
 }
 
 export default UserRepo

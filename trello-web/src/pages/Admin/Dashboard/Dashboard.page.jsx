@@ -6,6 +6,12 @@ import {
   Grid,
   Paper,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Typography
 } from '@mui/material'
@@ -141,11 +147,13 @@ export default function DashboardPage() {
     kpiCards,
     userSeries,
     upgradeSeries,
+    revenueSeries,
     summary
   } = useAdminDashboard()
 
   const userDailySeries = userSeries.map((item) => Number(item?.count || 0))
   const upgradeDailySeries = upgradeSeries.map((item) => Number(item?.count || 0))
+  const revenueDailySeries = revenueSeries.map((item) => Number(item?.amount || 0))
   const conversionSeries = userSeries.map((item, index) => {
     const users = Number(item?.count || 0)
     const upgrades = Number(upgradeSeries[index]?.count || 0)
@@ -165,16 +173,26 @@ export default function DashboardPage() {
   const totalPaymentAttempts =
     Number(summary.currentPeriodPaidPayments || 0) +
     Number(summary.currentPeriodFailedPayments || 0)
-  const failedPaymentRate =
-    totalPaymentAttempts > 0
-      ? Number(
-          ((summary.currentPeriodFailedPayments / totalPaymentAttempts) * 100).toFixed(2)
-        )
-      : 0
+  const failedPaymentRate = totalPaymentAttempts > 0
+    ? Number(((summary.currentPeriodFailedPayments / totalPaymentAttempts) * 100).toFixed(2))
+    : 0
   const avgPaidPaymentsPerDay =
     period.rangeDays > 0
       ? Number((summary.currentPeriodPaidPayments / period.rangeDays).toFixed(2))
       : 0
+  const successfulUpgradeByPlan = summary.successfulUpgradeByPlan || []
+  const totalPlanUpgradeSuccess = successfulUpgradeByPlan.reduce(
+    (acc, item) => acc + Number(item?.count || 0),
+    0
+  )
+
+  const formatUSD = (amount) =>
+    Number(amount || 0).toLocaleString('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })
 
   const quickStats = [
     { title: 'Total Users', value: summary.totalUsers.toLocaleString('en-US') },
@@ -193,6 +211,14 @@ export default function DashboardPage() {
     {
       title: `Average Daily Upgrades (${period.rangeDays}d)`,
       value: summary.averageDailyUpgrades.toLocaleString('en-US')
+    },
+    {
+      title: `Revenue in Period (${period.rangeDays}d)`,
+      value: formatUSD(summary.currentPeriodRevenue)
+    },
+    {
+      title: 'Successful Upgrades by Plan',
+      value: totalPlanUpgradeSuccess.toLocaleString('en-US')
     }
   ]
 
@@ -388,7 +414,7 @@ export default function DashboardPage() {
           </Grid>
         ))}
 
-        <Grid item xs={12} lg={6}>
+        <Grid item xs={12} lg={4}>
           <Paper
             elevation={0}
             sx={{ p: 2.4, borderRadius: '14px', border: '1px solid var(--card-border)' }}
@@ -410,7 +436,7 @@ export default function DashboardPage() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} lg={6}>
+        <Grid item xs={12} lg={4}>
           <Paper
             elevation={0}
             sx={{ p: 2.4, borderRadius: '14px', border: '1px solid var(--card-border)' }}
@@ -429,6 +455,28 @@ export default function DashboardPage() {
               </Typography>
             </Stack>
             <MiniBarChart points={upgradeDailySeries} barColor='#f97316' height={170} />
+          </Paper>
+        </Grid>
+
+        <Grid item xs={12} lg={4}>
+          <Paper
+            elevation={0}
+            sx={{ p: 2.4, borderRadius: '14px', border: '1px solid var(--card-border)' }}
+          >
+            <Stack direction='row' justifyContent='space-between' alignItems='center'>
+              <Box>
+                <Typography sx={{ fontSize: '18px', fontWeight: 700, color: '#111827' }}>
+                  Daily Revenue (USD)
+                </Typography>
+                <Typography sx={{ fontSize: '13px', color: '#64748b' }}>
+                  Last {period.rangeDays} days trend
+                </Typography>
+              </Box>
+              <Typography sx={{ fontSize: '15px', fontWeight: 700, color: '#16a34a' }}>
+                {loading ? '--' : `${formatUSD(summary.totalRevenueSeries)} total`}
+              </Typography>
+            </Stack>
+            <MiniBarChart points={revenueDailySeries} barColor='#16a34a' height={170} />
           </Paper>
         </Grid>
 
@@ -541,6 +589,30 @@ export default function DashboardPage() {
               </Stack>
               <Stack direction='row' justifyContent='space-between'>
                 <Typography sx={{ fontSize: '13px', color: '#64748b' }}>
+                  Revenue in Period
+                </Typography>
+                <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                  {loading ? '--' : formatUSD(summary.currentPeriodRevenue)}
+                </Typography>
+              </Stack>
+              <Stack direction='row' justifyContent='space-between'>
+                <Typography sx={{ fontSize: '13px', color: '#64748b' }}>
+                  Revenue Growth
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    color: summary.revenueGrowthPercent >= 0 ? '#16a34a' : '#dc2626'
+                  }}
+                >
+                  {loading
+                    ? '--'
+                    : `${summary.revenueGrowthPercent >= 0 ? '+' : ''}${summary.revenueGrowthPercent}%`}
+                </Typography>
+              </Stack>
+              <Stack direction='row' justifyContent='space-between'>
+                <Typography sx={{ fontSize: '13px', color: '#64748b' }}>
                   Avg Paid Payments / Day
                 </Typography>
                 <Typography sx={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
@@ -623,6 +695,65 @@ export default function DashboardPage() {
         <Grid item xs={12}>
           <Paper
             elevation={0}
+            sx={{ p: 2.1, borderRadius: '14px', border: '1px solid var(--card-border)', mb: 2 }}
+          >
+            <Typography sx={{ fontSize: '18px', fontWeight: 700, color: '#111827' }}>
+              Successful Upgrades by Plan
+            </Typography>
+            <Typography sx={{ fontSize: '13px', color: '#64748b', mb: 1.2 }}>
+              Number of successful upgrades in selected period ({period.rangeDays} days)
+            </Typography>
+            {!loading && successfulUpgradeByPlan.length === 0 ? (
+              <Typography sx={{ fontSize: '13px', color: '#64748b' }}>
+                No successful upgrades in this period.
+              </Typography>
+            ) : (
+              <TableContainer>
+                <Table
+                  size='small'
+                  sx={{
+                    '& .MuiTableCell-root': {
+                      color: '#0f172a',
+                      borderColor: '#e2e8f0'
+                    },
+                    '& .MuiTableHead-root .MuiTableCell-root': {
+                      fontWeight: 700,
+                      bgcolor: '#f8fafc'
+                    },
+                    '& .MuiTableBody-root .MuiTableRow-root:last-of-type .MuiTableCell-root': {
+                      bgcolor: '#f8fafc'
+                    }
+                  }}
+                >
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Plan</TableCell>
+                      <TableCell align='right'>Successful Upgrades</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(loading ? new Array(3).fill(null) : successfulUpgradeByPlan).map((item, index) => (
+                      <TableRow key={loading ? `loading-${index}` : `${item.planId}-${index}`}>
+                        <TableCell>{loading ? '--' : item.planTitle}</TableCell>
+                        <TableCell align='right'>
+                          {loading ? '--' : Number(item.count || 0).toLocaleString('en-US')}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow sx={{ bgcolor: '#f8fafc' }}>
+                      <TableCell sx={{ fontWeight: 800 }}>Total</TableCell>
+                      <TableCell align='right' sx={{ fontWeight: 800 }}>
+                        {loading ? '--' : totalPlanUpgradeSuccess.toLocaleString('en-US')}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Paper>
+
+          <Paper
+            elevation={0}
             sx={{ p: 2.1, borderRadius: '14px', border: '1px solid var(--card-border)' }}
           >
             <Typography sx={{ fontSize: '18px', fontWeight: 700, color: '#111827' }}>
@@ -633,6 +764,7 @@ export default function DashboardPage() {
                 `Users in selected period: ${summary.currentPeriodUsers.toLocaleString('en-US')}`,
                 `Workspace upgrades in selected period: ${summary.currentPeriodUpgrades.toLocaleString('en-US')}`,
                 `Paid payments: ${summary.currentPeriodPaidPayments.toLocaleString('en-US')} | Failed payments: ${summary.currentPeriodFailedPayments.toLocaleString('en-US')}`,
+                `Revenue in selected period: ${formatUSD(summary.currentPeriodRevenue)}`,
                 `Payment success rate: ${summary.paymentSuccessRate}%`
               ].map((text) => (
                 <Grid key={text} item xs={12} md={6}>

@@ -15,6 +15,11 @@ Router.route('/')
 Router.route('/block/:userId').patch(
   asyncHandler(AdminUserController.updateBlockUser)
 )
-Router.route('/:userId').put(asyncHandler(AdminUserController.updateAdminUser))
+Router.route('/:userId')
+  .put(
+    asyncHandler(validate(adminAccountValidation.update)),
+    asyncHandler(AdminUserController.updateAdminUser)
+  )
+  .delete(asyncHandler(AdminUserController.deleteAdminAccount))
 
 export const adminUserRoute = Router

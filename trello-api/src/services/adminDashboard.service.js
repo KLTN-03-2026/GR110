@@ -61,6 +61,21 @@ const buildDailySeries = ({ rawData, startDate, endDate }) => {
   return series
 }
 
+const buildDailyRevenueSeries = ({ rawData, startDate, endDate }) => {
+  const amountMap = new Map(rawData.map((item) => [item.date, Number(item.amount || 0)]))
+  const series = []
+
+  for (let cursor = new Date(startDate); cursor < endDate; cursor = addDays(cursor, 1)) {
+    const date = toDateKey(cursor)
+    series.push({
+      date,
+      amount: Number((amountMap.get(date) || 0).toFixed(2))
+    })
+  }
+
+  return series
+}
+
 class AdminDashboardService {
   static fetchOverview = async ({ data }) => {
     const now = new Date()
@@ -95,6 +110,7 @@ class AdminDashboardService {
     const [
       rawUserDaily,
       rawUpgradeDaily,
+      rawRevenueDaily,
       totalUsers,
       totalWorkspaces,
       totalPaidUpgrades,
@@ -105,13 +121,20 @@ class AdminDashboardService {
       currentPeriodPaidPayments,
       previousPeriodPaidPayments,
       currentPeriodFailedPayments,
-      previousPeriodFailedPayments
+      previousPeriodFailedPayments,
+      currentPeriodRevenue,
+      previousPeriodRevenue,
+      successfulUpgradeByPlan
     ] = await Promise.all([
       AdminDashboardRepo.getUserRegistrationsByDay({
         startDate,
         endDate: endDateExclusive
       }),
       AdminDashboardRepo.getWorkspaceUpgradesByDay({
+        startDate,
+        endDate: endDateExclusive
+      }),
+      AdminDashboardRepo.getRevenueByDay({
         startDate,
         endDate: endDateExclusive
       }),
@@ -149,6 +172,18 @@ class AdminDashboardService {
       AdminDashboardRepo.getFailedPaymentCountByDateRange({
         startDate: previousStartDate,
         endDate: previousEndDateExclusive
+      }),
+      AdminDashboardRepo.getRevenueAmountByDateRange({
+        startDate,
+        endDate: endDateExclusive
+      }),
+      AdminDashboardRepo.getRevenueAmountByDateRange({
+        startDate: previousStartDate,
+        endDate: previousEndDateExclusive
+      }),
+      AdminDashboardRepo.getSuccessfulUpgradeByPlan({
+        startDate,
+        endDate: endDateExclusive
       })
     ])
 
@@ -160,6 +195,12 @@ class AdminDashboardService {
 
     const workspaceUpgradesByDay = buildDailySeries({
       rawData: rawUpgradeDaily,
+      startDate,
+      endDate: endDateExclusive
+    })
+
+    const revenueByDay = buildDailyRevenueSeries({
+      rawData: rawRevenueDaily,
       startDate,
       endDate: endDateExclusive
     })
@@ -206,11 +247,21 @@ class AdminDashboardService {
           current: currentPeriodFailedPayments,
           previous: previousPeriodFailedPayments
         }),
+        currentPeriodRevenue,
+        previousPeriodRevenue,
+        revenueGrowthPercent: calcGrowthPercent({
+          current: currentPeriodRevenue,
+          previous: previousPeriodRevenue
+        }),
         paymentSuccessRate
       },
       charts: {
         userRegistrationsByDay,
-        workspaceUpgradesByDay
+        workspaceUpgradesByDay,
+        revenueByDay
+      },
+      breakdowns: {
+        successfulUpgradeByPlan
       }
     }
   }

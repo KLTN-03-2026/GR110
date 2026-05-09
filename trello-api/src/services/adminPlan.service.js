@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { BadRequestErrorResponse, ErrorResponse, NotFoundErrorResponse } from '~/core/error.response'
+import { BadRequestErrorResponse, NotFoundErrorResponse } from '~/core/error.response'
 import PlanRepo from '~/repo/adminPlan.repo'
 
 class AdminPlanService {
@@ -38,6 +38,8 @@ class AdminPlanService {
   static updateBlockPlan = async ({ planId }) => {
     const plan = await PlanRepo.findById({ _id: planId })
     if (!plan) throw new NotFoundErrorResponse('Plan not found!')
+
+    if(plan._id.toString() === '69dc9cc2454ef403fb52c8ba') throw new BadRequestErrorResponse('The default plan cannot be inactive')
 
     const updatedPlan = await PlanRepo.updateById({
       _id: planId,

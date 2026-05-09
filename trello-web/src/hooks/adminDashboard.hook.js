@@ -19,9 +19,17 @@ const getDefaultToDate = () => toInputDate(new Date())
 const sumSeries = (series = []) =>
   series.reduce((acc, item) => acc + Number(item?.count || 0), 0)
 
+const sumRevenueSeries = (series = []) =>
+  series.reduce((acc, item) => acc + Number(item?.amount || 0), 0)
+
 const averageSeries = (series = []) => {
   if (!series.length) return 0
   return Number((sumSeries(series) / series.length).toFixed(2))
+}
+
+const averageRevenueSeries = (series = []) => {
+  if (!series.length) return 0
+  return Number((sumRevenueSeries(series) / series.length).toFixed(2))
 }
 
 const getPeakAndLow = (series = []) => {
@@ -100,6 +108,8 @@ export default function useAdminDashboard() {
   const summary = dashboardData?.summary || {}
   const userSeries = dashboardData?.charts?.userRegistrationsByDay || []
   const upgradeSeries = dashboardData?.charts?.workspaceUpgradesByDay || []
+  const revenueSeries = dashboardData?.charts?.revenueByDay || []
+  const successfulUpgradeByPlan = dashboardData?.breakdowns?.successfulUpgradeByPlan || []
   const period = dashboardData?.period || {
     fromDate: queryFromDate,
     toDate: queryToDate,
@@ -138,17 +148,23 @@ export default function useAdminDashboard() {
       ),
       paidPaymentGrowthPercent: Number(summary.paidPaymentGrowthPercent || 0),
       failedPaymentGrowthPercent: Number(summary.failedPaymentGrowthPercent || 0),
+      currentPeriodRevenue: Number(summary.currentPeriodRevenue || 0),
+      previousPeriodRevenue: Number(summary.previousPeriodRevenue || 0),
+      revenueGrowthPercent: Number(summary.revenueGrowthPercent || 0),
       conversion,
       totalUserSeries: sumSeries(userSeries),
       totalUpgradeSeries: sumSeries(upgradeSeries),
+      totalRevenueSeries: sumRevenueSeries(revenueSeries),
       averageDailyUsers: averageSeries(userSeries),
       averageDailyUpgrades: averageSeries(upgradeSeries),
+      averageDailyRevenue: averageRevenueSeries(revenueSeries),
       userPeak: userPeakInfo.peak,
       userLow: userPeakInfo.low,
       upgradePeak: upgradePeakInfo.peak,
-      upgradeLow: upgradePeakInfo.low
+      upgradeLow: upgradePeakInfo.low,
+      successfulUpgradeByPlan
     }
-  }, [summary, userSeries, upgradeSeries])
+  }, [summary, userSeries, upgradeSeries, revenueSeries, successfulUpgradeByPlan])
 
   const kpiCards = useMemo(
     () => [
@@ -221,6 +237,7 @@ export default function useAdminDashboard() {
     kpiCards,
     userSeries,
     upgradeSeries,
+    revenueSeries,
     summary: derived
   }
 }

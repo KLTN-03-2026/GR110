@@ -19,6 +19,33 @@ const create = Joi.object({
   username: Joi.string().required().trim().strict()
 })
 
+const update = Joi.object({
+  avatar: Joi.string().allow(null).default(null),
+
+  email: Joi.string()
+    .optional()
+    .pattern(EMAIL_RULE)
+    .message(EMAIL_RULE_MESSAGE),
+
+  password: Joi.string()
+    .optional()
+    .pattern(PASSWORD_RULE)
+    .message(PASSWORD_RULE_MESSAGE),
+
+  displayName: Joi.string().optional().trim().strict(),
+
+  role: Joi.string()
+    .valid(...Object.values(USER_ROLES))
+    .optional(),
+
+  isActive: Joi.boolean().optional(),
+
+  isBlocked: Joi.boolean().optional(),
+
+  username: Joi.string().optional().trim().strict()
+})
+
+
 export const adminAccountValidation = {
-  create
+  create, update
 }

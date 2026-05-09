@@ -30,6 +30,13 @@ class AdminUserController {
     new OkSuccessResponse({
       metadata: await AdminUserService.createAdminAccount({ userData })
     }).send(res)
-    }
+  }
+
+  static deleteAdminAccount = async (req, res) => {
+    const { userId } = req.params
+    new OkSuccessResponse({
+      metadata: await AdminUserService.deleteAdminAccount({ _id: userId })
+    }).send(res)
+  }
 }
 export default AdminUserController

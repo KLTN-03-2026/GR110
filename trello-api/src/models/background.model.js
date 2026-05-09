@@ -22,7 +22,7 @@ const BACKGROUND_COLLECTION_SCHEMA = Joi.object({
     .valid(...BACKGROUND_TYPE),
 
   boardId: Joi.when('type', {
-    is: 'board',
+    is: 'custom',
     then: Joi.string()
       .required()
       .pattern(OBJECT_ID_RULE)

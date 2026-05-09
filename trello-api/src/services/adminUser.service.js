@@ -1,6 +1,6 @@
 import bcryptjs from 'bcryptjs'
 import { ObjectId } from 'mongodb'
-import { NotFoundErrorResponse } from '~/core/error.response'
+import { BadRequestErrorResponse, ErrorResponse, ForbiddenErrorResponse, NotFoundErrorResponse } from '~/core/error.response'
 import UserRepo from '~/repo/adminUser.repo'
 
 class AdminUserService {
@@ -81,6 +81,18 @@ class AdminUserService {
 
     const newAccount = await UserRepo.createOne({ data: adminData })
     return newAccount
+  }
+
+  static deleteAdminAccount = async ({ _id }) => {
+    const user = await UserRepo.findById({ _id })
+
+    if (!user) throw new NotFoundErrorResponse('User not found')
+
+    if (user.role !== 'admin') {
+      throw new ForbiddenErrorResponse('You cannot delete a user account.')
+    }
+
+    return await UserRepo.deleteById({ _id })
   }
 }
 export default AdminUserService

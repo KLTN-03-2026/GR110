@@ -22,7 +22,7 @@ import { useForm } from 'react-hook-form'
 import { useDispatch, useSelector } from 'react-redux'
 import { selectCurrentAdmin, updateAdminAPI } from '~/redux/adminUser/adminSlice'
 import FieldErrorAlert from '~/components/Form/FieldErrorAlert'
-import { PASSWORD_RULE, PASSWORD_RULE_MESSAGE } from '~/utils/validators'
+import { FIELD_REQUIRED_MESSAGE, PASSWORD_RULE, PASSWORD_RULE_MESSAGE } from '~/utils/validators'
 import { createTheme, ThemeProvider } from '@mui/material/styles'
 
 /* ── Brand tokens ── */
@@ -428,10 +428,11 @@ export default function ProfilePage() {
                       label="Current Password"
                       error={!!errors.currentPassword}
                       {...register('currentPassword', {
+                        required: FIELD_REQUIRED_MESSAGE,
                         validate: (value) => {
                           const np = watch('newPassword'), cp = watch('confirmPassword')
                           if (!value && !np && !cp) return true
-                          if (!value && (np || cp)) return 'Current password is required'
+                          if ((np || cp)) return 'Current password is required'
                           return true
                         }
                       })}
@@ -447,12 +448,10 @@ export default function ProfilePage() {
                       type="password"
                       error={!!errors.newPassword}
                       {...register('newPassword', {
-                        validate: (value) => {
-                          const cur = watch('currentPassword'), cp = watch('confirmPassword')
-                          if (!value && !cur && !cp) return true
-                          if (!value && (cur || cp)) return 'New password is required'
-                          if (value && !PASSWORD_RULE.test(value)) return PASSWORD_RULE_MESSAGE
-                          return true
+                        required: FIELD_REQUIRED_MESSAGE,
+                        pattern: {
+                          value: PASSWORD_RULE,
+                          message: PASSWORD_RULE_MESSAGE
                         }
                       })}
                       sx={inputSx}
@@ -467,12 +466,10 @@ export default function ProfilePage() {
                       type="password"
                       error={!!errors.confirmPassword}
                       {...register('confirmPassword', {
-                        validate: (value) => {
-                          const np = watch('newPassword'), cur = watch('currentPassword')
-                          if (!value && !np && !cur) return true
-                          if (!value && (np || cur)) return 'Confirm password is required'
-                          if (value !== np) return 'Passwords do not match'
-                          return true
+                        required: FIELD_REQUIRED_MESSAGE,
+                        pattern: {
+                          value: PASSWORD_RULE,
+                          message: PASSWORD_RULE_MESSAGE
                         }
                       })}
                       sx={inputSx}
