@@ -1,123 +1,234 @@
-import { useState, useEffect } from 'react'
-import TextField from '@mui/material/TextField'
+import { useCallback, useEffect, useState } from 'react'
 import Autocomplete from '@mui/material/Autocomplete'
+import Box from '@mui/material/Box'
+import Chip from '@mui/material/Chip'
 import CircularProgress from '@mui/material/CircularProgress'
 import InputAdornment from '@mui/material/InputAdornment'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import SearchIcon from '@mui/icons-material/Search'
 import { createSearchParams, useNavigate } from 'react-router-dom'
 import { fetchBoardsAPI } from '~/apis'
 import { useDebounceFn } from '~/customHooks/useDebounceFn'
 
-/**
- * Hướng dẫn & ví dụ cái Autocomplele của MUI ở đây:
- * https://mui.com/material-ui/react-autocomplete/#asynchronous-requests
- */
 function AutoCompleteSearchBoard() {
   const navigate = useNavigate()
-
-  // State xử lý hiển thị kết quả fetch về từ API
   const [open, setOpen] = useState(false)
-  // State lưu trữ danh sách board fetch về được
-  const [boards, setBoards] = useState(null)
-  // Sẽ hiện loading khi bắt đầu gọi api fetch boards
+  const [boards, setBoards] = useState([])
   const [loading, setLoading] = useState(false)
+  const [inputValue, setInputValue] = useState('')
 
   useEffect(() => {
-    // Khi đóng cái phần list kết quả lại thì đồng thời clear cho boards về null
-    if (!open) {
-      setBoards(null)
+    if (!open && !inputValue.trim()) setBoards([])
+  }, [open, inputValue])
+
+  const getCoverSx = (cover) => {
+    const base = {
+      width: 46,
+      height: 30,
+      borderRadius: 1,
+      border: '1px solid',
+      borderColor: 'divider',
+      flexShrink: 0,
+      backgroundColor: '#dbeafe'
     }
-  }, [open])
 
-  // Xử lý việc nhận data nhập vào từ input sau đó gọi API để lấy kết quả về (cần cho vào useDebounceFn như bên dưới)
-  const handleInputSearchChange = (event) => {
-    const searchValue = event.target?.value
-    if (!searchValue) return
+    if (cover?.type === 'color' && cover?.value)
+      return { ...base, backgroundColor: cover.value }
 
-    // Dùng createSearchParams của react-router-dom để tạo một cái searchPath chuẩn với q[title] để gọi lên API
-    const searchPath = `?${createSearchParams({ 'q[title]': searchValue })}`
+    if (cover?.type === 'image' && cover?.value)
+      return {
+        ...base,
+        backgroundImage: `url(${cover.value})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center'
+      }
 
-    // Gọi API...
-    setLoading(true)
-    fetchBoardsAPI(searchPath)
-      .then((res) => {
-        setBoards(res.boards || [])
-      })
-      .finally(() => setLoading(false))
+    return {
+      ...base,
+      backgroundImage: 'linear-gradient(120deg, #dbeafe 0%, #bfdbfe 100%)'
+    }
   }
-  // Bọc hàm handleInputSearchChange ở trên vào useDebounceFn và cho delay khoảng 1s sau khi dừng gõ phím thì mới chạy cái function
 
-  const debounceSearchBoard = useDebounceFn(handleInputSearchChange, 2000)
+  const handleFetchBoards = useCallback(async (keyword) => {
+    const normalizedKeyword = keyword?.trim()
 
-  // Khi chúng ta select chọn một cái board cụ thể thì sẽ điều hướng tới board đó luôn
-  const handleSelectedBoard = (event, selectedBoard) => {
-    // Phải kiểm tra nếu tồn tại một cái board cụ thể được select thì mới gọi điều hướng - navigate
-    if (selectedBoard) {
-      navigate(`/boards/${selectedBoard._id}`)
+    if (!normalizedKeyword) {
+      setBoards([])
+      setLoading(false)
+      return
     }
+
+    setLoading(true)
+    try {
+      const searchPath = `?${createSearchParams({
+        q: normalizedKeyword,
+        page: 1,
+        itemsPerPage: 8
+      })}`
+      const response = await fetchBoardsAPI(searchPath)
+      setBoards(response?.boards || [])
+    } catch (error) {
+      setBoards([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const debounceSearchBoard = useDebounceFn(handleFetchBoards, 550)
+
+  useEffect(() => {
+    return () => debounceSearchBoard.cancel?.()
+  }, [debounceSearchBoard])
+
+  const handleInputChange = (_, value, reason) => {
+    setInputValue(value)
+
+    if (reason === 'clear' || !value?.trim()) {
+      debounceSearchBoard.cancel?.()
+      setBoards([])
+      setLoading(false)
+      return
+    }
+
+    debounceSearchBoard(value)
   }
 
   return (
     <Autocomplete
-      sx={{ width: 220 }}
+      sx={{ width: { xs: 200, sm: 260, md: 300 } }}
       id="asynchronous-search-board"
-      // Cái text này hiện ra khi boards là null hoặc sau khi đã fetch boards nhưng rỗng - không có kết quả
-      noOptionsText={!boards ? 'Type to search board...' : 'No board found!'}
-      // Cụm này để handle việc đóng mở phần kết quả tìm kiếm
-      open={open}
-      onOpen={() => {
-        setOpen(true)
-      }}
-      onClose={() => {
-        setOpen(false)
-      }}
-      // getOptionLabel: để thằng Autocomplete nó lấy title của board và hiển thị ra
-      getOptionLabel={(board) => board.title}
-      // Options của Autocomplete nó cần đầu vào là 1 Array, mà boards của chúng ta ban đầu cần cho null để làm cái noOptionsText ở trên nên đoạn này cần thêm cái || [] vào
-      options={boards || []}
-      // Fix một cái warning của MUI, vì Autocomplete mặc định khi chúng ta chọn giá trị nó sẽ xảy ra sự so sánh object bên dưới, và mặc dù có 2 json objects trông như nhau trong JavaScript nhưng khi compare sẽ ra false. Vậy nên cần compare chuẩn với value dạng Primitive, ví dụ ở đây là dùng String _id thay vì compare toàn bộ cả cái json object board.
-      // Link chi tiết: https://stackoverflow.com/a/65347275/8324172
-      isOptionEqualToValue={(option, value) => option._id === value._id}
-      // Loading thì đơn giản rồi nhé
+      disablePortal
+      filterOptions={(x) => x}
+      value={null}
+      inputValue={inputValue}
+      options={boards}
       loading={loading}
-      // onInputChange sẽ chạy khi gõ nội dung vào thẻ input, cần làm debounce để tránh việc bị spam gọi API
-      onInputChange={debounceSearchBoard}
-      // onChange của cả cái Autocomplete sẽ chạy khi chúng ta select một cái kết quả (ở đây là board)
-      onChange={handleSelectedBoard}
-      // Render ra cái thẻ input để nhập nội dung tìm kiếm
+      noOptionsText={inputValue.trim() ? 'No board found' : 'Type to search...'}
+      open={open}
+      onOpen={() => setOpen(true)}
+      onClose={() => setOpen(false)}
+      onInputChange={handleInputChange}
+      getOptionLabel={(board) => board.title}
+      isOptionEqualToValue={(option, value) => option.boardId === value.boardId}
+      onChange={(_, selectedBoard) => {
+        if (!selectedBoard) return
+        setInputValue(selectedBoard.title || '')
+        navigate(`/boards/${selectedBoard.workspaceId}/${selectedBoard.boardId}`)
+      }}
+      renderOption={(props, board) => (
+        <Box
+          component="li"
+          {...props}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.2,
+            px: 1,
+            py: 0.9
+          }}
+        >
+          <Box sx={getCoverSx(board.cover)} />
+
+          <Box sx={{ minWidth: 0, flexGrow: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{ fontWeight: 600, color: 'text.primary' }}
+              noWrap
+            >
+              {board.title}
+            </Typography>
+          </Box>
+
+          <Chip
+            label={board.visibility || 'private'}
+            size="small"
+            sx={{
+              height: 20,
+              fontSize: '0.65rem',
+              borderRadius: 1,
+              bgcolor:
+                board.visibility === 'public'
+                  ? 'rgba(46, 125, 50, 0.14)'
+                  : board.visibility === 'workspace'
+                    ? 'rgba(2, 136, 209, 0.14)'
+                    : 'rgba(106, 27, 154, 0.14)',
+              color:
+                board.visibility === 'public'
+                  ? '#2e7d32'
+                  : board.visibility === 'workspace'
+                    ? '#0288d1'
+                    : '#6a1b9a'
+            }}
+          />
+        </Box>
+      )}
       renderInput={(params) => (
         <TextField
           {...params}
-          label="Type to search..."
           size="small"
+          placeholder="Search boards..."
           InputProps={{
             ...params.InputProps,
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ color: 'white' }} />
+                <SearchIcon sx={{ fontSize: 18, color: 'rgba(255,255,255,0.92)' }} />
               </InputAdornment>
             ),
             endAdornment: (
               <>
                 {loading ? (
-                  <CircularProgress sx={{ color: 'white' }} size={20} />
+                  <CircularProgress sx={{ color: 'white' }} size={16} />
                 ) : null}
                 {params.InputProps.endAdornment}
               </>
             )
           }}
           sx={{
-            '& label': { color: 'white' },
-            '& input': { color: 'white' },
-            '& label.Mui-focused': { color: 'white' },
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': { borderColor: 'white' },
-              '&:hover fieldset': { borderColor: 'white' },
-              '&.Mui-focused fieldset': { borderColor: 'white' }
+            '& input': {
+              color: 'white',
+              fontSize: '0.9rem',
+              '&::placeholder': {
+                color: 'rgba(255,255,255,0.85)',
+                opacity: 1
+              }
             },
-            '.MuiSvgIcon-root': { color: 'white' }
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: 'rgba(255, 255, 255, 0.10)',
+              transition: 'all .2s ease',
+              '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.45)' },
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.14)' },
+              '&:hover fieldset': { borderColor: 'rgba(255, 255, 255, 0.75)' },
+              '&.Mui-focused': { backgroundColor: 'rgba(255, 255, 255, 0.17)' },
+              '&.Mui-focused fieldset': { borderColor: 'white', borderWidth: 1 }
+            },
+            '.MuiAutocomplete-clearIndicator, .MuiAutocomplete-popupIndicator': {
+              color: 'rgba(255,255,255,0.85)'
+            }
           }}
         />
+      )}
+      ListboxProps={{
+        sx: {
+          py: 0.75
+        }
+      }}
+      PaperComponent={(paperProps) => (
+        <Box
+          {...paperProps}
+          sx={{
+            mt: 0.8,
+            overflow: 'hidden',
+            borderRadius: 2.2,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            boxShadow: '0 14px 30px rgba(15, 23, 42, 0.16)'
+          }}
+        >
+          {paperProps.children}
+        </Box>
       )}
     />
   )

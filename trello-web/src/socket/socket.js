@@ -1,14 +1,23 @@
 import { io } from 'socket.io-client'
 
 let socketInstance = null
+let activeConsumers = 0
+let hasBoundCoreListeners = false
 
-const initSocket = () => {
-  if (socketInstance) return socketInstance
+const SOCKET_URL = 'http://localhost:8017'
+const SOCKET_OPTIONS = {
+  withCredentials: true,
+  autoConnect: false,
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  timeout: 20000
+  // transports: ['websocket']
+}
 
-  socketInstance = io('http://localhost:8017', {
-    withCredentials: true
-    // transports: ['websocket']
-  })
+const bindCoreListeners = () => {
+  if (!socketInstance || hasBoundCoreListeners) return
 
   socketInstance.on('connect', () => {
     console.log('Socket connected:', socketInstance.id)
@@ -22,6 +31,21 @@ const initSocket = () => {
     console.log('Socket disconnected:', reason)
   })
 
+  hasBoundCoreListeners = true
+}
+
+const initSocket = () => {
+  if (!socketInstance) {
+    socketInstance = io(SOCKET_URL, SOCKET_OPTIONS)
+  }
+
+  bindCoreListeners()
+  activeConsumers += 1
+
+  if (!socketInstance.connected) {
+    socketInstance.connect()
+  }
+
   return socketInstance
 }
 
@@ -34,10 +58,22 @@ const getSocket = () => {
 }
 
 const disconnectSocket = () => {
-  if (socketInstance) {
-    socketInstance.disconnect()
-    socketInstance = null
-  }
+  if (!socketInstance) return
+
+  socketInstance.removeAllListeners()
+  socketInstance.disconnect()
+  socketInstance = null
+  activeConsumers = 0
+  hasBoundCoreListeners = false
 }
 
-export { initSocket, getSocket, disconnectSocket }
+const releaseSocket = () => {
+  if (!socketInstance) return
+
+  activeConsumers = Math.max(0, activeConsumers - 1)
+  if (activeConsumers > 0) return
+
+  disconnectSocket()
+}
+
+export { initSocket, getSocket, disconnectSocket, releaseSocket }

@@ -9,7 +9,7 @@ import {
 import { selectCurrentUser } from '~/redux/user/userSlice'
 import { useNavigate } from 'react-router-dom'
 import { fetchWorkspacesAPI } from '~/redux/workspace/workspacesSlice'
-import { initSocket } from '~/socket/socket'
+import { initSocket, releaseSocket } from '~/socket/socket'
 
 export const useNotification = () => {
   const navigate = useNavigate()
@@ -51,12 +51,20 @@ export const useNotification = () => {
     socket.on('connect', join)
 
     const handleReceiveInvitation = ({ userId, data }) => {
-      console.log('data::::', data)
       if (userId !== currentUser._id) return
       dispatch(addNotification(data))
     }
 
+    // Defensive: avoid duplicate listener registration after remount/reconnect loops
+    socket.off('invitation:created', handleReceiveInvitation)
     socket.on('invitation:created', handleReceiveInvitation)
+
+    return () => {
+      socket.off('connect', join)
+      socket.off('invitation:created', handleReceiveInvitation)
+      socket.emit('user:leave', { userId: currentUser._id })
+      releaseSocket()
+    }
   }, [dispatch, currentUser?._id])
 
   const handleUpdateNotification = async ({ notification, status }) => {
@@ -76,9 +84,6 @@ export const useNotification = () => {
       if (updatedNotification.entity === 'workspace') {
         dispatch(fetchWorkspacesAPI())
         navigate(`/h/workspaces/${updatedNotification.entityId}/boards`)
-      }
-      if (updatedNotification.entity === 'board') {
-        navigate(`/boards/${updatedNotification.entityId}`)
       }
     }
   }

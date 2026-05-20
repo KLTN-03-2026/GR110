@@ -42,7 +42,7 @@ import { CARD_FIELDS } from '~/constant/cardFields'
 import { getAttachmentDownloadUrl } from '~/apis/attachment.api'
 import { toast } from 'react-toastify'
 import { useEffect } from 'react'
-import { initSocket } from '~/socket/socket'
+import { initSocket, releaseSocket } from '~/socket/socket'
 
 const useCardDetail = () => {
   const dispatch = useDispatch()
@@ -166,6 +166,7 @@ const useCardDetail = () => {
       socket.off('task:created', handleCreateTask)
       socket.off('task:updated', handleUpdateTask)
       socket.off('task:deleted', handleDeleteTask)
+      releaseSocket()
     }
   }, [activeCard, isShowModalActiveCard])
 

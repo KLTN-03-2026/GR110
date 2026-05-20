@@ -22,14 +22,16 @@ function WorkspacePageHeader({
       sx={{
         position: 'relative',
         overflow: 'hidden',
+        minHeight: 140,
         borderRadius: '24px',
         mb: 3,
         px: { xs: 3, md: 3.5 },
         py: { xs: 3.5, md: 2.5 },
-        border: `1px solid ${isDark
+        border: `1px solid ${
+          isDark
             ? alpha(theme.palette.common.white, 0.1)
             : alpha(accentColor, 0.18)
-          }`,
+        }`,
         color: isDark ? 'common.white' : 'text.primary',
         background: isDark
           ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.16)}, transparent 48%)`
@@ -67,10 +69,11 @@ function WorkspacePageHeader({
               bgcolor: isDark
                 ? alpha(theme.palette.common.white, 0.1)
                 : alpha(accentColor, 0.08),
-              border: `1px solid ${isDark
+              border: `1px solid ${
+                isDark
                   ? alpha(theme.palette.common.white, 0.16)
                   : alpha(accentColor, 0.18)
-                }`,
+              }`,
               fontWeight: 800,
               fontSize: '0.7rem',
               letterSpacing: 1,
@@ -81,7 +84,7 @@ function WorkspacePageHeader({
           />
 
           <Typography
-            variant='h6'
+            variant="h6"
             sx={{
               lineHeight: 1.2,
               letterSpacing: 0,

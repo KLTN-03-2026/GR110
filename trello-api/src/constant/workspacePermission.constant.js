@@ -12,7 +12,6 @@ export const WORKSPACE_PERMISSIONS = {
   ROLE_DELETE: 'workspace.role.delete', // done
 
   BOARD_CREATE: 'workspace.board.create', // done
-  BOARD_DELETE: 'workspace.board.delete',
 
   WORKSPACE_UPGRADE: 'workspace.upgrade',
   WORKSPACE_DOWNGRADE: 'workspace.downgrade'

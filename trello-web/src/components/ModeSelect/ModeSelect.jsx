@@ -1,12 +1,13 @@
 import { useColorScheme } from '@mui/material/styles'
-import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined'
 import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness'
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
 import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
 function ModeSelect() {
   const { mode, setMode } = useColorScheme()
@@ -16,31 +17,86 @@ function ModeSelect() {
     setMode(selectedMode)
   }
 
+  const modeMap = {
+    light: {
+      icon: (
+        <LightModeIcon sx={{ fontSize: 18, color: 'rgba(255,255,255,0.92)' }} />
+      ),
+      label: 'Light'
+    },
+    dark: {
+      icon: (
+        <DarkModeOutlinedIcon
+          sx={{ fontSize: 18, color: 'rgba(255,255,255,0.92)' }}
+        />
+      ),
+      label: 'Dark'
+    },
+    system: {
+      icon: (
+        <SettingsBrightnessIcon
+          sx={{ fontSize: 18, color: 'rgba(255,255,255,0.92)' }}
+        />
+      ),
+      label: 'System'
+    }
+  }
+
+  const currentMode = modeMap[mode] || modeMap.system
+
   return (
-    <FormControl size="small" sx={{ minWidth: '120px' }}>
-      <InputLabel
-        id="label-select-dark-light-mode"
-        sx={{
-          color: 'white',
-          '&.Mui-focused': { color: 'white' }
-        }}
-      >
-        Mode
-      </InputLabel>
+    <FormControl size="small" sx={{ minWidth: 132 }}>
       <Select
-        labelId="label-select-dark-light-mode"
         id="select-dark-light-mode"
         value={mode}
-        label="Mode"
         onChange={handleChange}
+        IconComponent={KeyboardArrowDownRoundedIcon}
+        renderValue={() => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+            {currentMode.icon}
+            <Typography
+              sx={{ fontSize: '0.9rem', color: 'white', lineHeight: 1 }}
+            >
+              {currentMode.label}
+            </Typography>
+          </Box>
+        )}
+        MenuProps={{
+          PaperProps: {
+            sx: {
+              mt: 0.8,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 14px 30px rgba(15, 23, 42, 0.16)',
+              overflow: 'hidden'
+            }
+          }
+        }}
         sx={{
-          color: 'white',
-          '.MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
-          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'white' },
-          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-            borderColor: 'white'
+          borderRadius: 2,
+          backgroundColor: 'rgba(255, 255, 255, 0.10)',
+          height: 38,
+          transition: 'all .2s ease',
+          '& .MuiSelect-select': {
+            py: 0.8,
+            pr: 4,
+            display: 'flex',
+            alignItems: 'center'
           },
-          '.MuiSvgIcon-root': { color: 'white' }
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(255, 255, 255, 0.45)'
+          },
+          '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.14)' },
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'rgba(255, 255, 255, 0.75)'
+          },
+          '&.Mui-focused': { backgroundColor: 'rgba(255, 255, 255, 0.17)' },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: 'white',
+            borderWidth: 1
+          },
+          '& .MuiSvgIcon-root': { color: 'rgba(255,255,255,0.92)' }
         }}
       >
         <MenuItem value="light">

@@ -237,10 +237,11 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
               overflow: 'hidden',
               px: { xs: 2.25, sm: 3 },
               py: 2.25,
-              color: 'white',
+              color: isDark ? 'white' : 'text.primary',
               background: isDark
                 ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, transparent 48%)`
-                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
+                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.primary.light, 0.06)} 52%, transparent 100%)`,
+              borderBottom: `1px solid ${theme.palette.divider}`
             }}
           >
             <Stack
@@ -257,11 +258,22 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                     borderRadius: '12px',
                     display: 'grid',
                     placeItems: 'center',
-                    bgcolor: 'rgba(255,255,255,0.12)',
-                    border: '1px solid rgba(255,255,255,0.16)'
+                    bgcolor: isDark
+                      ? 'rgba(255,255,255,0.12)'
+                      : alpha(theme.palette.primary.main, 0.12),
+                    border: `1px solid ${
+                      isDark
+                        ? 'rgba(255,255,255,0.16)'
+                        : alpha(theme.palette.primary.main, 0.18)
+                    }`
                   }}
                 >
-                  <AutoAwesomeIcon sx={{ color: '#f0f4ff', fontSize: 22 }} />
+                  <AutoAwesomeIcon
+                    sx={{
+                      color: isDark ? '#f0f4ff' : 'primary.main',
+                      fontSize: 22
+                    }}
+                  />
                 </Box>
                 <Box>
                   <Typography
@@ -277,7 +289,9 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                   <Typography
                     sx={{
                       mt: 0.25,
-                      color: 'rgba(255,255,255,0.72)',
+                      color: isDark
+                        ? 'rgba(255,255,255,0.72)'
+                        : 'text.secondary',
                       fontSize: '0.82rem'
                     }}
                   >
@@ -291,9 +305,15 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                 onClick={handleClose}
                 size="small"
                 sx={{
-                  color: 'white',
-                  bgcolor: 'rgba(255,255,255,0.10)',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.18)' }
+                  color: isDark ? 'white' : 'text.primary',
+                  bgcolor: isDark
+                    ? 'rgba(255,255,255,0.10)'
+                    : alpha(theme.palette.common.black, 0.04),
+                  '&:hover': {
+                    bgcolor: isDark
+                      ? 'rgba(255,255,255,0.18)'
+                      : alpha(theme.palette.common.black, 0.08)
+                  }
                 }}
               >
                 <CloseIcon />

@@ -5,7 +5,6 @@ import { WEBSITE_DOMAIN } from '~/utils/constants'
 import { sendEmailService } from '~/providers/NodeMailer'
 import { JwtProvider } from '~/providers/JwtProvider'
 import { env } from '~/config/environment'
-import { CloudinaryProvider } from '~/providers/CloudinaryProvider'
 import UserRepo from '~/repo/user.repo'
 import {
   ConflictErrorResponse,
@@ -27,9 +26,15 @@ class UserService {
 
     const users = await UserRepo.findMany({
       filter: {
-        $or: [
-          { userEmail: { $regex: escapedKeyword, $options: 'i' } },
-          { displayName: { $regex: escapedKeyword, $options: 'i' } }
+        $and: [
+          { isActive: true },
+          { isBlocked: false },
+          {
+            $or: [
+              { email: { $regex: escapedKeyword, $options: 'i' } },
+              { displayName: { $regex: escapedKeyword, $options: 'i' } }
+            ]
+          }
         ]
       }
     })

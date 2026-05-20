@@ -9,7 +9,6 @@ import {
   Typography
 } from '@mui/material'
 import { alpha, useTheme } from '@mui/material/styles'
-
 import AutoAwesomeRoundedIcon from '@mui/icons-material/AutoAwesomeRounded'
 import RocketLaunchRoundedIcon from '@mui/icons-material/RocketLaunchRounded'
 import ConfirmationNumberRoundedIcon from '@mui/icons-material/ConfirmationNumberRounded'
@@ -189,628 +188,646 @@ function IntroductionPage() {
   }, [now])
 
   return (
-    <Stack spacing={2.5}>
-
-      <WorkspacePageHeader
-        badgeIcon={<AutoAwesomeRoundedIcon sx={{ fontSize: 13 }} />}
-        badgeLabel="Welcome"
-        title={`Welcome back, ${displayName}`}
-        description="Manage workspaces, monitor quotas, and keep delivery moving."
+    <Box
+      sx={{
+        height: 'calc(100vh - 122px)',
+        minHeight: 0,
+        overflow: 'hidden'
+      }}
+    >
+      <Stack
+        spacing={2.5}
+        sx={{
+          height: '100%',
+          minHeight: 0,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          pr: 0.5
+        }}
       >
-        <Button
-          variant="contained"
-          startIcon={<RocketLaunchRoundedIcon />}
-          onClick={() =>
-            firstWorkspace
-              ? navigate(`/h/workspaces/${firstWorkspace._id}/boards`)
-              : navigate('/h/tickets')
-          }
-          sx={{
-            textTransform: 'none',
-            fontWeight: 700,
-            borderRadius: '999px',
-            px: 3,
-            py: 1.15,
-            backgroundColor: 'white',
-            color: '#1d4ed8',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.20)',
-            '&:hover': {
-              backgroundColor: 'rgba(255,255,255,0.92)',
-              transform: 'translateY(-1px)',
-              boxShadow: '0 10px 28px rgba(0,0,0,0.25)'
+        <WorkspacePageHeader
+          badgeIcon={<AutoAwesomeRoundedIcon sx={{ fontSize: 13 }} />}
+          badgeLabel="Welcome"
+          title={`Welcome back, ${displayName}`}
+          description="Manage workspaces, monitor quotas, and keep delivery moving."
+        >
+          <Button
+            variant="contained"
+            startIcon={<RocketLaunchRoundedIcon />}
+            onClick={() =>
+              firstWorkspace
+                ? navigate(`/h/workspaces/${firstWorkspace._id}/boards`)
+                : navigate('/h/tickets')
             }
-          }}
-        >
-          {firstWorkspace ? 'Go to Workspace' : 'Open Tickets'}
-        </Button>
-      </WorkspacePageHeader>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: '2fr 1fr 1fr'
-          },
-          gap: 2
-        }}
-      >
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.5,
-            minHeight: 126,
-            borderRadius: '14px',
-            border: `1px solid ${theme.palette.divider}`,
-            bgcolor: isDark ? '#2c2c2a' : theme.palette.background.paper,
-            boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
-          }}
-        >
-          <Typography
             sx={{
-              color: 'text.secondary',
-              fontWeight: 900,
-              fontSize: '0.82rem',
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              mb: 1
-            }}
-          >
-            Current Time
-          </Typography>
-
-          <Typography
-            sx={{
-              color: 'text.primary',
-              fontWeight: 900,
-              fontSize: { xs: 28, md: 32 },
-              lineHeight: 1
-            }}
-          >
-            {currentTime}
-          </Typography>
-
-          <Typography
-            sx={{
-              color: 'text.secondary',
+              textTransform: 'none',
               fontWeight: 700,
-              fontSize: '0.95rem',
-              mt: 1.2
+              borderRadius: '999px',
+              px: 3,
+              py: 1.15,
+              backgroundColor: 'white',
+              color: '#1d4ed8',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.20)',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.92)',
+                transform: 'translateY(-1px)',
+                boxShadow: '0 10px 28px rgba(0,0,0,0.25)'
+              }
             }}
           >
-            {currentDate}
-          </Typography>
-        </Paper>
+            {firstWorkspace ? 'Go to Workspace' : 'Open Tickets'}
+          </Button>
+        </WorkspacePageHeader>
 
-        <Paper
-          elevation={0}
+        <Box
           sx={{
-            p: 2.5,
-            minHeight: 126,
-            borderRadius: '14px',
-            border: `1px solid ${theme.palette.divider}`,
-            bgcolor: isDark ? '#2c2c2a' : theme.palette.background.paper,
-            boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: '2fr 1fr 1fr'
+            },
+            gap: 2
           }}
         >
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 900,
-              fontSize: '0.82rem',
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              mb: 1.5
-            }}
-          >
-            Day of Week
-          </Typography>
-
-          <Typography
-            sx={{
-              color: 'text.primary',
-              fontWeight: 900,
-              fontSize: 22,
-              lineHeight: 1.1
-            }}
-          >
-            {dayOfWeek}
-          </Typography>
-
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 700,
-              fontSize: '0.95rem',
-              mt: 1.1
-            }}
-          >
-            Week {weekNumber}
-          </Typography>
-        </Paper>
-
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.5,
-            minHeight: 126,
-            borderRadius: '14px',
-            border: `1px solid ${theme.palette.divider}`,
-            bgcolor: isDark ? '#2c2c2a' : theme.palette.background.paper,
-            boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
-          }}
-        >
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 900,
-              fontSize: '0.82rem',
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              mb: 1.5
-            }}
-          >
-            Your Timezone
-          </Typography>
-
-          <Typography
-            sx={{
-              color: 'text.primary',
-              fontWeight: 900,
-              fontSize: 18,
-              lineHeight: 1.2
-            }}
-          >
-            {timeZone}
-          </Typography>
-
-          <Typography
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 700,
-              fontSize: '0.95rem',
-              mt: 1.1
-            }}
-          >
-            {timeZoneOffset}
-          </Typography>
-        </Paper>
-      </Box>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, minmax(0, 1fr))',
-            md: 'repeat(4, minmax(0, 1fr))'
-          },
-          gap: 2
-        }}
-      >
-        {quickActions.map((action) => (
           <Paper
-            key={action.label}
             elevation={0}
             sx={{
-              p: 2.25,
-              borderRadius: '16px',
+              p: 2.5,
+              minHeight: 126,
+              borderRadius: '14px',
               border: `1px solid ${theme.palette.divider}`,
-              bgcolor: theme.palette.background.paper,
+              bgcolor: isDark ? '#2c2c2a' : theme.palette.background.paper,
               boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
             }}
           >
-            <Stack spacing={1.25} sx={{ height: '100%' }}>
-              <Box
-                sx={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: '14px',
-                  display: 'grid',
-                  placeItems: 'center',
-                  bgcolor: alpha(
-                    theme.palette.primary.main,
-                    isDark ? 0.2 : 0.1
-                  ),
-                  color: 'primary.main'
-                }}
-              >
-                {action.icon}
-              </Box>
-
-              <Typography sx={{ fontWeight: 800, color: 'text.primary' }}>
-                {action.label}
-              </Typography>
-
-              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                {action.description}
-              </Typography>
-
-              <Button
-                variant="outlined"
-                size="small"
-                endIcon={<LaunchRoundedIcon />}
-                disabled={action.disabled}
-                onClick={action.onClick}
-                sx={{
-                  mt: 'auto',
-                  alignSelf: 'flex-start',
-                  borderRadius: '10px',
-                  textTransform: 'none',
-                  fontWeight: 700
-                }}
-              >
-                Open
-              </Button>
-            </Stack>
-          </Paper>
-        ))}
-      </Box>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1.35fr 0.65fr' },
-          gap: 2
-        }}
-      >
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2, md: 2.5 },
-            borderRadius: '16px',
-            border: `1px solid ${theme.palette.divider}`,
-            bgcolor: theme.palette.background.paper,
-            boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
-          }}
-        >
-          <Stack spacing={2}>
-            <Box>
-              <Typography sx={{ fontWeight: 800, fontSize: '1rem' }}>
-                Support Center
-              </Typography>
-              <Typography
-                variant="body2"
-                sx={{ color: 'text.secondary', mt: 0.25 }}
-              >
-                Need help? Message our Telegram support bot. It can be connected
-                with n8n to handle common questions automatically.
-              </Typography>
-            </Box>
-
-            <Box
+            <Typography
               sx={{
-                p: 2,
-                borderRadius: '16px',
-                bgcolor: alpha(
-                  theme.palette.primary.main,
-                  isDark ? 0.16 : 0.06
-                ),
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`
+                color: 'text.secondary',
+                fontWeight: 900,
+                fontSize: '0.82rem',
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                mb: 1
               }}
             >
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={1.5}
-                alignItems={{ xs: 'flex-start', sm: 'center' }}
-                justifyContent="space-between"
-              >
-                <Stack direction="row" spacing={1.25} alignItems="center">
-                  <Box
-                    sx={{
-                      width: 46,
-                      height: 46,
-                      borderRadius: '16px',
-                      display: 'grid',
-                      placeItems: 'center',
-                      bgcolor: theme.palette.primary.main,
-                      color: 'primary.contrastText'
-                    }}
-                  >
-                    <SupportAgentRoundedIcon />
-                  </Box>
-
-                  <Box>
-                    <Typography sx={{ fontWeight: 800 }}>
-                      Taskio Telegram Support
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      Auto support workflow powered by n8n.
-                    </Typography>
-                  </Box>
-                </Stack>
-
-                <Button
-                  variant="contained"
-                  endIcon={<LaunchRoundedIcon />}
-                  onClick={() =>
-                    window.open(
-                      TELEGRAM_SUPPORT_LINK,
-                      '_blank',
-                      'noopener,noreferrer'
-                    )
-                  }
-                  sx={{
-                    borderRadius: '999px',
-                    textTransform: 'none',
-                    fontWeight: 800,
-                    px: 2.5
-                  }}
-                >
-                  Open Telegram
-                </Button>
-              </Stack>
-            </Box>
-
-            <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-              <Chip
-                icon={<SmartToyRoundedIcon />}
-                label="Auto Reply"
-                sx={{ fontWeight: 700 }}
-              />
-              <Chip
-                icon={<BoltRoundedIcon />}
-                label="n8n Workflow"
-                sx={{ fontWeight: 700 }}
-              />
-              <Chip
-                icon={<CheckCircleRoundedIcon />}
-                label="Support Bot Active"
-                sx={{ fontWeight: 700 }}
-              />
-            </Stack>
-          </Stack>
-        </Paper>
-
-        <Paper
-          elevation={0}
-          sx={{
-            p: { xs: 2, md: 2.5 },
-            borderRadius: '16px',
-            border: `1px solid ${theme.palette.divider}`,
-            bgcolor: theme.palette.background.paper,
-            boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
-          }}
-        >
-          <Stack spacing={1.5}>
-            <Stack direction="row" spacing={1.25} alignItems="center">
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: '14px',
-                  display: 'grid',
-                  placeItems: 'center',
-                  bgcolor: alpha(
-                    theme.palette.warning.main,
-                    isDark ? 0.2 : 0.1
-                  ),
-                  color: 'warning.main'
-                }}
-              >
-                <TipsAndUpdatesRoundedIcon />
-              </Box>
-
-              <Box>
-                <Typography sx={{ fontWeight: 800 }}>Today Tip</Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  Use tickets for faster tracking.
-                </Typography>
-              </Box>
-            </Stack>
-
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              Create a ticket when you need a clear support history. For instant
-              help, use Telegram bot support.
+              Current Time
             </Typography>
 
-            <Button
-              variant="outlined"
-              startIcon={<ConfirmationNumberRoundedIcon />}
-              onClick={() => navigate('/h/tickets')}
+            <Typography
               sx={{
-                borderRadius: '12px',
-                textTransform: 'none',
-                fontWeight: 800,
-                alignSelf: 'flex-start'
+                color: 'text.primary',
+                fontWeight: 900,
+                fontSize: { xs: 28, md: 32 },
+                lineHeight: 1
               }}
             >
-              Create Ticket
-            </Button>
-          </Stack>
-        </Paper>
-      </Box>
+              {currentTime}
+            </Typography>
 
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
-          gap: 2
-        }}
-      >
-        {infoCards.map((card) => (
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                mt: 1.2
+              }}
+            >
+              {currentDate}
+            </Typography>
+          </Paper>
+
           <Paper
-            key={card.label}
             elevation={0}
             sx={{
-              p: 2,
+              p: 2.5,
+              minHeight: 126,
+              borderRadius: '14px',
+              border: `1px solid ${theme.palette.divider}`,
+              bgcolor: isDark ? '#2c2c2a' : theme.palette.background.paper,
+              boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
+            }}
+          >
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 900,
+                fontSize: '0.82rem',
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                mb: 1.5
+              }}
+            >
+              Day of Week
+            </Typography>
+
+            <Typography
+              sx={{
+                color: 'text.primary',
+                fontWeight: 900,
+                fontSize: 22,
+                lineHeight: 1.1
+              }}
+            >
+              {dayOfWeek}
+            </Typography>
+
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                mt: 1.1
+              }}
+            >
+              Week {weekNumber}
+            </Typography>
+          </Paper>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              minHeight: 126,
+              borderRadius: '14px',
+              border: `1px solid ${theme.palette.divider}`,
+              bgcolor: isDark ? '#2c2c2a' : theme.palette.background.paper,
+              boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
+            }}
+          >
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 900,
+                fontSize: '0.82rem',
+                letterSpacing: 0.8,
+                textTransform: 'uppercase',
+                mb: 1.5
+              }}
+            >
+              Your Timezone
+            </Typography>
+
+            <Typography
+              sx={{
+                color: 'text.primary',
+                fontWeight: 900,
+                fontSize: 18,
+                lineHeight: 1.2
+              }}
+            >
+              {timeZone}
+            </Typography>
+
+            <Typography
+              sx={{
+                color: 'text.secondary',
+                fontWeight: 700,
+                fontSize: '0.95rem',
+                mt: 1.1
+              }}
+            >
+              {timeZoneOffset}
+            </Typography>
+          </Paper>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, minmax(0, 1fr))',
+              md: 'repeat(4, minmax(0, 1fr))'
+            },
+            gap: 2
+          }}
+        >
+          {quickActions.map((action) => (
+            <Paper
+              key={action.label}
+              elevation={0}
+              sx={{
+                p: 2.25,
+                borderRadius: '16px',
+                border: `1px solid ${theme.palette.divider}`,
+                bgcolor: theme.palette.background.paper,
+                boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
+              }}
+            >
+              <Stack spacing={1.25} sx={{ height: '100%' }}>
+                <Box
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    borderRadius: '14px',
+                    display: 'grid',
+                    placeItems: 'center',
+                    bgcolor: alpha(
+                      theme.palette.primary.main,
+                      isDark ? 0.2 : 0.1
+                    ),
+                    color: 'primary.main'
+                  }}
+                >
+                  {action.icon}
+                </Box>
+
+                <Typography sx={{ fontWeight: 800, color: 'text.primary' }}>
+                  {action.label}
+                </Typography>
+
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {action.description}
+                </Typography>
+
+                <Button
+                  variant="outlined"
+                  size="small"
+                  endIcon={<LaunchRoundedIcon />}
+                  disabled={action.disabled}
+                  onClick={action.onClick}
+                  sx={{
+                    mt: 'auto',
+                    alignSelf: 'flex-start',
+                    borderRadius: '10px',
+                    textTransform: 'none',
+                    fontWeight: 700
+                  }}
+                >
+                  Open
+                </Button>
+              </Stack>
+            </Paper>
+          ))}
+        </Box>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1.35fr 0.65fr' },
+            gap: 2
+          }}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, md: 2.5 },
               borderRadius: '16px',
               border: `1px solid ${theme.palette.divider}`,
               bgcolor: theme.palette.background.paper,
               boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
             }}
           >
-            <Stack direction="row" spacing={1.5} alignItems="flex-start">
-              <Box
-                sx={{
-                  width: 42,
-                  height: 42,
-                  flexShrink: 0,
-                  borderRadius: '14px',
-                  display: 'grid',
-                  placeItems: 'center',
-                  bgcolor: alpha(
-                    theme.palette.success.main,
-                    isDark ? 0.18 : 0.08
-                  ),
-                  color: 'success.main'
-                }}
-              >
-                {card.icon}
-              </Box>
-
+            <Stack spacing={2}>
               <Box>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {card.label}
-                </Typography>
-                <Typography sx={{ fontWeight: 900, fontSize: '1.05rem' }}>
-                  {card.value}
+                <Typography sx={{ fontWeight: 800, fontSize: '1rem' }}>
+                  Support Center
                 </Typography>
                 <Typography
                   variant="body2"
                   sx={{ color: 'text.secondary', mt: 0.25 }}
                 >
-                  {card.description}
+                  Need help? Message our Telegram support bot. It can be
+                  connected with n8n to handle common questions automatically.
                 </Typography>
               </Box>
-            </Stack>
-          </Paper>
-        ))}
-      </Box>
 
-      <Paper
-        elevation={0}
-        sx={{
-          p: { xs: 2, md: 2.5 },
-          borderRadius: '16px',
-          border: `1px solid ${theme.palette.divider}`,
-          bgcolor: theme.palette.background.paper,
-          boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
-        }}
-      >
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
-          justifyContent="space-between"
-          spacing={1.5}
-          sx={{ mb: 2 }}
-        >
-          <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: '1rem' }}>
-              Your Workspaces
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: 'text.secondary', mt: 0.25 }}
-            >
-              {workspaces.length > 0
-                ? `You currently have ${workspaces.length} workspace${workspaces.length > 1 ? 's' : ''}.`
-                : 'No workspace yet. Use the sidebar action to create your first one.'}
-            </Typography>
-          </Box>
-
-          {!workspaces.length && (
-            <Chip
-              icon={<AddRoundedIcon />}
-              label="Create Workspace from Sidebar"
-              sx={{
-                fontWeight: 700,
-                color: 'primary.main',
-                bgcolor: alpha(
-                  theme.palette.primary.main,
-                  isDark ? 0.18 : 0.08
-                ),
-                border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
-              }}
-            />
-          )}
-        </Stack>
-
-        {workspaces.length > 0 && (
-          <Stack spacing={1.25}>
-            {workspaces.slice(0, 5).map((workspace) => (
               <Box
-                key={workspace._id}
                 sx={{
-                  borderRadius: '14px',
-                  border: `1px solid ${theme.palette.divider}`,
-                  px: { xs: 1.5, md: 2 },
-                  py: 1.5,
-                  bgcolor: isDark
-                    ? alpha(theme.palette.common.white, 0.03)
-                    : alpha(theme.palette.primary.main, 0.015)
+                  p: 2,
+                  borderRadius: '16px',
+                  bgcolor: alpha(
+                    theme.palette.primary.main,
+                    isDark ? 0.16 : 0.06
+                  ),
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`
                 }}
               >
                 <Stack
-                  direction={{ xs: 'column', md: 'row' }}
-                  spacing={1.25}
-                  alignItems={{ xs: 'flex-start', md: 'center' }}
+                  direction={{ xs: 'column', sm: 'row' }}
+                  spacing={1.5}
+                  alignItems={{ xs: 'flex-start', sm: 'center' }}
                   justifyContent="space-between"
                 >
-                  <Box
-                    sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}
-                  >
-                    <Avatar
+                  <Stack direction="row" spacing={1.25} alignItems="center">
+                    <Box
                       sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: '12px',
-                        bgcolor: alpha(theme.palette.primary.main, 0.15),
-                        color: 'primary.main',
-                        fontWeight: 800
+                        width: 46,
+                        height: 46,
+                        borderRadius: '16px',
+                        display: 'grid',
+                        placeItems: 'center',
+                        bgcolor: theme.palette.primary.main,
+                        color: 'primary.contrastText'
                       }}
                     >
-                      {workspace?.title?.charAt(0)?.toUpperCase()}
-                    </Avatar>
+                      <SupportAgentRoundedIcon />
+                    </Box>
 
                     <Box>
-                      <Typography sx={{ fontWeight: 700 }}>
-                        {workspace.title}
+                      <Typography sx={{ fontWeight: 800 }}>
+                        Taskio Telegram Support
                       </Typography>
                       <Typography
                         variant="body2"
                         sx={{ color: 'text.secondary' }}
                       >
-                        {workspace?.planName || 'Free'} plan
+                        Auto support workflow powered by n8n.
                       </Typography>
                     </Box>
-                  </Box>
-
-                  <Stack
-                    direction="row"
-                    spacing={0.75}
-                    useFlexGap
-                    flexWrap="wrap"
-                  >
-                    {workspaceLinks.map((item) => (
-                      <Button
-                        key={`${workspace._id}-${item.key}`}
-                        size="small"
-                        variant="outlined"
-                        startIcon={item.icon}
-                        onClick={() =>
-                          navigate(`/h/workspaces/${workspace._id}/${item.key}`)
-                        }
-                        sx={{
-                          borderRadius: '999px',
-                          textTransform: 'none',
-                          fontWeight: 700
-                        }}
-                      >
-                        {item.label}
-                      </Button>
-                    ))}
                   </Stack>
+
+                  <Button
+                    variant="contained"
+                    endIcon={<LaunchRoundedIcon />}
+                    onClick={() =>
+                      window.open(
+                        TELEGRAM_SUPPORT_LINK,
+                        '_blank',
+                        'noopener,noreferrer'
+                      )
+                    }
+                    sx={{
+                      borderRadius: '999px',
+                      textTransform: 'none',
+                      fontWeight: 800,
+                      px: 2.5
+                    }}
+                  >
+                    Open Telegram
+                  </Button>
                 </Stack>
               </Box>
-            ))}
+
+              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                <Chip
+                  icon={<SmartToyRoundedIcon />}
+                  label="Auto Reply"
+                  sx={{ fontWeight: 700 }}
+                />
+                <Chip
+                  icon={<BoltRoundedIcon />}
+                  label="n8n Workflow"
+                  sx={{ fontWeight: 700 }}
+                />
+                <Chip
+                  icon={<CheckCircleRoundedIcon />}
+                  label="Support Bot Active"
+                  sx={{ fontWeight: 700 }}
+                />
+              </Stack>
+            </Stack>
+          </Paper>
+
+          <Paper
+            elevation={0}
+            sx={{
+              p: { xs: 2, md: 2.5 },
+              borderRadius: '16px',
+              border: `1px solid ${theme.palette.divider}`,
+              bgcolor: theme.palette.background.paper,
+              boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
+            }}
+          >
+            <Stack spacing={1.5}>
+              <Stack direction="row" spacing={1.25} alignItems="center">
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: '14px',
+                    display: 'grid',
+                    placeItems: 'center',
+                    bgcolor: alpha(
+                      theme.palette.warning.main,
+                      isDark ? 0.2 : 0.1
+                    ),
+                    color: 'warning.main'
+                  }}
+                >
+                  <TipsAndUpdatesRoundedIcon />
+                </Box>
+
+                <Box>
+                  <Typography sx={{ fontWeight: 800 }}>Today Tip</Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    Use tickets for faster tracking.
+                  </Typography>
+                </Box>
+              </Stack>
+
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                Create a ticket when you need a clear support history. For
+                instant help, use Telegram bot support.
+              </Typography>
+
+              <Button
+                variant="outlined"
+                startIcon={<ConfirmationNumberRoundedIcon />}
+                onClick={() => navigate('/h/tickets')}
+                sx={{
+                  borderRadius: '12px',
+                  textTransform: 'none',
+                  fontWeight: 800,
+                  alignSelf: 'flex-start'
+                }}
+              >
+                Create Ticket
+              </Button>
+            </Stack>
+          </Paper>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+            gap: 2
+          }}
+        >
+          {infoCards.map((card) => (
+            <Paper
+              key={card.label}
+              elevation={0}
+              sx={{
+                p: 2,
+                borderRadius: '16px',
+                border: `1px solid ${theme.palette.divider}`,
+                bgcolor: theme.palette.background.paper,
+                boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
+              }}
+            >
+              <Stack direction="row" spacing={1.5} alignItems="flex-start">
+                <Box
+                  sx={{
+                    width: 42,
+                    height: 42,
+                    flexShrink: 0,
+                    borderRadius: '14px',
+                    display: 'grid',
+                    placeItems: 'center',
+                    bgcolor: alpha(
+                      theme.palette.success.main,
+                      isDark ? 0.18 : 0.08
+                    ),
+                    color: 'success.main'
+                  }}
+                >
+                  {card.icon}
+                </Box>
+
+                <Box>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {card.label}
+                  </Typography>
+                  <Typography sx={{ fontWeight: 900, fontSize: '1.05rem' }}>
+                    {card.value}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'text.secondary', mt: 0.25 }}
+                  >
+                    {card.description}
+                  </Typography>
+                </Box>
+              </Stack>
+            </Paper>
+          ))}
+        </Box>
+
+        <Paper
+          elevation={0}
+          sx={{
+            p: { xs: 2, md: 2.5 },
+            borderRadius: '16px',
+            border: `1px solid ${theme.palette.divider}`,
+            bgcolor: theme.palette.background.paper,
+            boxShadow: isDark ? 'none' : '0 2px 12px rgba(15,23,42,0.04)'
+          }}
+        >
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            alignItems={{ xs: 'flex-start', sm: 'center' }}
+            justifyContent="space-between"
+            spacing={1.5}
+            sx={{ mb: 2 }}
+          >
+            <Box>
+              <Typography sx={{ fontWeight: 800, fontSize: '1rem' }}>
+                Your Workspaces
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: 'text.secondary', mt: 0.25 }}
+              >
+                {workspaces.length > 0
+                  ? `You currently have ${workspaces.length} workspace${workspaces.length > 1 ? 's' : ''}.`
+                  : 'No workspace yet. Use the sidebar action to create your first one.'}
+              </Typography>
+            </Box>
+
+            {!workspaces.length && (
+              <Chip
+                icon={<AddRoundedIcon />}
+                label="Create Workspace from Sidebar"
+                sx={{
+                  fontWeight: 700,
+                  color: 'primary.main',
+                  bgcolor: alpha(
+                    theme.palette.primary.main,
+                    isDark ? 0.18 : 0.08
+                  ),
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`
+                }}
+              />
+            )}
           </Stack>
-        )}
-      </Paper>
-    </Stack>
+
+          {workspaces.length > 0 && (
+            <Stack spacing={1.25}>
+              {workspaces.slice(0, 5).map((workspace) => (
+                <Box
+                  key={workspace._id}
+                  sx={{
+                    borderRadius: '14px',
+                    border: `1px solid ${theme.palette.divider}`,
+                    px: { xs: 1.5, md: 2 },
+                    py: 1.5,
+                    bgcolor: isDark
+                      ? alpha(theme.palette.common.white, 0.03)
+                      : alpha(theme.palette.primary.main, 0.015)
+                  }}
+                >
+                  <Stack
+                    direction={{ xs: 'column', md: 'row' }}
+                    spacing={1.25}
+                    alignItems={{ xs: 'flex-start', md: 'center' }}
+                    justifyContent="space-between"
+                  >
+                    <Box
+                      sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}
+                    >
+                      <Avatar
+                        sx={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: '12px',
+                          bgcolor: alpha(theme.palette.primary.main, 0.15),
+                          color: 'primary.main',
+                          fontWeight: 800
+                        }}
+                      >
+                        {workspace?.title?.charAt(0)?.toUpperCase()}
+                      </Avatar>
+
+                      <Box>
+                        <Typography sx={{ fontWeight: 700 }}>
+                          {workspace.title}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: 'text.secondary' }}
+                        >
+                          {workspace?.planName || 'Free'} plan
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Stack
+                      direction="row"
+                      spacing={0.75}
+                      useFlexGap
+                      flexWrap="wrap"
+                    >
+                      {workspaceLinks.map((item) => (
+                        <Button
+                          key={`${workspace._id}-${item.key}`}
+                          size="small"
+                          variant="outlined"
+                          startIcon={item.icon}
+                          onClick={() =>
+                            navigate(
+                              `/h/workspaces/${workspace._id}/${item.key}`
+                            )
+                          }
+                          sx={{
+                            borderRadius: '999px',
+                            textTransform: 'none',
+                            fontWeight: 700
+                          }}
+                        >
+                          {item.label}
+                        </Button>
+                      ))}
+                    </Stack>
+                  </Stack>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </Paper>
+      </Stack>
+    </Box>
   )
 }
 
