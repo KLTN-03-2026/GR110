@@ -35,7 +35,6 @@ import {
 } from '~/helpers/boardPermission.cache'
 import S3Provider from '~/providers/S3Provider'
 import BackgroundRepo from '~/repo/adminBackground.repo'
-import Joi from 'joi'
 import { invokeOpenAIModel } from '~/providers/OpenAIProvider'
 
 const generateWorkspaceAdminRole = ({ workspaceId }) => {
@@ -55,7 +54,8 @@ const generateWorkspaceAdminRole = ({ workspaceId }) => {
       'workspace.role.update',
       'workspace.role.delete',
       'workspace.board.create',
-      'workspace.board.delete'
+      'workspace.upgrade',
+      'workspace.downgrade'
     ]
   }
 }
@@ -106,13 +106,6 @@ Rules:
 - Do not invent data not present in the input
 - Professional, concise tone suitable for a team lead
 `
-
-const WORKSPACE_SUMMARY_SCHEMA = Joi.object({
-  summary: Joi.string().required(),
-  insights: Joi.array().items(Joi.string()).required(),
-  risks: Joi.array().items(Joi.string()).required(),
-  suggestions: Joi.array().items(Joi.string()).required()
-})
 
 class WorkspaceService {
   static fetchWorkspacePermission = async () => {

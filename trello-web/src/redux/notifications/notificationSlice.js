@@ -45,7 +45,14 @@ export const notificationsSlice = createSlice({
       state.notifications = action.payload
     },
     addNotification: (state, action) => {
-      state.unshift(action.payload)
+      const incoming = action.payload
+      if (!incoming?._id) {
+        state.unshift(incoming)
+        return
+      }
+
+      const exists = state.some((item) => item._id === incoming._id)
+      if (!exists) state.unshift(incoming)
     }
   },
   extraReducers: (builder) => {

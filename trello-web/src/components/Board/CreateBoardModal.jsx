@@ -656,7 +656,7 @@ function CreateBoardModal({ ui, handler }) {
                 borderRadius: 5,
                 textTransform: 'none',
                 fontWeight: 700,
-                color:'inherit'
+                color: 'inherit'
               }}
             >
               Cancel
@@ -766,7 +766,6 @@ function CreateBoardModal({ ui, handler }) {
               </Stack>
 
               <IconButton
-                onClick={handleClose}
                 size="small"
                 sx={{
                   position: 'absolute',
@@ -786,7 +785,7 @@ function CreateBoardModal({ ui, handler }) {
                   }
                 }}
               >
-                <CloseIcon fontSize="small" />
+                <CloseIcon fontSize="small" onClick={handleClose} />
               </IconButton>
             </Box>
 
