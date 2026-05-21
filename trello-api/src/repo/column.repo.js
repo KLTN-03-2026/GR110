@@ -135,5 +135,11 @@ class ColumnRepo {
       .countDocuments(filter, options)
   }
 
+  static aggregate = async ({ pipeline = [] }) => {
+    return await GET_DB()
+      .collection(columnModel.COLUMN_COLLECTION_NAME)
+      .aggregate(pipeline)
+      .toArray()
+  }
 }
 export default ColumnRepo
