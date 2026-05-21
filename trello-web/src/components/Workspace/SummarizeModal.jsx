@@ -96,8 +96,8 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
       console.error('Error summarizing workspace:', err)
       setError(
         err?.response?.data?.message ||
-          err?.message ||
-          'Failed to summarize workspace. Please try again.'
+        err?.message ||
+        'Failed to summarize workspace. Please try again.'
       )
     } finally {
       setLoading(false)
@@ -237,7 +237,7 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
               overflow: 'hidden',
               px: { xs: 2.25, sm: 3 },
               py: 2.25,
-              color: 'white',
+              color: isDark ? 'common.white' : 'text.primary',
               background: isDark
                 ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, transparent 48%)`
                 : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
@@ -257,27 +257,44 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                     borderRadius: '12px',
                     display: 'grid',
                     placeItems: 'center',
-                    bgcolor: 'rgba(255,255,255,0.12)',
-                    border: '1px solid rgba(255,255,255,0.16)'
+                    bgcolor: isDark
+                      ? alpha(theme.palette.common.white, 0.12)
+                      : alpha(theme.palette.primary.main, 0.1),
+                    border: `1px solid ${isDark
+                        ? alpha(theme.palette.common.white, 0.16)
+                        : alpha(theme.palette.primary.main, 0.18)
+                      }`
                   }}
                 >
-                  <AutoAwesomeIcon sx={{ color: '#f0f4ff', fontSize: 22 }} />
+                  <AutoAwesomeIcon
+                    sx={{
+                      color: isDark
+                        ? '#f0f4ff'
+                        : theme.palette.primary.main,
+                      fontSize: 22
+                    }}
+                  />
                 </Box>
+
                 <Box>
                   <Typography
                     id="summarize-modal-title"
                     sx={{
                       fontWeight: 800,
                       fontSize: '1.1rem',
-                      lineHeight: 1.3
+                      lineHeight: 1.3,
+                      color: isDark ? 'common.white' : 'text.primary'
                     }}
                   >
                     Workspace Summary
                   </Typography>
+
                   <Typography
                     sx={{
                       mt: 0.25,
-                      color: 'rgba(255,255,255,0.72)',
+                      color: isDark
+                        ? alpha(theme.palette.common.white, 0.72)
+                        : 'text.secondary',
                       fontSize: '0.82rem'
                     }}
                   >
@@ -287,13 +304,20 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                   </Typography>
                 </Box>
               </Stack>
+
               <IconButton
                 onClick={handleClose}
                 size="small"
                 sx={{
-                  color: 'white',
-                  bgcolor: 'rgba(255,255,255,0.10)',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.18)' }
+                  color: isDark ? 'common.white' : 'text.primary',
+                  bgcolor: isDark
+                    ? alpha(theme.palette.common.white, 0.1)
+                    : alpha(theme.palette.text.primary, 0.06),
+                  '&:hover': {
+                    bgcolor: isDark
+                      ? alpha(theme.palette.common.white, 0.18)
+                      : alpha(theme.palette.text.primary, 0.1)
+                  }
                 }}
               >
                 <CloseIcon />
