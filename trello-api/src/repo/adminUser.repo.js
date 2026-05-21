@@ -77,6 +77,7 @@ class UserRepo {
     return await GET_DB()
       .collection(userModel.USER_COLLECTION_NAME)
       .find(filter)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .toArray()

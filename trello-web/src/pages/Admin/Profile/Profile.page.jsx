@@ -103,6 +103,13 @@ export default function ProfilePage() {
     setPreviewUrl(URL.createObjectURL(file))
   }
 
+  const currentPassword = watch('currentPassword')
+  const newPassword = watch('newPassword')
+  const confirmPassword = watch('confirmPassword')
+
+  const isChangingPassword =
+    currentPassword || newPassword || confirmPassword
+
   const onSubmit = async (data) => {
     if (selectedFile) {
       const formData = new FormData()
@@ -112,7 +119,9 @@ export default function ProfilePage() {
       formData.append('newPassword', data.newPassword || '')
       formData.append('confirmPassword', data.confirmPassword || '')
       formData.append('file', selectedFile)
+
       await dispatch(updateAdminAPI(formData))
+
       setSelectedFile(null)
       setPreviewUrl(null)
     } else {
@@ -428,11 +437,9 @@ export default function ProfilePage() {
                       label="Current Password"
                       error={!!errors.currentPassword}
                       {...register('currentPassword', {
-                        required: FIELD_REQUIRED_MESSAGE,
                         validate: (value) => {
-                          const np = watch('newPassword'), cp = watch('confirmPassword')
-                          if (!value && !np && !cp) return true
-                          if ((np || cp)) return 'Current password is required'
+                          if (!isChangingPassword) return true
+                          if (!value) return 'Current password is required'
                           return true
                         }
                       })}
@@ -448,10 +455,11 @@ export default function ProfilePage() {
                       type="password"
                       error={!!errors.newPassword}
                       {...register('newPassword', {
-                        required: FIELD_REQUIRED_MESSAGE,
-                        pattern: {
-                          value: PASSWORD_RULE,
-                          message: PASSWORD_RULE_MESSAGE
+                        validate: (value) => {
+                          if (!isChangingPassword) return true
+                          if (!value) return FIELD_REQUIRED_MESSAGE
+                          if (!PASSWORD_RULE.test(value)) return PASSWORD_RULE_MESSAGE
+                          return true
                         }
                       })}
                       sx={inputSx}
@@ -466,10 +474,11 @@ export default function ProfilePage() {
                       type="password"
                       error={!!errors.confirmPassword}
                       {...register('confirmPassword', {
-                        required: FIELD_REQUIRED_MESSAGE,
-                        pattern: {
-                          value: PASSWORD_RULE,
-                          message: PASSWORD_RULE_MESSAGE
+                        validate: (value) => {
+                          if (!isChangingPassword) return true
+                          if (!value) return FIELD_REQUIRED_MESSAGE
+                          if (value !== watch('newPassword')) return 'Confirm password does not match'
+                          return true
                         }
                       })}
                       sx={inputSx}

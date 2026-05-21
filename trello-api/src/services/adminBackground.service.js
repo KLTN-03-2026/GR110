@@ -120,7 +120,7 @@ class AdminBackgroundService {
     if (keyword) {
       filter.$or = [
         { title: { $regex: escapedKeyword, $options: 'i' } },
-        { entity: { $regex: escapedKeyword, $options: 'i' } }
+        { entity: { $regex: escapedKeyword, $options: 'i' } },
       ]
     }
 

@@ -81,7 +81,8 @@ class AdminPlanService {
   static createAdminPlan = async ({ planData }) => {
     const dataPlan = {
       ...planData,
-      isDeleted: false
+      isDeleted: false,
+      isDefault: false
     }
     const newPlan = await PlanRepo.createOne({ data: dataPlan })
     return newPlan

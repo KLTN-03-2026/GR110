@@ -1,14 +1,11 @@
 import {
   Box,
-  Button,
   InputAdornment,
   Stack,
   TextField,
   Typography
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
-import FilterListOutlinedIcon from '@mui/icons-material/FilterListOutlined'
-import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined'
 import SubscriptionTable from '~/components/Admin/Subcription/SubcriptionTable'
 import { useAdminSubscription } from '~/hooks/adminSubscription.hook'
 
@@ -30,6 +27,7 @@ export default function SubscriptionPage() {
     setSelectedSubscription,
     handleCloseCancelModal,
     handleOpenCancelModal,
+    handleSearchChange
   } = useAdminSubscription()
 
 
@@ -57,17 +55,31 @@ export default function SubscriptionPage() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
         <TextField
           value={search}
+          onChange={handleSearchChange}
           placeholder="Search subscriptions..."
           size="small"
           sx={{
-            width: 250,
+            '& .InputLabel-root': {
+              color: '#6b7280'
+            },
+            '& .MuiInputLabel-root.Mui-focused': {
+              color: '#ea6b3d'
+            },
             '& .MuiOutlinedInput-root': {
-              height: 38,
-              borderRadius: '8px',
-              backgroundColor: '#fff'
+              backgroundColor: '#ffffff',
+              color: '#111827',
+              '& fieldset': {
+                borderColor: '#d1d5db'
+              },
+              '&:hover fieldset': {
+                borderColor: '#9ca3af'
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#ea6b3d'
+              }
             },
             '& .MuiInputBase-input': {
-              fontSize: '15px'
+              color: '#111827'
             }
           }}
           InputProps={{

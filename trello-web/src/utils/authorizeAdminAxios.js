@@ -48,6 +48,8 @@ authorizeAdminAxiosInstance.interceptors.response.use(
       if (!refreshTokenPromise) {
         refreshTokenPromise = refreshAdminTokenAPI()
           .then((data) => {
+            console.log('ref token');
+            
             return data?.accessTokenAdmin
           })
           .catch(() => {

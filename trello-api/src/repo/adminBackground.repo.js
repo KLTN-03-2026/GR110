@@ -75,6 +75,7 @@ class BackgroundRepo {
     return await GET_DB()
       .collection(backgroundModel.BACKGROUND_COLLECTION_NAME)
       .find(filter)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .toArray()

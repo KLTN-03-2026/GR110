@@ -30,7 +30,6 @@ export const useAdminSubscription = () => {
     setSelectedSubscription(null)
   }
 
-
   const updateQueryParams = useCallback(
     ({ nextSearch, nextPage, nextLimit }) => {
       const params = new URLSearchParams(searchParams)

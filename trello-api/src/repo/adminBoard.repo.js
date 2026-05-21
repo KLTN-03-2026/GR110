@@ -20,7 +20,6 @@ class BoardRepo {
       .collection(boardModel.BOARD_COLLECTION_NAME)
       .aggregate([
         { $match: filter },
-
         {
           $lookup: {
             from: workspaceModel.WORKSPACE_COLLECTION_NAME,
