@@ -234,7 +234,7 @@ export default function TicketPage() {
                   onChange={(e) => handleChangeStatus(e.target.value)}
                   sx={selectSx}
                 >
-                  <MenuItem value="all">All Statuses</MenuItem>
+                  <MenuItem value="all">All Status</MenuItem>
                   <MenuItem value="pending">Pending</MenuItem>
                   <MenuItem value="processing">Processing</MenuItem>
                   <MenuItem value="resolved">Resolved</MenuItem>

@@ -221,7 +221,7 @@ const useCardDetail = () => {
   const handleUpdateCover = async (data) => {
     const payload = !data
       ? { cover: null }
-      : { cover: { type: data.type, value: data.value } }
+      : { cover: { type: data.type, value: data.value, display: data.display } }
     const updatedCard = await dispatch(
       updateCardBasicAPI({
         _id: activeCard._id,

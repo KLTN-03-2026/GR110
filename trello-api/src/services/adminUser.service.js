@@ -1,6 +1,6 @@
 import bcryptjs from 'bcryptjs'
 import { ObjectId } from 'mongodb'
-import { BadRequestErrorResponse, ErrorResponse, ForbiddenErrorResponse, NotFoundErrorResponse } from '~/core/error.response'
+import { ForbiddenErrorResponse, NotFoundErrorResponse } from '~/core/error.response'
 import UserRepo from '~/repo/adminUser.repo'
 
 class AdminUserService {

@@ -4,7 +4,8 @@ import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 
 const CARD_COVER_SCHEMA = Joi.object({
   type: Joi.string().valid('color', 'attachment').required(),
-  value: Joi.string().required().trim().strict()
+  value: Joi.string().required().trim().strict(),
+  display: Joi.string().valid('default', 'full').default('default')
 }).default(null)
 
 const CARD_COLLECTION_NAME = 'cards'

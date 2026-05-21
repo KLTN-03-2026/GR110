@@ -148,7 +148,8 @@ export default function UpdateSubscriptionForm({ initialData, onSubmitForm }) {
     mode: 'onBlur'
   })
 
-  const {_id} = useParams()
+  const { _id } = useParams()
+
   const onSubmit = async (data) => {
     const payload = {
       workspaceId: data.workspaceId,
@@ -196,7 +197,7 @@ export default function UpdateSubscriptionForm({ initialData, onSubmitForm }) {
       }
     }
 
-    await updateAdminSubscriptionApi({subscriptionId: _id, subscriptionData: payload })
+    await updateAdminSubscriptionApi({ subscriptionId: _id, subscriptionData: payload })
   }
 
   return (
@@ -223,12 +224,14 @@ export default function UpdateSubscriptionForm({ initialData, onSubmitForm }) {
 
           <TextField
             fullWidth
-            value={defaultValues.workspaceTitle}
-            disabled
+            value={defaultValues.workspaceTitle || ''}
+            InputProps={{
+              readOnly: true
+            }}
             sx={inputSx}
           />
 
-          <input type='hidden' {...register('workspaceId')} />
+          <input type="hidden" {...register('workspaceId')} />
         </Box>
 
         <Box>
@@ -236,12 +239,14 @@ export default function UpdateSubscriptionForm({ initialData, onSubmitForm }) {
 
           <TextField
             fullWidth
-            value={defaultValues.planTitle}
-            disabled
+            value={defaultValues.planTitle || ''}
+            InputProps={{
+              readOnly: true
+            }}
             sx={inputSx}
           />
 
-          <input type='hidden' {...register('planId')} />
+          <input type="hidden" {...register('planId')} />
         </Box>
 
         <Box>

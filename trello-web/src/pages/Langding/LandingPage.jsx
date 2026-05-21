@@ -28,6 +28,7 @@ import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRou
 import { alpha } from '@mui/material/styles'
 import { useEffect, useState } from 'react'
 import { fetchPlanApi } from '~/apis/landingPage.api'
+import { useNavigate } from 'react-router-dom'
 
 const theme = createTheme({
   palette: {
@@ -111,7 +112,10 @@ const workflow = [
 ]
 
 const formatPlanPrice = (price) => {
-  return Number(price || 0).toLocaleString('vi-VN')
+  return Number(price || 0).toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  })
 }
 
 const getPlanHighlights = (plan) => {
@@ -188,6 +192,8 @@ export default function LandingPage() {
   const [plans, setPlans] = useState([])
   const [isLoadingPlans, setIsLoadingPlans] = useState(true)
   const [plansError, setPlansError] = useState('')
+
+  const navigate = useNavigate()
 
   useEffect(() => {
     let isMounted = true
@@ -282,6 +288,7 @@ export default function LandingPage() {
                 </Button>
                 <Button
                   variant="contained"
+                  onClick={() => navigate('/auth/login')}
                   endIcon={<ArrowForwardRoundedIcon />}
                   sx={{
                     borderRadius: '999px',
@@ -351,6 +358,7 @@ export default function LandingPage() {
               >
                 <Button
                   variant="contained"
+                  onClick={() => navigate('/h/introduction')}
                   size="large"
                   startIcon={<RocketLaunchRoundedIcon />}
                   sx={{
@@ -679,7 +687,7 @@ export default function LandingPage() {
                           letterSpacing: '-0.02em'
                         }}
                       >
-                        {formatPlanPrice(plan?.currentPrice)}đ
+                        {formatPlanPrice(plan?.currentPrice)}
                       </Typography>
                       <Typography
                         sx={{ color: 'text.secondary', fontWeight: 600 }}
@@ -828,6 +836,7 @@ export default function LandingPage() {
               </Box>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
                 <Button
+                  onClick={() => navigate('/h/workspaces')}
                   variant="contained"
                   color="inherit"
                   startIcon={<TaskAltRoundedIcon />}
@@ -844,6 +853,7 @@ export default function LandingPage() {
                 </Button>
                 <Button
                   variant="outlined"
+                  onClick={() => navigate('https://web.telegram.org/k/#@taskio_support_demo_bot')}
                   startIcon={<VerifiedRoundedIcon />}
                   sx={{
                     borderRadius: '999px',

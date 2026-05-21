@@ -14,7 +14,7 @@ class AdminAuthController {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
-      maxAge: ms(env.ACCESS_TOKEN_LIFE)
+      maxAge: ms(env.REFRESH_TOKEN_LIFE)
     })
 
     res.cookie('refreshTokenAdmin', result.refreshTokenAdmin, {

@@ -137,7 +137,7 @@ function BoardList({ ui, data, handler, isLoading = false }) {
         </Button>
       </WorkspacePageHeader>
 
-      <Box sx={{ overflow: 'hidden' }}>
+      <Box sx={{ overflow: 'visible', pt: 0.75 }}>
         <Grid container spacing={2.5}>
           {isLoading ? (
             renderBoardSkeletons()

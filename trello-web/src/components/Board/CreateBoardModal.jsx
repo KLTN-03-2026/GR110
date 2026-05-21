@@ -767,10 +767,13 @@ function CreateBoardModal({ ui, handler }) {
 
               <IconButton
                 size="small"
+                onClick={handleClose}
+                aria-label="close"
                 sx={{
                   position: 'absolute',
                   right: 16,
                   top: 16,
+                  zIndex: 2,
                   color: 'text.secondary',
                   bgcolor: alpha(
                     theme.palette.text.primary,
@@ -785,7 +788,7 @@ function CreateBoardModal({ ui, handler }) {
                   }
                 }}
               >
-                <CloseIcon fontSize="small" onClick={handleClose} />
+                <CloseIcon fontSize="small" />
               </IconButton>
             </Box>
 

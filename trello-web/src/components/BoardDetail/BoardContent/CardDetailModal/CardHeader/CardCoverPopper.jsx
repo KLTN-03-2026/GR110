@@ -45,7 +45,6 @@ function CardCoverPopper({
   anchorEl,
   open,
   onClose,
-  handleSelectCover,
   attachments = [],
   handleUpdateCover,
   handleUploadFiles

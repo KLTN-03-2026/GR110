@@ -88,6 +88,7 @@ class PlanRepo {
     return await GET_DB()
       .collection(planModel.PLAN_COLLECTION_NAME)
       .find(filter)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .toArray()
