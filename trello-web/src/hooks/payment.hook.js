@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { fetchPayment } from '~/apis/subscriptions.api'
-import { initSocket } from '~/socket/socket'
+import { initSocket, releaseSocket } from '~/socket/socket'
 
 export default function usePayment() {
   const { subscriptionId } = useParams()
@@ -14,9 +14,25 @@ export default function usePayment() {
   useEffect(() => {
     if (!subscriptionId) return
 
+    let isMounted = true
+    const socket = initSocket()
+    const join = () => socket.emit('workspace:join', { workspaceId })
+    if (socket.connected) join()
+    socket.on('connect', join)
+
+    const handlePaymentUpdated = (data) => {
+      if (data.workspaceId !== workspaceId) return
+      if (data.subscriptionId !== subscriptionId) return
+      setLocalStatus(data.status)
+    }
+
+    socket.on('payment:updated', handlePaymentUpdated)
+
     const fetchPaymentDetail = async () => {
       try {
         const res = await fetchPayment({ subscriptionId })
+        if (!isMounted) return
+
         const mappingStatus = {
           pending: 'idle',
           active: 'success',
@@ -24,23 +40,6 @@ export default function usePayment() {
           checking: 'checking'
         }
         setLocalStatus(mappingStatus[res.status] || 'idle')
-
-        const socket = initSocket()
-
-        const join = () => socket.emit('workspace:join', { workspaceId })
-
-        if (socket.connected) join()
-        socket.on('connect', join)
-
-        const handlePaymentUpdated = (data) => {
-          if (data.workspaceId !== workspaceId) return
-          if (data.subscriptionId !== subscriptionId) return
-
-          setLocalStatus(data.status)
-        }
-
-        socket.on('payment:updated', handlePaymentUpdated)
-
         setDataPayment(res)
       } catch (error) {
         console.log('ERROR FETCH PAYMENT:', error)
@@ -48,7 +47,15 @@ export default function usePayment() {
     }
 
     fetchPaymentDetail()
-  }, [subscriptionId])
+
+    return () => {
+      isMounted = false
+      socket.off('connect', join)
+      socket.off('payment:updated', handlePaymentUpdated)
+      socket.emit('workspace:leave', { workspaceId })
+      releaseSocket()
+    }
+  }, [subscriptionId, workspaceId])
 
   return {
     dataPayment,

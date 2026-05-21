@@ -96,8 +96,8 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
       console.error('Error summarizing workspace:', err)
       setError(
         err?.response?.data?.message ||
-        err?.message ||
-        'Failed to summarize workspace. Please try again.'
+          err?.message ||
+          'Failed to summarize workspace. Please try again.'
       )
     } finally {
       setLoading(false)
@@ -237,10 +237,11 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
               overflow: 'hidden',
               px: { xs: 2.25, sm: 3 },
               py: 2.25,
-              color: isDark ? 'common.white' : 'text.primary',
+              color: isDark ? 'white' : 'text.primary',
               background: isDark
                 ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.2)}, transparent 48%)`
-                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)}, transparent 50%)`
+                : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.12)} 0%, ${alpha(theme.palette.primary.light, 0.06)} 52%, transparent 100%)`,
+              borderBottom: `1px solid ${theme.palette.divider}`
             }}
           >
             <Stack
@@ -258,42 +259,38 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                     display: 'grid',
                     placeItems: 'center',
                     bgcolor: isDark
-                      ? alpha(theme.palette.common.white, 0.12)
-                      : alpha(theme.palette.primary.main, 0.1),
-                    border: `1px solid ${isDark
-                        ? alpha(theme.palette.common.white, 0.16)
+                      ? 'rgba(255,255,255,0.12)'
+                      : alpha(theme.palette.primary.main, 0.12),
+                    border: `1px solid ${
+                      isDark
+                        ? 'rgba(255,255,255,0.16)'
                         : alpha(theme.palette.primary.main, 0.18)
-                      }`
+                    }`
                   }}
                 >
                   <AutoAwesomeIcon
                     sx={{
-                      color: isDark
-                        ? '#f0f4ff'
-                        : theme.palette.primary.main,
+                      color: isDark ? '#f0f4ff' : 'primary.main',
                       fontSize: 22
                     }}
                   />
                 </Box>
-
                 <Box>
                   <Typography
                     id="summarize-modal-title"
                     sx={{
                       fontWeight: 800,
                       fontSize: '1.1rem',
-                      lineHeight: 1.3,
-                      color: isDark ? 'common.white' : 'text.primary'
+                      lineHeight: 1.3
                     }}
                   >
                     Workspace Summary
                   </Typography>
-
                   <Typography
                     sx={{
                       mt: 0.25,
                       color: isDark
-                        ? alpha(theme.palette.common.white, 0.72)
+                        ? 'rgba(255,255,255,0.72)'
                         : 'text.secondary',
                       fontSize: '0.82rem'
                     }}
@@ -304,19 +301,18 @@ function SummarizeModal({ isOpen, onClose, workspaceId }) {
                   </Typography>
                 </Box>
               </Stack>
-
               <IconButton
                 onClick={handleClose}
                 size="small"
                 sx={{
-                  color: isDark ? 'common.white' : 'text.primary',
+                  color: isDark ? 'white' : 'text.primary',
                   bgcolor: isDark
-                    ? alpha(theme.palette.common.white, 0.1)
-                    : alpha(theme.palette.text.primary, 0.06),
+                    ? 'rgba(255,255,255,0.10)'
+                    : alpha(theme.palette.common.black, 0.04),
                   '&:hover': {
                     bgcolor: isDark
-                      ? alpha(theme.palette.common.white, 0.18)
-                      : alpha(theme.palette.text.primary, 0.1)
+                      ? 'rgba(255,255,255,0.18)'
+                      : alpha(theme.palette.common.black, 0.08)
                   }
                 }}
               >

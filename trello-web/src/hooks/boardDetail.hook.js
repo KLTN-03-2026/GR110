@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 import { cloneDeep } from 'lodash'
 import { useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { initSocket } from '~/socket/socket'
+import { initSocket, releaseSocket } from '~/socket/socket'
 
 const useBoardDetail = () => {
   const dispatch = useDispatch()
@@ -385,6 +385,7 @@ const useBoardDetail = () => {
     socket.on('column:restored', handleColumnRestored)
 
     return () => {
+      socket.off('connect', joinBoard)
       socket.off('board:updated', handleBoardUpdated)
       socket.off('card:updated', handleCardUpdated)
       socket.off('card:created', handleCardCreated)
@@ -395,6 +396,8 @@ const useBoardDetail = () => {
       socket.off('column:updated', handleColumnUpdated)
       socket.off('column:archived', handleColumnArchived)
       socket.off('column:restored', handleColumnRestored)
+      socket.emit('board:leave', { boardId })
+      releaseSocket()
       dispatch(clearActiveBoard())
     }
   }, [dispatch, workspaceId, boardId])

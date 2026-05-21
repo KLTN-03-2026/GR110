@@ -2,7 +2,11 @@ import { GET_DB } from '~/config/mongodb'
 import { pagingSkipValue } from '~/utils/algorithms'
 import { boardModel } from '~/models/board.model'
 import { ObjectId } from 'mongodb'
-import { DEFAULT_ITEMS_PER_PAGE, DEFAULT_PAGE } from '~/utils/constants'
+import {
+  DEFAULT_ITEMS_PER_PAGE,
+  DEFAULT_PAGE,
+  visibility
+} from '~/utils/constants'
 import { columnModel } from '~/models/column.model'
 import { cardModel } from '~/models/card.model'
 
@@ -48,65 +52,108 @@ class BoardRepo {
   }
 
   static getBoards = async ({ filters }) => {
-    const page = filters?.page ?? DEFAULT_PAGE
-    const itemsPerPage = filters?.itemsPerPage ?? DEFAULT_ITEMS_PER_PAGE
-    const q = filters?.q ?? ''
-    const userId = filters?.userId
+    const q = filters?.q
+    const userId = filters?.userId?.toString?.() || ''
 
-    const queryConditions = [
-      { _destroy: false },
-      {
-        $or: [
-          { ownerIds: { $all: [new ObjectId(userId)] } },
-          { memberIds: { $all: [new ObjectId(userId)] } }
-        ]
-      }
-    ]
+    if (!userId) return { boards: [] }
 
-    // xử lí query cho từng trường hợp search board , ví dụ search title...
-    if (q) {
-      Object.keys(q).forEach((key) => {
-        // queryFilters[key] ví dụ queryFilters[title] nếu phía FE đẩy lên q[title]
+    const escapeRegex = (value = '') => {
+      return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    }
 
-        // Có phân biệt chữ hoa chữ thường
-        // queryConditions.push({ [key]: { $regex: queryFilters[key] } })
+    const searchConditions = []
 
-        // Không phân biệt chữ hoa chữ thường
-        queryConditions.push({
-          [key]: { $regex: new RegExp(q[key], 'i') }
-        })
+    if (typeof q === 'string' && q.trim()) {
+      const keywordRegex = new RegExp(escapeRegex(q.trim()), 'i')
+      searchConditions.push({
+        $or: [{ title: keywordRegex }, { description: keywordRegex }]
+      })
+    }
+
+    if (q && typeof q === 'object' && !Array.isArray(q)) {
+      Object.entries(q).forEach(([key, value]) => {
+        if (!value || typeof value !== 'string' || !value.trim()) return
+
+        const fieldRegex = new RegExp(escapeRegex(value.trim()), 'i')
+
+        if (key === 'search' || key === 'keyword') {
+          searchConditions.push({
+            $or: [{ title: fieldRegex }, { description: fieldRegex }]
+          })
+          return
+        }
+
+        searchConditions.push({ [key]: fieldRegex })
       })
     }
 
     const query = await GET_DB()
-      .collection(boardModel.BOARD_COLLECTION_NAME)
+      .collection('workspaceMembers')
       .aggregate(
         [
           {
-            $match: { $and: queryConditions }
-          },
-          // sort title của board theo A-Z (mặc định sẽ bị chữ B hoa đứng trước chữ a thường (theo chuẩn bảng mã ASCII)
-          { $sort: { title: 1 } },
-          // $facet để xử lý nhiều luồng trong một query
-          {
-            $facet: {
-              // Luồng 01: Query boards
-              queryBoards: [
-                { $skip: pagingSkipValue(page, itemsPerPage) },
-                { $limit: itemsPerPage }
-              ],
-              // Luồng 02: Query đếm tổng tất cả số lượng bản ghi boards trong DB và trả về vào biến: countedAllBoards
-              queryTotalBoards: [{ $count: 'countedAllBoards' }]
+            $match: {
+              userId,
+              status: 'active'
             }
-          }
+          },
+          {
+            $lookup: {
+              from: boardModel.BOARD_COLLECTION_NAME,
+              let: {
+                workspaceId: '$workspaceId'
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ['$workspaceId', '$$workspaceId'] },
+                        { $eq: ['$status', 'active'] }
+                      ]
+                    }
+                  }
+                },
+                ...(searchConditions.length
+                  ? [
+                      {
+                        $match: {
+                          $and: searchConditions
+                        }
+                      }
+                    ]
+                  : []),
+                {
+                  $project: {
+                    _id: 0,
+                    boardId: '$_id',
+                    workspaceId: 1,
+                    title: 1,
+                    cover: 1,
+                    visibility: 1
+                  }
+                }
+              ],
+              as: 'boards'
+            }
+          },
+          { $unwind: '$boards' },
+          { $replaceRoot: { newRoot: '$boards' } },
+          { $sort: { title: 1 } },
+          {
+            $group: {
+              _id: '$boardId',
+              board: { $first: '$$ROOT' }
+            }
+          },
+          { $replaceRoot: { newRoot: '$board' } }
         ],
         { collation: { locale: 'en' } }
       )
       .toArray()
-    const res = query[0]
+
     return {
-      boards: res.queryBoards || [],
-      totalBoards: res.queryTotalBoards[0]?.countedAllBoards || 0
+      boards: query || []
     }
   }
 

@@ -1,4 +1,5 @@
-import { Controller, useForm } from 'react-hook-form'
+import { useMemo } from 'react'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
 import Avatar from '@mui/material/Avatar'
@@ -46,6 +47,18 @@ function InviteUserWorkspaceModal({
   const theme = useTheme()
   const submitting = loading || isSubmitting
   const isDark = theme.palette.mode === 'dark'
+  const selectedUsers = useWatch({ control, name: 'users', defaultValue: [] })
+
+  const normalizedUsers = useMemo(() => {
+    const userMap = new Map()
+
+    users.forEach((user) => {
+      if (!user?._id) return
+      userMap.set(user._id, user)
+    })
+
+    return Array.from(userMap.values())
+  }, [users])
 
   const handleClose = () => {
     if (submitting) return
@@ -87,8 +100,8 @@ function InviteUserWorkspaceModal({
             alignItems: 'center',
             justifyContent: 'space-between',
             background: isDark
-                        ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.18)}, transparent 58%)`
-                        : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, transparent 62%)`
+              ? `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.18)}, transparent 58%)`
+              : `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)}, transparent 62%)`
           }}
         >
           <Stack direction="row" spacing={1.5} alignItems="center">
@@ -145,12 +158,19 @@ function InviteUserWorkspaceModal({
               render={({ field }) => (
                 <Autocomplete
                   multiple
-                  options={users}
+                  options={normalizedUsers}
                   value={field.value}
                   inputValue={searchKeyword}
                   loading={loading}
                   disabled={submitting}
                   filterSelectedOptions
+                  disableCloseOnSelect
+                  filterOptions={(options) => options}
+                  noOptionsText={
+                    searchKeyword.trim().length < 3
+                      ? 'Type at least 3 characters to search users'
+                      : 'No users found'
+                  }
                   isOptionEqualToValue={(option, value) =>
                     option._id === value._id
                   }
@@ -163,18 +183,22 @@ function InviteUserWorkspaceModal({
                     field.onChange(newValue)
                   }}
                   renderTags={(value, getTagProps) =>
-                    value.map((user, index) => (
-                      <Chip
-                        key={user._id}
-                        label={user.email}
-                        {...getTagProps({ index })}
-                        color="primary"
-                        sx={{ borderRadius: 2, fontWeight: 500 }}
-                      />
-                    ))
+                    value.map((user, index) => {
+                      const { key, ...tagProps } = getTagProps({ index })
+
+                      return (
+                        <Chip
+                          key={key}
+                          label={user.email}
+                          {...tagProps}
+                          color="primary"
+                          sx={{ borderRadius: 2, fontWeight: 500 }}
+                        />
+                      )
+                    })
                   }
-                  renderOption={(props, option) => (
-                    <Box component="li" {...props} key={option._id}>
+                  renderOption={({ key, ...optionProps }, option) => (
+                    <Box component="li" {...optionProps} key={key}>
                       <Stack direction="row" spacing={1.5} alignItems="center">
                         <Avatar
                           src={option.avatar}
@@ -264,32 +288,26 @@ function InviteUserWorkspaceModal({
               }}
             />
 
-            <Controller
-              name="users"
-              control={control}
-              render={({ field }) =>
-                !!field.value.length && (
-                  <Box
-                    sx={{
-                      px: 2,
-                      py: 1.5,
-                      borderRadius: 2.5,
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(144, 202, 249, 0.08)'
-                          : 'rgba(25, 118, 210, 0.06)',
-                      border: '1px dashed',
-                      borderColor: 'divider'
-                    }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      {field.value.length} recipient
-                      {field.value.length > 1 ? 's' : ''} selected
-                    </Typography>
-                  </Box>
-                )
-              }
-            />
+            {!!selectedUsers.length && (
+              <Box
+                sx={{
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: 2.5,
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(144, 202, 249, 0.08)'
+                      : 'rgba(25, 118, 210, 0.06)',
+                  border: '1px dashed',
+                  borderColor: 'divider'
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {selectedUsers.length} recipient
+                  {selectedUsers.length > 1 ? 's' : ''} selected
+                </Typography>
+              </Box>
+            )}
           </Stack>
         </DialogContent>
 

@@ -1,5 +1,5 @@
-import { Controller, useForm } from 'react-hook-form'
-
+import { useMemo } from 'react'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import Alert from '@mui/material/Alert'
 import Autocomplete from '@mui/material/Autocomplete'
 import Avatar from '@mui/material/Avatar'
@@ -16,7 +16,6 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
-
 import CloseIcon from '@mui/icons-material/Close'
 import MailOutlineIcon from '@mui/icons-material/MailOutline'
 import MessageOutlinedIcon from '@mui/icons-material/MessageOutlined'
@@ -49,6 +48,19 @@ function InviteUserBoardModal({
   const submitting = loading || isSubmitting
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
+  const selectedUsers = useWatch({ control, name: 'users', defaultValue: [] })
+
+  const normalizedUsers = useMemo(() => {
+    const userMap = new Map()
+
+    users.forEach((candidate) => {
+      const candidateId = candidate?.userId || candidate?.user?._id
+      if (!candidateId) return
+      userMap.set(candidateId, candidate)
+    })
+
+    return Array.from(userMap.values())
+  }, [users])
 
   const handleClose = () => {
     if (submitting) return
@@ -148,14 +160,22 @@ function InviteUserBoardModal({
               render={({ field }) => (
                 <Autocomplete
                   multiple
-                  options={users}
+                  options={normalizedUsers}
                   value={field.value}
                   inputValue={searchKeyword}
                   loading={loading}
                   disabled={submitting}
                   filterSelectedOptions
+                  disableCloseOnSelect
+                  filterOptions={(options) => options}
+                  noOptionsText={
+                    searchKeyword.trim().length < 3
+                      ? 'Type at least 3 characters to search users'
+                      : 'No users found'
+                  }
                   isOptionEqualToValue={(option, value) =>
-                    option._id === value._id
+                    (option?.userId || option?.user?._id) ===
+                    (value?.userId || value?.user?._id)
                   }
                   getOptionLabel={(option) => option?.user?.email || ''}
                   onInputChange={(_, newInputValue, reason) => {
@@ -180,15 +200,16 @@ function InviteUserBoardModal({
                       )
                     })
                   }
-                  renderOption={(props, option) => (
-                    <Box component="li" {...props} key={option?.userId}>
+                  renderOption={({ key, ...optionProps }, option) => (
+                    <Box component="li" {...optionProps} key={key}>
                       <Stack direction="row" spacing={1.5} alignItems="center">
                         <Avatar
                           src={option.user?.avatar}
                           alt={option.user?.displayName || option.user?.email}
                           sx={{ width: 32, height: 32 }}
                         >
-                          {option.user?.displayName?.[0] || option.user?.email?.[0]}
+                          {option.user?.displayName?.[0] ||
+                            option.user?.email?.[0]}
                         </Avatar>
 
                         <Box>
@@ -271,32 +292,26 @@ function InviteUserBoardModal({
               }}
             />
 
-            <Controller
-              name="users"
-              control={control}
-              render={({ field }) =>
-                !!field.value.length && (
-                  <Box
-                    sx={{
-                      px: 2,
-                      py: 1.5,
-                      borderRadius: 2.5,
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(144, 202, 249, 0.08)'
-                          : 'rgba(25, 118, 210, 0.06)',
-                      border: '1px dashed',
-                      borderColor: 'divider'
-                    }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      {field.value.length} recipient
-                      {field.value.length > 1 ? 's' : ''} selected
-                    </Typography>
-                  </Box>
-                )
-              }
-            />
+            {!!selectedUsers.length && (
+              <Box
+                sx={{
+                  px: 2,
+                  py: 1.5,
+                  borderRadius: 2.5,
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(144, 202, 249, 0.08)'
+                      : 'rgba(25, 118, 210, 0.06)',
+                  border: '1px dashed',
+                  borderColor: 'divider'
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  {selectedUsers.length} recipient
+                  {selectedUsers.length > 1 ? 's' : ''} selected
+                </Typography>
+              </Box>
+            )}
           </Stack>
         </DialogContent>
 

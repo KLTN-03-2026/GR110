@@ -198,7 +198,6 @@ class BoardService {
   }
 
   static getDetails = async ({ _id, workspaceId, workspaceAccess }) => {
-    console.log('boardID:::', _id)
     const [board, members, labels, currentMember] = await Promise.all([
       BoardRepo.getDetail({ _id }),
       BoardMemberRepo.getMembersByBoardId({
