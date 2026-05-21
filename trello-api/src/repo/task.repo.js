@@ -162,6 +162,13 @@ class TaskRepo {
       done: result[0]?.done || 0
     }
   }
+
+  static aggregate = async ({ pipeline = [] }) => {
+    return await GET_DB()
+      .collection(taskModel.TASK_COLLECTION_NAME)
+      .aggregate(pipeline)
+      .toArray()
+  }
 }
 
 export default TaskRepo

@@ -121,5 +121,11 @@ class CardRepo {
       .countDocuments(filter, options)
   }
 
+  static aggregate = async ({ pipeline = [] }) => {
+    return await GET_DB()
+      .collection(cardModel.CARD_COLLECTION_NAME)
+      .aggregate(pipeline)
+      .toArray()
+  }
 }
 export default CardRepo

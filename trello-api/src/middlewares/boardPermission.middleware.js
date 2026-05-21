@@ -62,7 +62,6 @@ const checkPermission = (requiredPermission) => {
 
     const cacheKey = getBoardAccessCacheKey({ boardId, userId })
     const cachedData = parseCacheData(await getCache({ key: cacheKey }))
-    console.log('cachedData board::', cachedData)
     if (cachedData) {
       const permissions = new Set(cachedData.permissionCodes || [])
 
