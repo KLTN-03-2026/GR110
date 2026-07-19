@@ -4,6 +4,7 @@ import { sendEmailService } from '~/providers/NodeMailer'
 import SubscriptionRepo from '~/repo/subscription.repo'
 import UserRepo from '~/repo/user.repo'
 import WorkspaceRepo from '~/repo/workspace.repo'
+import { WEBSITE_DOMAIN } from '~/utils/constants'
 
 const formatDateForMail = (value) => {
   if (!value) return '-'
@@ -56,7 +57,7 @@ export const sendUpgradePaymentSuccessMail = async ({
         paymentMethod: 'PayPal',
         paidAt: formatDateForMail(paidAt),
         nextBillingDate: formatDateForMail(subscriptionDetail?.endedAt),
-        workspaceLink: `${env.WEBSITE_DOMAIN_DEVELOPMENT}/h/workspaces/${workspaceId}/billing`,
+        workspaceLink: `${WEBSITE_DOMAIN}/h/workspaces/${workspaceId}/billing`,
         supportEmail: env.EMAIL_USERNAME
       }
     })

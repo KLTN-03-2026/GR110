@@ -1,0 +1,1415 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1744,
+        496
+      ],
+      "id": "6c04e968-0c3b-4dac-a461-55f57a85374c",
+      "name": "Telegram Trigger",
+      "webhookId": "d52b64e5-8b04-4dc4-a39c-2d55fcd88b94",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "={{\n  ($node[\"AI Agent\"].json.output || '') +\n  (\n    $('Set Docs Context').isExecuted\n      ? (() => {\n          const ctx = $items(\"Set Docs Context\")[0]?.json || {};\n          const sources = Array.isArray(ctx.sources)\n            ? ctx.sources\n            : JSON.parse(ctx.sources || '[]');\n\n          const ragUsed = ctx.ragUsed === true || ctx.ragUsed === 'true';\n          const usedFallback = ctx.usedFallback === true || ctx.usedFallback === 'true';\n\n          return ragUsed && sources.length > 0 && !usedFallback\n            ? \"\\n\\n📚 Nguồn tham khảo:\\n- \" + [...new Set(sources)].join(\"\\n- \")\n            : \"\";\n        })()\n      : \"\"\n  )\n}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1184,
+        672
+      ],
+      "id": "83076818-b9b0-4ef2-80f0-18c377ff29ae",
+      "name": "Send a text message",
+      "webhookId": "820d0092-cd19-49c1-abec-06c7c1535b25",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "22970370-e697-452c-aa91-42f503ef561d",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "^\\/(start|help|about|ticket)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -880,
+        720
+      ],
+      "id": "a791b0b0-9d18-4785-85df-182af20df9f0",
+      "name": "Check Command"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/about",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "fb12b5f4-0f2c-482d-a5d4-7a55c6ab28a0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "about"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "afac0bad-6e51-49bf-b2da-d16975f0e5bf",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "^\\/(start|help)$",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "menu"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "37e2b9c0-18b9-43c1-916c-2a3bd43f15da",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/ticket",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "ticket"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -656,
+        624
+      ],
+      "id": "c921c7e1-d65d-459c-9f9e-7caaeba5e024",
+      "name": "Command Router"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "=Taskio Support Bot là chatbot hỗ trợ người dùng dựa trên tài liệu nội bộ.  Luồng xử lý: Telegram → n8n → AWS Lambda → S3 Documents → Groq LLM → Telegram  Dữ liệu bot sử dụng gồm: - guide: hướng dẫn sử dụng - policies: chính sách, quyền, subscription - support: FAQ và hỗ trợ  Bot chỉ trả lời dựa trên tài liệu đã được cung cấp.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        528
+      ],
+      "id": "561928ee-65f4-4448-b770-62fd336a2c54",
+      "name": "Send About",
+      "webhookId": "989facb3-f7d6-4e37-941f-cbee62a8c068",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "=Xin chào 👋 Mình là Taskio Support Bot.\n\nBạn có thể hỏi mình về:\n- Cách dùng Taskio\n- Workspace, board, card\n- Phân quyền\n- Subscription\n- Chính sách và hỗ trợ\n\nVí dụ:\n“Taskio là gì?”\n“Làm sao tạo workspace?”\n“Subscription có những trạng thái nào?”\n“Tôi quên mật khẩu thì làm sao?”",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -400,
+        752
+      ],
+      "id": "c5ed2df5-9972-4475-b3a1-337b871cdc1d",
+      "name": "Send Menu",
+      "webhookId": "989facb3-f7d6-4e37-941f-cbee62a8c068",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "=Để mình tạo ticket hỗ trợ, bạn copy mẫu dưới đây và điền giúp mình nhé:\n\nTICKET\nEmail: email đăng nhập Taskio của bạn\nVấn đề: ví dụ Account bị khóa\nMô tả: mô tả chi tiết lỗi bạn gặp\nMức độ: Bình thường / Cao\n\nVí dụ:\n\nTICKET\nEmail: user@gmail.com\nVấn đề: Account bị khóa\nMô tả: Tôi đăng nhập thì hệ thống báo tài khoản bị khóa, không truy cập được workspace.\nMức độ: Cao",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -192,
+        672
+      ],
+      "id": "bec1ad1c-0e90-4681-86cc-e54eadb5ed54",
+      "name": "Send Ticket Form",
+      "webhookId": "989facb3-f7d6-4e37-941f-cbee62a8c068",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1583caae-5ce9-4793-bdf4-b369eed11a45",
+              "leftValue": "={{ $json.message.text }}",
+              "rightValue": "^TICKET",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1104,
+        512
+      ],
+      "id": "9b1f8dd4-b357-4798-b0f8-9584b3887eb0",
+      "name": "Is Ticket Form"
+    },
+    {
+      "parameters": {
+        "jsCode": "const text = $json.message.text || ''\n\nconst getField = (label) => {\n  const regex = new RegExp(`${label}:\\\\s*(.+)`, 'i')\n  const match = text.match(regex)\n  return match ? match[1].trim() : ''\n}\n\nconst email = getField('Email')\nconst issue = getField('Vấn đề')\nconst description = getField('Mô tả')\nconst priority = getField('Mức độ') || 'Bình thường'\n\nconst emailValid = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)\n\nconst missingFields = []\n\nif (!email) missingFields.push('Email')\nelse if (!emailValid) missingFields.push('Email không hợp lệ')\n\nif (!issue) missingFields.push('Vấn đề')\nif (!description) missingFields.push('Mô tả')\n\nreturn [\n  {\n    json: {\n      email,\n      issue,\n      description,\n      priority,\n      emailValid,\n      isValid: missingFields.length === 0,\n      missingFields,\n      telegramUserId: $json.message.from.id,\n      telegramUsername: $json.message.from.username || $json.message.from.first_name || '',\n      chatId: $json.message.chat.id,\n      originalMessage: text\n    }\n  }\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        288
+      ],
+      "id": "47885cee-00e5-424f-970d-7b726a895d42",
+      "name": "Parse Ticket Form"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1bda871a-e6ce-4469-a932-471d7574b1b8",
+              "leftValue": "={{ $json.isValid }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -688,
+        288
+      ],
+      "id": "eb4da376-9032-423c-a7f5-1f8d14db4d5e",
+      "name": "Ticket Info Complete"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "=Thông tin ticket chưa đầy đủ.  Thiếu: {{ $json.missingFields.join(\", \") }}  Bạn vui lòng gửi lại theo mẫu:  TICKET Email: your-email@example.com Vấn đề: Account bị khóa Mô tả: Mô tả chi tiết lỗi bạn gặp Mức độ: Bình thường / Cao",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -384,
+        304
+      ],
+      "id": "58733ce2-fdf5-4a70-816c-6fa81b324688",
+      "name": "Reply Missing Ticket Info",
+      "webhookId": "6be9e27d-3e89-4e29-8ed6-eeed6e50e31e",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://7p50s2cptl.execute-api.ap-southeast-1.amazonaws.com/create-ticket",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"email\": \"{{ $json.email }}\",\n  \"issue\": \"{{ $json.issue }}\",\n  \"description\": \"{{ $json.description }}\",\n  \"priority\": \"{{ $json.priority }}\",\n  \"telegramUserId\": \"{{ $json.telegramUserId }}\",\n  \"telegramUsername\": \"{{ $json.telegramUsername }}\",\n  \"originalMessage\": {{ JSON.stringify($json.originalMessage) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -432,
+        96
+      ],
+      "id": "e9d8ce8a-f71a-4ea2-9c9b-43fe87d31c7b",
+      "name": "Create Ticket Lambda",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Parse Ticket Form\"].json.chatId }}",
+        "text": "=Mình đã tạo ticket hỗ trợ cho bạn ✅\n\nMã ticket: {{ $node[\"Create Ticket Lambda\"].json.ticketId }}\n\nEmail: {{ $node[\"Parse Ticket Form\"].json.email }}\nVấn đề: {{ $node[\"Parse Ticket Form\"].json.issue }}\nMức độ: {{ $node[\"Parse Ticket Form\"].json.priority }}\n\nĐội ngũ hỗ trợ sẽ kiểm tra và phản hồi sau.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -192,
+        0
+      ],
+      "id": "e9204d45-b4ac-4fbf-80b7-91e26346aa95",
+      "name": "Send Ticket Created",
+      "webhookId": "6be9e27d-3e89-4e29-8ed6-eeed6e50e31e",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "=You are a friendly support chatbot for the Taskio application.\n\nPersonality:\n\n* Friendly, calm, supportive, and natural.\n* Reply naturally like a human support assistant.\n* Keep answers short, clear, and easy to understand.\n* Prefer concise answers with 2–6 short sentences unless the user asks for more detail.\n* You may use light friendly expressions such as \"mình\", \"nhé\", \"nè\", \"để mình kiểm tra giúp bạn\".\n* Do not be too robotic or overly formal.\n* Do not overuse emojis. Use at most 1 emoji only when it feels natural.\n\nLanguage:\n\n* Reply in the same language as the user's message.\n* If unclear, reply in Vietnamese.\n\nScope restriction:\n\n* You are ONLY a support assistant for the Taskio application.\n* Only answer questions related to:\n\n  * Taskio features\n  * Taskio workflows\n  * Taskio permissions\n  * Taskio troubleshooting\n  * Taskio subscriptions and billing\n  * User account/support issues related to Taskio\n* Do not answer general knowledge, coding, math, history, entertainment, politics, or unrelated technical questions.\n* If the question is unrelated to Taskio, politely refuse and redirect the user back to Taskio-related topics.\n* For unrelated questions, reply briefly like:\n  \"Mình hiện chỉ hỗ trợ các vấn đề liên quan đến Taskio thôi nhé.\"\n\nInformation sources:\nYou have 3 kinds of context:\n\n1. Taskio document context\n2. User long-term memory\n3. Recent conversation memory\n\nPriority order:\n\n1. Taskio document context\n2. User long-term memory\n3. Recent conversation memory\n4. General AI knowledge (lowest priority)\n\nTaskio document context:\n{{ $json.docsContext || \"No document context.\" }}\n\nUser long-term memory:\n{{ $('Redis Get Long Memory').item.json.propertyName || \"{}\" }}\n\nSource usage rules:\n\n* Use Taskio document context as the primary source of truth ONLY for Taskio product facts, features, permissions, policies, prices, workflows, and troubleshooting.\n* Use user long-term memory for personal user information such as name, email, language preference, previous support issue, and information the user already provided.\n* Use recent conversation memory only to understand follow-up questions and conversation context.\n* Do not treat long-term memory as Taskio documentation.\n* Do not treat recent conversation memory as Taskio factual documentation.\n* If Taskio document context does not mention something, do not invent it from general knowledge.\n\nStrict accuracy rules:\n\n* Only answer Taskio factual questions if the information exists in Taskio document context.\n* Do not infer undocumented features, permissions, APIs, workflows, pricing, or UI elements.\n* Do not speculate.\n* Do not guess hidden system behavior.\n* Do not fabricate steps, permissions, plans, or workflows.\n* If a feature is not explicitly mentioned in Taskio document context, treat it as unknown or unavailable.\n* If the answer is not clearly supported by Taskio document context, say:\n  \"Mình chưa thấy thông tin này trong tài liệu Taskio hiện tại.\"\n* Do not try to sound confident when information is missing.\n\nPersonal memory rules:\n\n* If the user asks about their own information, such as their name, email, previous issue, or preferences, answer from User long-term memory and recent conversation memory.\n* Do NOT require Taskio document context for personal memory questions.\n* If the requested personal information is missing, say you do not have it yet and ask the user to provide it.\n* Example:\n  User: \"tôi tên gì, email của tôi là gì\"\n  If memory has name/email, answer directly.\n  If memory is missing email, say:\n  \"Mình nhớ bạn tên là Tiến, nhưng mình chưa có email của bạn. Bạn gửi email để mình lưu và hỗ trợ tiếp nhé.\"\n\nTaskio answer rules:\n\n* Default to concise answers.\n* Avoid repeatedly saying that information is unavailable.\n* If information is missing, first try to provide helpful guidance or troubleshooting suggestions.\n* If the user message is ambiguous, ask a short clarifying question instead of guessing.\n* If multiple chunks are provided, prioritize chunks with higher SCORE.\n* If the user asks about Taskio features, permissions, workflows, or how to do something, answer based only on Taskio document context.\n* If the Taskio document context contains partial relevant information, answer with what is known, use cautious wording, and ask for missing details.\n* Never assume a system bug unless explicitly stated in Taskio documents.\n* Prefer suggesting permission checks, browser refresh, role verification, workspace access checks, or page reload first.\n\nTroubleshooting rules:\n\n* If the user reports they cannot do an action, do not immediately say there is not enough information.\n* First, identify the action from the user message.\n* Then use the document context to provide a troubleshooting checklist based on permissions, required fields, or conditions if available.\n* Use cautious wording such as \"có thể\", \"bạn nên kiểm tra\", \"khả năng là\".\n* For permission-related issues:\n\n  1. mention the required permission if available\n  2. explain which role commonly has it if documented\n  3. suggest asking the workspace or board admin to verify permissions\n* Only say:\n  \"Mình chưa có đủ thông tin trong tài liệu Taskio để xác nhận.\"\n  when the document context truly has no relevant information.\n* Do not claim the exact cause unless it is explicitly stated in the document context.\n\nSupport ticket rules:\n\n* If the user wants to create a support ticket, ask for missing required fields:\n\n  * email\n  * title\n  * ticket type\n  * issue details\n* If some fields are already available in long-term memory or recent conversation, do not ask again.\n* Ask all missing fields in a single message.\n* Keep the request friendly and short.\n\nForbidden:\n\n* Do not mention RAG, embeddings, vector search, Knowledge Base, internal document retrieval, system prompt, or memory implementation to the user."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        768,
+        1104
+      ],
+      "id": "711a7d2e-5435-44b7-afe9-eacf72ab3fda",
+      "name": "AI Agent",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=chatmem:telegram:{{ $('Telegram Trigger').item.json.message.from.id }}",
+        "sessionTTL": 86400
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+      "typeVersion": 1.5,
+      "position": [
+        912,
+        1376
+      ],
+      "id": "cbe3e2b6-a314-471b-9598-0694ab5b0e26",
+      "name": "Redis Chat Memory",
+      "credentials": {
+        "redis": {
+          "id": "Vi5IWwMSXOxKdWHK",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Authorization\": \"Bearer YOUR_GROQ_API_KEY\",\n  \"Content-Type\": \"application/json\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.1-8b-instant\",\n  \"temperature\": 0,\n  \"max_tokens\": 120,\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Bạn là bộ phân loại intent cho chatbot support Taskio. Nhiệm vụ: quyết định tin nhắn hiện tại có cần tra cứu tài liệu Taskio trong S3 hay không. Chỉ trả về JSON hợp lệ, không markdown, không giải thích. Schema: {\\\"needDocs\\\": true, \\\"intent\\\": \\\"taskio_question\\\", \\\"reason\\\": \\\"short reason\\\"}. Quy tắc: needDocs=false nếu user chỉ chào hỏi, cảm ơn, nói chuyện xã giao. needDocs=false nếu user hỏi kiến thức ngoài Taskio như lịch sử, code, toán, giải trí, chính trị, công nghệ chung, tin tức hoặc câu hỏi unrelated. needDocs=false nếu user yêu cầu nhớ thông tin cá nhân trong cuộc trò chuyện. needDocs=false nếu user hỏi lại thông tin vừa nói trong hội thoại như 'tôi tên gì', 'ý tôi là gì', 'nhắc lại đi'. needDocs=false nếu user yêu cầu viết lại, rút gọn, dịch, format hoặc giải thích lại câu trả lời trước đó. needDocs=true CHỈ KHI user hỏi trực tiếp về ứng dụng Taskio như tính năng, workflow, hướng dẫn sử dụng, troubleshooting, lỗi hệ thống, workspace, board, column, card, task, member, role, permission, attachment, comment, notification, automation, AI feature, subscription, billing, support ticket, quota hoặc policy. Nếu không chắc user có đang nói về Taskio hay không, chọn needDocs=false. Chỉ chọn needDocs=true khi có tín hiệu rõ ràng rằng user đang hỏi về Taskio.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"={{ $('Telegram Trigger').item.json.message.text || '' }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -640,
+        1088
+      ],
+      "id": "6a0b07df-e8ea-4906-847e-641efeb7dc1e",
+      "name": "Intent Router"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json\n\nlet raw = '{}'\n\n// Nếu Intent Router là HTTP Request gọi Groq\nif (input.choices && input.choices[0] && input.choices[0].message) {\n  raw = input.choices[0].message.content\n}\n\n// Nếu Intent Router là AI/node khác\nelse if (input.output) {\n  raw = input.output\n} else if (input.text) {\n  raw = input.text\n} else if (input.response) {\n  raw = input.response\n}\n\n// Trường hợp Groq trả về mảng [{ choices: ... }]\nelse if (Array.isArray(input) && input[0]?.choices?.[0]?.message?.content) {\n  raw = input[0].choices[0].message.content\n}\n\n// Dọn markdown nếu model lỡ trả ```json ... ```\nraw = String(raw)\n  .replace(/```json/gi, '')\n  .replace(/```/g, '')\n  .trim()\n\nlet parsed\n\ntry {\n  parsed = JSON.parse(raw)\n} catch (error) {\n  parsed = {\n    needDocs: true,\n    intent: 'unknown',\n    reason: 'Failed to parse router output, fallback to docs',\n    raw\n  }\n}\n\nconst telegram = $('Telegram Trigger').first().json\n\nreturn [\n  {\n    json: {\n      userMessage: telegram.message?.text || '',\n      needDocs: parsed.needDocs === true,\n      intent: parsed.intent || 'unknown',\n      routerReason: parsed.reason || '',\n      routerRaw: raw\n    }\n  }\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        1088
+      ],
+      "id": "dd5928f2-c37e-4795-a283-c51950db6110",
+      "name": "Parse output router"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3e888be9-6878-4364-a485-574bfd4a4525",
+              "leftValue": "={{ $json.needDocs }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        1088
+      ],
+      "id": "125411db-dbcd-49eb-85ee-f9a392ad9e58",
+      "name": "If need docs"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "674d5047-f5d3-487f-815b-fc9b2927156f",
+              "name": "userMessage",
+              "value": "={{ $('Telegram Trigger').item.json.message.text || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b423b183-5e5e-4a75-b3ac-bdd809211258",
+              "name": "docsContext",
+              "value": "={{ JSON.stringify($('Search S3 Docs Lambda').item.json)}}",
+              "type": "string"
+            },
+            {
+              "id": "8292acf2-2daf-4510-994b-4d21dd994d88",
+              "name": "sources",
+              "value": "={{ $('Search S3 Docs Lambda').item.json.sources || [] }}",
+              "type": "string"
+            },
+            {
+              "id": "9bcb54ca-c085-4679-aed6-93bd27182469",
+              "name": "ragUsed",
+              "value": "={{ true }}",
+              "type": "string"
+            },
+            {
+              "id": "ff890602-2712-4a37-b693-fe4e14d4a44b",
+              "name": "usedFallback",
+              "value": "={{ $('Search S3 Docs Lambda').item.json.debug && $('Search S3 Docs Lambda').item.json.debug.usedFallback ? true : false }}",
+              "type": "string"
+            },
+            {
+              "id": "3ada55fe-41fa-402e-a067-955a98e18156",
+              "name": "intent",
+              "value": "={{ $('Parse output router').item.json.intent || 'taskio_question' }}",
+              "type": "string"
+            },
+            {
+              "id": "3164e3c1-7c2a-4e1d-b0dc-c591c11b08c8",
+              "name": "routerReason",
+              "value": "={{ $('Parse output router').item.json.routerReason || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        160,
+        864
+      ],
+      "id": "7b1c16e1-ee0b-4659-a4b5-8c5b19470b2d",
+      "name": "Set Docs Context"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0cd005cc-58f8-47f9-89db-c83bc996425c",
+              "name": "userMessage",
+              "value": "={{ $('Telegram Trigger').item.json.message.text || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "cafb5c23-2178-4085-84cc-6e397c075a26",
+              "name": "docsContext",
+              "value": "={{ '' }}",
+              "type": "string"
+            },
+            {
+              "id": "6143894a-6379-4d0f-bbc9-db82dd51574c",
+              "name": "sources",
+              "value": "={{ [] }}",
+              "type": "string"
+            },
+            {
+              "id": "8f258cd2-00d8-44f8-9c92-d7e76a61dba5",
+              "name": "ragUsed",
+              "value": "={{ false }}",
+              "type": "string"
+            },
+            {
+              "id": "5346aba5-8ecb-448c-bee7-52bb41a25b76",
+              "name": "usedFallback",
+              "value": "={{ false }}",
+              "type": "string"
+            },
+            {
+              "id": "1a51eb0d-3a08-4508-8277-68587d280d49",
+              "name": "intent",
+              "value": "{{ $('Parse output router').item.json.intent || 'memory_or_chat' }",
+              "type": "string"
+            },
+            {
+              "id": "6473bd88-79f9-44e1-805f-8ea4736f86d1",
+              "name": "routerReason",
+              "value": "={{ $('Parse output router').item.json.routerReason || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        256,
+        1104
+      ],
+      "id": "a1c4d383-3b77-40b2-9c83-9f916dac8bac",
+      "name": "Set Empty Docs"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Parse Ticket Form\"].json.chatId }}",
+        "text": "=❌ Xin lỗi, hiện tại hệ thống tạo ticket đang gặp lỗi tạm thời.\n\nBạn vui lòng thử lại sau ít phút hoặc liên hệ:\nsupportTaskio@gmail.com",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -192,
+        192
+      ],
+      "id": "3da829ce-911e-46c0-adc7-cbfcf5550355",
+      "name": "Send Ticket Error",
+      "webhookId": "6be9e27d-3e89-4e29-8ed6-eeed6e50e31e",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "=Xin lỗi, hiện tại bot đang gặp lỗi khi xử lý câu hỏi của bạn.\n\nBạn thử lại sau ít phút nhé. Nếu cần hỗ trợ gấp, vui lòng liên hệ supportTaskio@gmail.com.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1200,
+        1312
+      ],
+      "id": "55b5b568-2a91-4f4b-b5de-537aa4430a92",
+      "name": "Send AI Error",
+      "webhookId": "820d0092-cd19-49c1-abec-06c7c1535b25",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "=Bạn thấy câu trả lời này hữu ích không?",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👍 Hữu ích",
+                    "additionalFields": {
+                      "callback_data": "feedback:positive"
+                    }
+                  },
+                  {
+                    "text": "👎 Chưa hữu ích",
+                    "additionalFields": {
+                      "callback_data": "feedback:negative"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        96,
+        0
+      ],
+      "id": "b1db2588-cbe1-4387-8c49-9c8db4b0d106",
+      "name": "Send Feedback Question",
+      "webhookId": "820d0092-cd19-49c1-abec-06c7c1535b25",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "981c26f5-ea78-45a4-9a81-0f6465d35eb6",
+              "leftValue": "={{ !!$json.callback_query && !!$json.callback_query.data && $json.callback_query.data.startsWith('feedback:') }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1440,
+        496
+      ],
+      "id": "0d210d77-b671-44b3-9ea1-4ce64c323ae5",
+      "name": "Check Callback Feedback"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Check Callback Feedback').item.json.callback_query.message.chat.id }}",
+        "text": "=💙 Cảm ơn bạn đã phản hồi!\nTaskio sẽ dùng đánh giá này để cải thiện chatbot hỗ trợ tốt hơn. ✨",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1200,
+        240
+      ],
+      "id": "d691b07f-92a3-4105-b457-6274a48d4d72",
+      "name": "Send Feedback Thanks",
+      "webhookId": "6be9e27d-3e89-4e29-8ed6-eeed6e50e31e",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://7p50s2cptl.execute-api.ap-southeast-1.amazonaws.com/chatbot/logs",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n\"x-log-secret\": \"taskio-log-secret-123456\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source\": \"telegram\",\n  \"type\": \"chatbot_interaction\",\n  \"environment\": \"dev\",\n  \"user\": {\n    \"id\": {{ JSON.stringify($('Telegram Trigger').item.json.message.from.id) }},\n    \"firstName\": {{ JSON.stringify($('Telegram Trigger').item.json.message.from.first_name || '') }},\n    \"lastName\": {{ JSON.stringify($('Telegram Trigger').item.json.message.from.last_name || '') }},\n    \"username\": {{ JSON.stringify($('Telegram Trigger').item.json.message.from.username || '') }}\n  },\n  \"chat\": {\n    \"id\": {{ JSON.stringify($('Telegram Trigger').item.json.message.chat.id) }},\n    \"type\": {{ JSON.stringify($('Telegram Trigger').item.json.message.chat.type) }}\n  },\n  \"message\": {\n    \"id\": {{ JSON.stringify($('Telegram Trigger').item.json.message.message_id) }},\n    \"question\": {{ JSON.stringify($('Set Docs Context').isExecuted ? $('Set Docs Context').item.json.userMessage : $('Telegram Trigger').item.json.message.text || '') }},\n    \"timestamp\": {{ JSON.stringify(new Date($('Telegram Trigger').item.json.message.date * 1000).toISOString()) }}\n  },\n  \"bot\": {\n    \"answer\": {{ JSON.stringify($node[\"AI Agent\"].json.output || $node[\"AI Agent\"].json.text || $node[\"AI Agent\"].json.response || '') }},\n    \"provider\": \"n8n-ai-agent\",\n    \"model\": \"llama-3.1-8b-instant\"\n  },\n  \"rag\": {\n    \"used\": {{ JSON.stringify($('Set Docs Context').isExecuted ? ($('Set Docs Context').item.json.ragUsed === true || $('Set Docs Context').item.json.ragUsed === 'true') : false) }},\n    \"query\": {{ JSON.stringify($('Set Docs Context').isExecuted ? $('Set Docs Context').item.json.userMessage : $('Telegram Trigger').item.json.message.text || '') }},\n    \"usedFallback\": {{ JSON.stringify($('Set Docs Context').isExecuted ? ($('Set Docs Context').item.json.usedFallback === true || $('Set Docs Context').item.json.usedFallback === 'true') : false) }},\n    \"docsFound\": {{ JSON.stringify($('Set Docs Context').isExecuted ? JSON.parse($('Set Docs Context').item.json.sources || '[]').length : 0) }},\n    \"sources\": {{ JSON.stringify($('Set Docs Context').isExecuted ? [...new Set(JSON.parse($('Set Docs Context').item.json.sources || '[]'))] : []) }}\n  },\n  \"router\": {\n    \"needDocs\": {{ JSON.stringify($('Set Docs Context').isExecuted ? ($('Set Docs Context').item.json.ragUsed === true || $('Set Docs Context').item.json.ragUsed === 'true') : false) }},\n    \"intent\": {{ JSON.stringify($('Set Docs Context').isExecuted ? $('Set Docs Context').item.json.intent || '' : '') }},\n    \"reason\": {{ JSON.stringify($('Set Docs Context').isExecuted ? $('Set Docs Context').item.json.routerReason || '' : '') }}\n  },\n  \"memory\": {\n    \"enabled\": true,\n    \"provider\": \"redis\",\n    \"sessionId\": {{ JSON.stringify('telegram:' + $('Telegram Trigger').item.json.message.from.id) }},\n    \"contextWindowLength\": 3\n  },\n  \"route\": {{ JSON.stringify($('Set Docs Context').isExecuted && ($('Set Docs Context').item.json.ragUsed === true || $('Set Docs Context').item.json.ragUsed === 'true') ? \"rag_answer\" : \"memory_answer\") }},\n  \"status\": \"success\",\n  \"error\": null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1184,
+        1088
+      ],
+      "id": "a4b1b71c-6f45-4e2d-8239-4d01185f4545",
+      "name": "Save Chat Log Lambda"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://7p50s2cptl.execute-api.ap-southeast-1.amazonaws.com/chatbot/logs",
+        "sendHeaders": true,
+        "specifyHeaders": "json",
+        "jsonHeaders": "{\n  \"Content-Type\": \"application/json\",\n\"x-log-secret\": \"taskio-log-secret-123456\"\n}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source\": \"telegram\",\n  \"type\": \"chatbot_feedback\",\n  \"environment\": \"dev\",\n  \"user\": {\n    \"id\": {{ JSON.stringify($json.callback_query.from.id) }},\n    \"firstName\": {{ JSON.stringify($json.callback_query.from.first_name || '') }},\n    \"lastName\": {{ JSON.stringify($json.callback_query.from.last_name || '') }},\n    \"username\": {{ JSON.stringify($json.callback_query.from.username || '') }}\n  },\n  \"chat\": {\n    \"id\": {{ JSON.stringify($json.callback_query.message.chat.id) }},\n    \"type\": {{ JSON.stringify($json.callback_query.message.chat.type) }}\n  },\n  \"feedback\": {\n    \"value\": {{ JSON.stringify($json.callback_query.data.split(':')[1]) }},\n    \"callbackData\": {{ JSON.stringify($json.callback_query.data) }}\n  },\n  \"relatedMessage\": {\n    \"id\": {{ JSON.stringify($json.callback_query.message.message_id) }},\n    \"text\": {{ JSON.stringify($json.callback_query.message.text || '') }}\n  },\n  \"memory\": {\n    \"sessionId\": {{ JSON.stringify('telegram:' + $json.callback_query.from.id) }}\n  },\n  \"status\": \"success\",\n  \"error\": null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -1200,
+        32
+      ],
+      "id": "f7441d4a-b244-48ef-8ff1-ab48dbfb39c5",
+      "name": "Save Feedback Log Lambda"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://7p50s2cptl.execute-api.ap-southeast-1.amazonaws.com/search-s3-docs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"question\": \"{{ $node['Telegram Trigger'].json.message.text }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -32,
+        880
+      ],
+      "id": "9e23255d-3917-4c36-a448-1deb4bff3afb",
+      "name": "Search S3 Docs Lambda",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "function safeJsonParse(value) {\n  if (typeof value !== \"string\") return value;\n\n  try {\n    return JSON.parse(value);\n  } catch {\n    return value;\n  }\n}\n\nfunction isObject(value) {\n  return value && typeof value === \"object\" && !Array.isArray(value);\n}\n\nfunction normalizeBoolean(value) {\n  return value === true || value === \"true\";\n}\n\n// Input gốc từ n8n\nconst input = $json;\n\n// Parse body nếu có\nconst body = input.body ? safeJsonParse(input.body) : null;\n\n// Parse docsContext nếu nó đang là JSON string\nconst parsedDocsContext = input.docsContext\n  ? safeJsonParse(input.docsContext)\n  : null;\n\n// Parse context nếu nó đang là JSON string\nconst parsedContext = input.context\n  ? safeJsonParse(input.context)\n  : null;\n\n// Ưu tiên tìm context theo thứ tự rõ ràng\nlet realContext = \"\";\n\nif (isObject(body) && typeof body.context === \"string\") {\n  realContext = body.context;\n} else if (isObject(parsedDocsContext) && typeof parsedDocsContext.context === \"string\") {\n  realContext = parsedDocsContext.context;\n} else if (isObject(parsedContext) && typeof parsedContext.context === \"string\") {\n  realContext = parsedContext.context;\n} else if (typeof input.context === \"string\" && !input.context.trim().startsWith(\"{\")) {\n  realContext = input.context;\n} else if (typeof input.docsContext === \"string\" && !input.docsContext.trim().startsWith(\"{\")) {\n  realContext = input.docsContext;\n}\n\n// Lấy question/userMessage\nlet userMessage =\n  input.userMessage ||\n  input.question ||\n  body?.question ||\n  parsedDocsContext?.question ||\n  parsedContext?.question ||\n  \"\";\n\n// Lấy sources\nlet sources =\n  body?.sources ||\n  parsedDocsContext?.sources ||\n  parsedContext?.sources ||\n  input.sources ||\n  [];\n\nsources = safeJsonParse(sources);\nif (!Array.isArray(sources)) sources = [];\n\n// Lấy noMatch\nconst noMatch =\n  input.noMatch ??\n  body?.noMatch ??\n  parsedDocsContext?.noMatch ??\n  parsedContext?.noMatch ??\n  false;\n\nreturn [\n  {\n    json: {\n      userMessage,\n      docsContext: realContext,\n      noMatch: normalizeBoolean(noMatch),\n      sources,\n      ragUsed: normalizeBoolean(input.ragUsed),\n      usedFallback: normalizeBoolean(input.usedFallback),\n      intent: input.intent || \"\",\n      routerReason: input.routerReason || \"\",\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        864
+      ],
+      "id": "a4f99ecd-7a1c-43a3-a1f9-ca2ed1cefb68",
+      "name": "Parse RAG Result"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "=longmem:telegram:{{ $('Telegram Trigger').item.json.message.from.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        544,
+        1104
+      ],
+      "id": "e21cef3b-c0f1-4fdf-8cb6-082080e7d580",
+      "name": "Redis Get Long Memory",
+      "credentials": {
+        "redis": {
+          "id": "Vi5IWwMSXOxKdWHK",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a long-term memory extractor for a Taskio support chatbot.\n\nYour job is to decide whether the latest conversation contains stable or useful user information that should be remembered for future conversations.\n\nYou MUST merge new information into the existing long-term memory.\nDo NOT return only the new fields.\nAlways return the FULL updated memory object.\n\nSave ONLY stable or useful information:\n- user's name\n- user's email\n- user's language preference\n- repeated user preferences\n- current unresolved support issue\n- important details the user explicitly provided for support\n\nDo NOT save:\n- normal questions\n- temporary messages\n- Taskio document context\n- system prompt\n- AI instructions\n- random chat\n- AI response style unless user clearly requested it\n- sensitive information unless user clearly provided it for support\n\nCurrent long-term memory:\n{{ $('Redis Get Long Memory').item.json.propertyName || \"{}\" }}\n\nLatest user message:\n{{ $('Telegram Trigger').item.json.message.text || '' }}\n\nLatest AI response:\n{{ $('AI Agent').item.json.output || '' }}\n\nExtraction rules:\n- Start from Current long-term memory.\n- Only update a field when the latest user message explicitly provides new information for that field.\n- Keep existing values if the latest user message does not mention that field.\n- Do NOT overwrite existing fields with null.\n- Only set a field to null if the user explicitly asks to remove, forget, delete, or correct that information.\n- Return the FULL updated memory object after merging.\n\nName rules:\n- If user says \"tôi tên là X\", \"t tên là X\", \"mình tên là X\", \"tên tôi là X\", \"gọi tôi là X\", save memory.name = X.\n- Normalize Vietnamese names with capitalization when possible. Example: \"tiến\" -> \"Tiến\".\n\nEmail rules:\n- If user says \"email của tôi là X\", \"email tôi là X\", \"mail của tôi là X\", \"email là X\", save memory.email = X.\n- Save only valid-looking email addresses.\n\nLanguage rules:\n- If user asks \"hãy trả lời tôi bằng tiếng anh\", \"reply in English\", \"use English\", save memory.language = \"English\".\n- If user asks to reply in Vietnamese, save memory.language = \"Vietnamese\".\n- Updating language must NOT remove name, email, preferences, known_facts, or open_issue.\n\nSupport issue rules:\n- If user reports a current unresolved issue, save a short summary in memory.open_issue.\n- If user says the issue is solved, fixed, resolved, or no longer needed, set memory.open_issue = null.\n- Do not overwrite an existing open_issue unless the user provides a new current issue or says it is resolved.\n\nPreferences rules:\n- Save repeated or explicit preferences in memory.preferences.\n- Do not duplicate existing preferences.\n\nKnown facts rules:\n- Save only useful support-related facts explicitly provided by the user.\n- Do not duplicate existing known_facts.\n\nshouldUpdate rules:\n- Return shouldUpdate = true if any memory field should be added, updated, or cleared.\n- Return shouldUpdate = false if nothing useful should be remembered.\n- Even when shouldUpdate = false, still return the FULL current memory object unchanged.\n\nReturn ONLY valid JSON. No markdown. No explanation.\n\nFormat:\n{\n  \"shouldUpdate\": true,\n  \"memory\": {\n    \"name\": null,\n    \"email\": null,\n    \"language\": null,\n    \"preferences\": [],\n    \"known_facts\": [],\n    \"open_issue\": null\n  }\n}",
+        "messages": {
+          "messageValues": []
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1168,
+        896
+      ],
+      "id": "54030659-742e-41d2-92d6-c8b9d16fd7d3",
+      "name": "Memory Extractor",
+      "notesInFlow": false,
+      "executeOnce": false,
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\n\nlet raw = input.output || input.text || input.response || '{}';\n\nif (typeof raw === 'string') {\n  raw = raw\n    .replace(/^```json\\s*/i, '')\n    .replace(/^```\\s*/i, '')\n    .replace(/```$/i, '')\n    .trim();\n}\n\nlet extracted;\ntry {\n  extracted = typeof raw === 'string' ? JSON.parse(raw) : raw;\n} catch (e) {\n  return [\n    {\n      json: {\n        shouldUpdate: false,\n        memory: null,\n        error: 'Invalid JSON from Memory Extractor',\n        raw,\n      },\n    },\n  ];\n}\n\nlet redisData = {};\nlet currentRaw = '{}';\n\ntry {\n  redisData = $('Redis Get Long Memory').first().json;\n\n  currentRaw =\n    redisData.value ??\n    redisData.data ??\n    redisData.result ??\n    redisData.longMemory ??\n    redisData.memory ??\n    null;\n\n  // Nếu Redis node chỉ trả về 1 field, lấy field đó\n  if (currentRaw === null) {\n    const values = Object.values(redisData);\n    if (values.length === 1) {\n      currentRaw = values[0];\n    }\n  }\n\n  if (currentRaw === null || currentRaw === undefined || currentRaw === '') {\n    currentRaw = '{}';\n  }\n} catch (e) {\n  currentRaw = '{}';\n}\n\nlet currentMemory = {};\ntry {\n  currentMemory =\n    typeof currentRaw === 'string'\n      ? JSON.parse(currentRaw)\n      : currentRaw || {};\n} catch (e) {\n  currentMemory = {};\n}\n\nconst newMemory = extracted.memory || {};\n\nconst mergedMemory = {\n  name: newMemory.name ?? currentMemory.name ?? null,\n  email: newMemory.email ?? currentMemory.email ?? null,\n  language: newMemory.language ?? currentMemory.language ?? null,\n\n  preferences:\n    Array.isArray(newMemory.preferences) && newMemory.preferences.length > 0\n      ? [...new Set([...(currentMemory.preferences || []), ...newMemory.preferences])]\n      : currentMemory.preferences || [],\n\n  known_facts:\n    Array.isArray(newMemory.known_facts) && newMemory.known_facts.length > 0\n      ? [...new Set([...(currentMemory.known_facts || []), ...newMemory.known_facts])]\n      : currentMemory.known_facts || [],\n\n  open_issue: newMemory.open_issue ?? currentMemory.open_issue ?? null,\n};\n\nreturn [\n  {\n    json: {\n      shouldUpdate: extracted.shouldUpdate === true,\n      memory: mergedMemory,\n\n      debugRedisData: redisData,\n      debugCurrentRaw: currentRaw,\n      debugCurrentMemory: currentMemory,\n      debugNewMemory: newMemory,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        896
+      ],
+      "id": "b8f3f114-62b5-4ef7-a1a3-d4f3782784fa",
+      "name": "Parse Memory JSON"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4ce8bf8d-e1ce-427f-a3e3-eb54fdbc3901",
+              "leftValue": "={{ $json.shouldUpdate }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1696,
+        896
+      ],
+      "id": "558e5588-5c1b-4233-987a-5581fcf62fdc",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "=longmem:telegram:{{ $('Telegram Trigger').item.json.message.from.id }}",
+        "value": "={{ JSON.stringify($json.memory) }}",
+        "expire": true,
+        "ttl": 7776000
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1936,
+        880
+      ],
+      "id": "f35b0e5c-740d-467c-9318-c077f2e1ce71",
+      "name": "Redis Set Long Memory",
+      "credentials": {
+        "redis": {
+          "id": "Vi5IWwMSXOxKdWHK",
+          "name": "Redis account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        1184
+      ],
+      "id": "ba2679b8-ceb8-4d13-a35f-0590a38a7d07",
+      "name": "GPT-4o Mini - Memory Extractor",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZlfXTecZYAXqA2oy",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        656,
+        1376
+      ],
+      "id": "9062a8f8-fa63-4e0d-86db-3561be20685e",
+      "name": "GPT-5 Mini - Main Agent",
+      "credentials": {
+        "openAiApi": {
+          "id": "ZlfXTecZYAXqA2oy",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $node[\"Telegram Trigger\"].json.message.chat.id }}",
+        "text": "=Xin lỗi vì sự bất tiện này, hiện tại hệ thống đng trục trặc, vui lòng thử lại sau!",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👍 Hữu ích",
+                    "additionalFields": {
+                      "callback_data": "feedback:positive"
+                    }
+                  },
+                  {
+                    "text": "👎 Chưa hữu ích",
+                    "additionalFields": {
+                      "callback_data": "feedback:negative"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1456,
+        688
+      ],
+      "id": "5bdba5d0-c82d-4fc6-bffb-2bc4357d861a",
+      "name": "Send Error Message",
+      "webhookId": "820d0092-cd19-49c1-abec-06c7c1535b25",
+      "credentials": {
+        "telegramApi": {
+          "id": "ynpWgPVz6SIx04Ll",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Check Callback Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Command": {
+      "main": [
+        [
+          {
+            "node": "Command Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Intent Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Command Router": {
+      "main": [
+        [
+          {
+            "node": "Send About",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Ticket Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Ticket Form": {
+      "main": [
+        [
+          {
+            "node": "Parse Ticket Form",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Ticket Form": {
+      "main": [
+        [
+          {
+            "node": "Ticket Info Complete",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ticket Info Complete": {
+      "main": [
+        [
+          {
+            "node": "Create Ticket Lambda",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply Missing Ticket Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Ticket Lambda": {
+      "main": [
+        [
+          {
+            "node": "Send Ticket Created",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Ticket Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Send Error Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save Chat Log Lambda",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Memory Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send AI Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Intent Router": {
+      "main": [
+        [
+          {
+            "node": "Parse output router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse output router": {
+      "main": [
+        [
+          {
+            "node": "If need docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If need docs": {
+      "main": [
+        [
+          {
+            "node": "Search S3 Docs Lambda",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Empty Docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Docs Context": {
+      "main": [
+        [
+          {
+            "node": "Parse RAG Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Empty Docs": {
+      "main": [
+        [
+          {
+            "node": "Redis Get Long Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Callback Feedback": {
+      "main": [
+        [
+          {
+            "node": "Send Feedback Thanks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save Feedback Log Lambda",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Ticket Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search S3 Docs Lambda": {
+      "main": [
+        [
+          {
+            "node": "Set Docs Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set Empty Docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse RAG Result": {
+      "main": [
+        [
+          {
+            "node": "Redis Get Long Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Redis Set Long Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Get Long Memory": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory Extractor": {
+      "main": [
+        [
+          {
+            "node": "Parse Memory JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Memory JSON": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-4o Mini - Memory Extractor": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Memory Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GPT-5 Mini - Main Agent": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Ticket Created": {
+      "main": [
+        [
+          {
+            "node": "Send Feedback Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 1,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

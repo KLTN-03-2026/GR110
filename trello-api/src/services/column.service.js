@@ -3,6 +3,7 @@ import BoardRepo from '~/repo/board.repo'
 import CardRepo from '~/repo/card.repo'
 import {
   BadRequestErrorResponse,
+  ConflictErrorResponse,
   ForbiddenErrorResponse,
   NotFoundErrorResponse
 } from '~/core/error.response'
@@ -141,30 +142,53 @@ class ColumnService {
     }
 
     if ('cardOrderIds' in updateData) {
-      const cardOrderIds = updateData.cardOrderIds
+      const cardOrderIds = updateData.cardOrderIds.map((id) => id.toString())
+      updateData.cardOrderIds = cardOrderIds
 
       const uniqueIds = new Set(cardOrderIds)
       if (uniqueIds.size !== cardOrderIds.length)
         throw new BadRequestErrorResponse('Duplicate card IDs are not allowed.')
 
-      if (cardOrderIds.length > 0) {
-        const existingCards = await CardRepo.findMany({
-          filter: {
-            _id: { $in: cardOrderIds.map((id) => new ObjectId(id)) },
-            columnId: _id.toString()
-          }
-        })
+      const existingCards = await CardRepo.findMany({
+        filter: {
+          boardId: boardAccess.board._id.toString(),
+          columnId: _id.toString(),
+          status: 'active'
+        },
+        options: { projection: { _id: 1 } }
+      })
 
-        if (existingCards.length !== cardOrderIds.length)
-          throw new BadRequestErrorResponse(
-            'Some card IDs do not exist or do not belong to this column.'
-          )
-      }
+      const existingCardIds = existingCards.map((card) => card._id.toString())
+      const existingSet = new Set(existingCardIds)
+      const incomingSet = new Set(cardOrderIds)
+
+      const hasSameCardSet =
+        existingCardIds.length === cardOrderIds.length &&
+        existingCardIds.every((id) => incomingSet.has(id)) &&
+        cardOrderIds.every((id) => existingSet.has(id))
+
+      if (!hasSameCardSet)
+        throw new ConflictErrorResponse(
+          'The column changed while you were reordering cards. Please refresh and try again.'
+        )
     }
 
     updateData.updatedAt = new Date()
 
-    const updatedColumn = await ColumnRepo.updateById({ _id, data: updateData })
+    const updatedColumn = await ColumnRepo.updateById({
+      _id,
+      data: updateData,
+      filter: {
+        boardId: boardAccess.board._id.toString(),
+        status: 'active',
+        updatedAt: column.updatedAt ?? null
+      }
+    })
+
+    if (!updatedColumn)
+      throw new ConflictErrorResponse(
+        'The column was updated by another member. Please refresh and retry.'
+      )
 
     emitColumnUpdated({
       boardId: boardAccess.board._id.toString(),

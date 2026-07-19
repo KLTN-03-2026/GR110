@@ -141,7 +141,8 @@ function CreateBoardModal({ ui, handler }) {
         cover: {
           type: 'image',
           value: firstBackground?.image || ''
-        }
+        },
+        aiPrompt: ''
       })
 
       setSelectedBackground(firstBackground)

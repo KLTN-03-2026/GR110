@@ -38,6 +38,7 @@ import AdminTicketPage from './pages/Admin/Ticket/Ticket.page'
 import { WorkspaceQuotaPage } from './pages/Home/WorkspaceQuota.page'
 import Introduction from './pages/Introduction/Introduction.page'
 import DashboardPage from './pages/Admin/Dashboard/Dashboard.page'
+import OverviewPage from './pages/Overview/Overview.page'
 const ProtectedRoute = ({ user }) => {
   if (!user) return <Navigate to="/auth/login" replace={true} />
   return <Outlet />
@@ -115,7 +116,7 @@ function App() {
           </Route>
           {/* <Route index element={<Navigate to="boards" replace />} />
           <Route path="boards" element={<BoardsOverviewPage />} />
-          
+
           <Route
             path="workspaces/:workspaceId/billing"
             element={<WorkspaceBillingPage />}
@@ -177,6 +178,7 @@ function App() {
       />
       <Route path="/404-not-found" element={<NotFound />} />
       <Route path="/landing-page" element={<LangdingPage />} />
+      <Route path="/overview" element={<OverviewPage />} />
     </Routes>
   )
 }

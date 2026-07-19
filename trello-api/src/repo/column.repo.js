@@ -79,14 +79,14 @@ class ColumnRepo {
     return createdColumn
   }
 
-  static updateById = async ({ _id, data, session }) => {
+  static updateById = async ({ _id, data, session, filter = {} }) => {
     if (data.cardOrderIds)
       data.cardOrderIds = data.cardOrderIds.map((_id) => new ObjectId(_id))
 
     const result = await GET_DB()
       .collection(columnModel.COLUMN_COLLECTION_NAME)
       .findOneAndUpdate(
-        { _id: new ObjectId(_id) },
+        { _id: new ObjectId(_id), ...filter },
         { $set: data },
         { returnDocument: 'after', session }
       )

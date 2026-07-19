@@ -64,6 +64,10 @@ authorizeAxiosInstance.interceptors.response.use(
       })
     }
 
+    if (error.config?.skipErrorToast) {
+      return Promise.reject(error)
+    }
+
     if (error.response?.status !== 410) {
       error.response?.data?.message
         ? toast.error(error.response.data.message)

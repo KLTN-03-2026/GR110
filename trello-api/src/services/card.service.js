@@ -42,6 +42,75 @@ const CARD_UPDATE_FIELDS = [
 
 const AI_CACHE_TTL = 86400
 
+const CARD_ASSIST_SENSITIVE_TOPIC_RULES = [
+  {
+    category: 'sexual content',
+    patterns: [
+      /\bsex\b/i,
+      /\bporn\b/i,
+      /\bnude\b/i,
+      /khi[êe]u d[âa]m/i,
+      /t[ìi]nh d[ụu]c/i,
+      /18\+/i
+    ]
+  },
+  {
+    category: 'child sexual content',
+    patterns: [/child porn/i, /ấu dâm/i]
+  },
+  {
+    category: 'extreme violence or gore',
+    patterns: [
+      /\bmurder\b/i,
+      /\bkill\b/i,
+      /\btorture\b/i,
+      /\bgore\b/i,
+      /gi[ếe]t ng[ườu]i/i,
+      /tra t[ấa]n/i
+    ]
+  },
+  {
+    category: 'self-harm or suicide',
+    patterns: [
+      /\bsuicide\b/i,
+      /self[- ]?harm/i,
+      /t[ựu]\s*t[ửu]/i,
+      /t[ựu]\s*h[ạa]i/i
+    ]
+  },
+  {
+    category: 'illegal drugs',
+    patterns: [
+      /\bcocaine\b/i,
+      /\bheroin\b/i,
+      /\bmeth\b/i,
+      /ma t[uýy]/i,
+      /\bdrug trafficking\b/i
+    ]
+  },
+  {
+    category: 'hate or extremist content',
+    patterns: [
+      /\bnazi\b/i,
+      /\bisis\b/i,
+      /kh[ủu]ng b[ốo]/i,
+      /hate speech/i,
+      /di[ệe]t ch[ủu]ng/i
+    ]
+  },
+  {
+    category: 'fraud, scam, or cyber abuse',
+    patterns: [
+      /\bscam\b/i,
+      /\bphishing\b/i,
+      /\bfraud\b/i,
+      /\bhack(?:ing)?\b/i,
+      /l[ừu]a đ[ảa]o/i,
+      /đ[áa]nh c[ắa]p/i
+    ]
+  }
+]
+
 class CardService {
   static fetchArchived = async ({ boardId }) => {
     const archivedItems = await CardRepo.findMany({
@@ -877,9 +946,17 @@ class CardService {
     const cacheKey = `ai:card-assist:${MODEL_TAG}:${hash}`
 
     const cached = await getCacheJSON({ key: cacheKey })
-    if (cached) return { ...cached, fromCache: true }
+    if (cached) {
+      const validatedCached = await validateAndSanitizeCardAssistOutput(cached)
+      return { ...validatedCached, fromCache: true }
+    }
 
-    const prompt = buildPrompt(card.title, userPrompt)
+    assertNoSensitiveCardAssistTopic({
+      text: [card.title, userPrompt].filter(Boolean).join('\n'),
+      source: 'request'
+    })
+
+    const prompt = buildPrompt(boardAccess.board.title, card.title, userPrompt)
 
     let raw
     try {
@@ -888,16 +965,7 @@ class CardService {
       throw new BadRequestErrorResponse(`AI service error: ${err?.message}`)
     }
 
-    let parsed
-    try {
-      parsed = JSON.parse(raw)
-    } catch {
-      throw new BadRequestErrorResponse('AI returned invalid JSON.')
-    }
-
-    const validated = await AI_OUTPUT_SCHEMA.validateAsync(parsed, {
-      abortEarly: false
-    })
+    const validated = await validateAndSanitizeCardAssistOutput(raw)
 
     await setCache({
       key: cacheKey,
@@ -1004,8 +1072,13 @@ class CardService {
   }
 }
 
-const buildPrompt = (title, userPrompt) => `
+const buildPrompt = (boardTitle, cardTitle, userPrompt) => `
 You are a task management assistant.
+
+STRICT SAFETY POLICY:
+- Refuse sexual content, child sexual content, violence, self-harm, illegal drugs, hate/extremism, fraud/scam/hacking.
+- If user request is unsafe, return this exact JSON:
+{"description":"Unsafe request. Please provide a neutral and safe work task context.","subtasks":["Clarify a safe work objective","Define clear success criteria","List execution steps in a safe scope"]}
 
 Return ONLY valid JSON, no extra text.
 
@@ -1013,14 +1086,134 @@ Given a card title, generate:
 - A concise description (1–3 sentences)
 - 3–7 actionable subtasks
 
-Card title: "${title}"
+LANGUAGE RULE (STRICT):
+- If "Additional context" exists, output description and subtasks in exactly the same language as "Additional context".
+- Do not translate to English.
+- If "Additional context" is empty, use the same language as "Card title".
+
+Board title: "${boardTitle}"
+Card title: "${cardTitle}"
 
 ${userPrompt ? `Additional context: "${userPrompt}"` : ''}
 `
 
 const AI_OUTPUT_SCHEMA = Joi.object({
-  description: Joi.string().max(2000).required(),
-  subtasks: Joi.array().items(Joi.string().max(200)).min(1).max(10).required()
+  description: Joi.string().trim().min(1).max(2000).required(),
+  subtasks: Joi.array()
+    .items(Joi.string().trim().min(1).max(200).required())
+    .min(3)
+    .max(7)
+    .required()
 })
+
+const findSensitiveCardAssistMatch = (text = '') => {
+  const safeText = String(text || '')
+  if (!safeText.trim()) return null
+
+  for (const rule of CARD_ASSIST_SENSITIVE_TOPIC_RULES) {
+    for (const pattern of rule.patterns) {
+      if (pattern.test(safeText)) {
+        return { category: rule.category }
+      }
+    }
+  }
+
+  return null
+}
+
+const assertNoSensitiveCardAssistTopic = ({
+  text = '',
+  source = 'content'
+}) => {
+  const match = findSensitiveCardAssistMatch(text)
+  if (!match) return
+
+  throw new ForbiddenErrorResponse(
+    `Blocked sensitive ${source}: ${match.category}. Please use a neutral and safe topic.`
+  )
+}
+
+const parseCardAssistJSON = (input) => {
+  if (input && typeof input === 'object') return input
+
+  const raw = String(input || '').trim()
+  if (!raw) throw new BadRequestErrorResponse('AI returned empty response.')
+
+  const cleaned = raw
+    .replace(/^```json/i, '')
+    .replace(/^```/i, '')
+    .replace(/```$/i, '')
+    .trim()
+
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+    if (!jsonMatch)
+      throw new BadRequestErrorResponse('AI returned invalid JSON.')
+
+    try {
+      return JSON.parse(jsonMatch[0])
+    } catch {
+      throw new BadRequestErrorResponse('AI returned invalid JSON.')
+    }
+  }
+}
+
+const ensureDescriptionSentenceCount = (description = '') => {
+  const parts = description
+    .split(/[.!?]+/g)
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+  if (parts.length < 1 || parts.length > 3) {
+    throw new BadRequestErrorResponse(
+      'AI output violates strict schema. Description must be 1-3 sentences.'
+    )
+  }
+}
+
+const ensureUniqueSubtasks = (subtasks = []) => {
+  const normalized = subtasks.map((task) =>
+    String(task || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim()
+  )
+  const unique = new Set(normalized)
+  if (unique.size !== normalized.length) {
+    throw new BadRequestErrorResponse(
+      'AI output violates strict schema. Subtasks must be unique.'
+    )
+  }
+}
+
+const validateAndSanitizeCardAssistOutput = async (rawOrParsed) => {
+  const parsed = parseCardAssistJSON(rawOrParsed)
+
+  let validated
+  try {
+    validated = await AI_OUTPUT_SCHEMA.validateAsync(parsed, {
+      abortEarly: false,
+      stripUnknown: true
+    })
+  } catch (error) {
+    const details = error?.details?.map((d) => d.message)?.join(', ')
+    throw new BadRequestErrorResponse(
+      `AI output violates strict schema.${details ? ` ${details}` : ''}`
+    )
+  }
+
+  ensureDescriptionSentenceCount(validated.description)
+  ensureUniqueSubtasks(validated.subtasks)
+
+  const outputText = [validated.description, ...validated.subtasks]
+    .filter(Boolean)
+    .join('\n')
+
+  assertNoSensitiveCardAssistTopic({ text: outputText, source: 'AI output' })
+
+  return validated
+}
 
 export default CardService

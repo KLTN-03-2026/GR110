@@ -4,7 +4,7 @@ let socketInstance = null
 let activeConsumers = 0
 let hasBoundCoreListeners = false
 
-const SOCKET_URL = 'http://localhost:8017'
+const SOCKET_URL = 'https://api.nguyenductien.cloud'
 const SOCKET_OPTIONS = {
   withCredentials: true,
   autoConnect: false,

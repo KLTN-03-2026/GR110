@@ -13,6 +13,7 @@ import { cloneDeep } from 'lodash'
 import { useParams } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { initSocket, releaseSocket } from '~/socket/socket'
+import { toast } from 'react-toastify'
 
 const useBoardDetail = () => {
   const dispatch = useDispatch()
@@ -32,6 +33,29 @@ const useBoardDetail = () => {
   const [action, setAction] = useState(null)
   const [selectedLabel, setSelectedLabel] = useState(null)
   const boardRef = useRef(null)
+  const isRefreshingBoardRef = useRef(false)
+  const lastConflictToastAtRef = useRef(0)
+
+  const notifyAndSyncBoardAfterConflict = async () => {
+    if (!workspaceId || !boardId) return
+
+    const now = Date.now()
+    if (now - lastConflictToastAtRef.current > 3000) {
+      toast.info(
+        'Board vừa được thành viên khác cập nhật. Hệ thống đang tự đồng bộ dữ liệu mới nhất.'
+      )
+      lastConflictToastAtRef.current = now
+    }
+
+    if (isRefreshingBoardRef.current) return
+    isRefreshingBoardRef.current = true
+
+    try {
+      await dispatch(fetchBoardDetailsAPI({ workspaceId, boardId }))
+    } finally {
+      isRefreshingBoardRef.current = false
+    }
+  }
 
   const handleOpenMoreOption = (event) => {
     setAnchorEl(event.currentTarget)
@@ -414,7 +438,7 @@ const useBoardDetail = () => {
     })
   }
 
-  const moveCardInTheSameColumn = (
+  const moveCardInTheSameColumn = async (
     dndOrderedCards,
     dndOrderedCardIds,
     columnId
@@ -429,14 +453,26 @@ const useBoardDetail = () => {
     }
     dispatch(updateCurrentActiveBoard(newBoard))
 
-    updateColumnDetailsAPI({
-      boardId,
-      columnId,
-      payload: { cardOrderIds: dndOrderedCardIds }
-    })
+    try {
+      await updateColumnDetailsAPI({
+        boardId,
+        columnId,
+        payload: { cardOrderIds: dndOrderedCardIds },
+        options: { skipErrorToast: true }
+      })
+    } catch (error) {
+      if (error?.response?.status === 409) {
+        await notifyAndSyncBoardAfterConflict()
+        return
+      }
+
+      error.response?.data?.message
+        ? toast.error(error.response.data.message)
+        : toast.error('Không thể cập nhật thứ tự thẻ. Vui lòng thử lại.')
+    }
   }
 
-  const moveCardToDifferentColumn = (
+  const moveCardToDifferentColumn = async (
     currentCardId,
     prevColumnId,
     nextColumnId,
@@ -455,17 +491,30 @@ const useBoardDetail = () => {
       prevCardOrderIds = []
     }
 
-    moveCardToDifferentColumnAPI({
-      boardId,
-      updateData: {
-        currentCardId,
-        prevColumnId,
-        prevCardOrderIds,
-        nextColumnId,
-        nextCardOrderIds: dndOrderedColumns.find((c) => c._id === nextColumnId)
-          ?.cardOrderIds
+    try {
+      await moveCardToDifferentColumnAPI({
+        boardId,
+        updateData: {
+          currentCardId,
+          prevColumnId,
+          prevCardOrderIds,
+          nextColumnId,
+          nextCardOrderIds: dndOrderedColumns.find(
+            (c) => c._id === nextColumnId
+          )?.cardOrderIds
+        },
+        options: { skipErrorToast: true }
+      })
+    } catch (error) {
+      if (error?.response?.status === 409) {
+        await notifyAndSyncBoardAfterConflict()
+        return
       }
-    })
+
+      error.response?.data?.message
+        ? toast.error(error.response.data.message)
+        : toast.error('Không thể di chuyển thẻ. Vui lòng thử lại.')
+    }
   }
 
   return {

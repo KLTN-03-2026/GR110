@@ -10,10 +10,17 @@ export const updateBoardDetailsAPI = async (boardId, updateData) => {
   return response.data.metadata
 }
 
-export const moveCardToDifferentColumnAPI = async ({ updateData, boardId }) => {
+export const moveCardToDifferentColumnAPI = async ({
+  updateData,
+  boardId,
+  options = {}
+}) => {
   const response = await authorizeAxiosInstance.put(
     `${API_ROOT}/v1/boards/supports/moving_card/${boardId}`,
-    updateData
+    updateData,
+    {
+      skipErrorToast: options.skipErrorToast
+    }
   )
   return response.data.metadata
 }
@@ -30,11 +37,15 @@ export const createNewColumnAPI = async (newColumnData) => {
 export const updateColumnDetailsAPI = async ({
   boardId,
   columnId,
-  payload
+  payload,
+  options = {}
 }) => {
   const response = await authorizeAxiosInstance.put(
     `${API_ROOT}/v1/columns/${boardId}/${columnId}`,
-    payload
+    payload,
+    {
+      skipErrorToast: options.skipErrorToast
+    }
   )
   return response.data.metadata
 }

@@ -3,6 +3,16 @@ import ejs from 'ejs'
 import path from 'path'
 import { env } from '~/config/environment'
 
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: env.EMAIL_USERNAME,
+    pass: env.EMAIL_PASSWORD
+  }
+})
+
 export const sendEmailService = async ({
   recipientEmail,
   customSubject,
@@ -10,16 +20,7 @@ export const sendEmailService = async ({
   templateName = '',
   data = {}
 }) => {
-  const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: env.EMAIL_USERNAME,
-      pass: env.EMAIL_PASSWORD
-    }
-  })
-
+  console.log('sendEmailService')
   let finalHtmlContent = htmlContent
 
   if (templateName) {
@@ -32,6 +33,8 @@ export const sendEmailService = async ({
     finalHtmlContent = await ejs.renderFile(templatePath, data)
   }
 
+  console.log('start sending email')
+
   const info = await transporter.sendMail({
     from: env.EMAIL_USERNAME,
     to: recipientEmail,
@@ -39,5 +42,6 @@ export const sendEmailService = async ({
     html: finalHtmlContent
   })
 
+  console.log('done sending email')
   return info
 }

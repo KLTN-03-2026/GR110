@@ -12,6 +12,7 @@ import { emitPayment } from '~/realtime/realtimeEmitters/payment.emitter'
 import PaymentRepo from '~/repo/payment.repo'
 import SubscriptionRepo from '~/repo/subscription.repo'
 import TransactionRepo from '~/repo/transaction.repo'
+import { WEBSITE_DOMAIN } from '~/utils/constants'
 
 class PaypalService {
   static createOrderPaypal = async ({ subscriptionId, payment }) => {
@@ -42,7 +43,6 @@ class PaypalService {
     }
 
     const accessToken = await generateAccessToken()
-
 
     try {
       const orderPayload = {
@@ -84,8 +84,8 @@ class PaypalService {
         application_context: {
           brand_name: 'Taskio',
           user_action: 'PAY_NOW',
-          return_url: `${env.WEBSITE_DOMAIN_DEVELOPMENT}/h/workspaces/${subscription.workspaceId}/billing`,
-          cancel_url: `${env.WEBSITE_DOMAIN_DEVELOPMENT}/h/workspaces/${subscription.workspaceId}/billing`
+          return_url: `${WEBSITE_DOMAIN}/h/workspaces/${subscription.workspaceId}/billing`,
+          cancel_url: `${WEBSITE_DOMAIN}/h/workspaces/${subscription.workspaceId}/billing`
         }
       }
 
@@ -211,7 +211,7 @@ class PaypalService {
           })
           return
         }
-        
+
         payment = await PaymentRepo.findOne({
           filter: {
             transactionId: transaction._id.toString(),
@@ -400,8 +400,6 @@ const payFail = async ({
     subscriptionId: subscriptionId.toString(),
     status: 'failed'
   })
-  
-  
 }
 
 const generateAccessToken = async () => {
@@ -428,10 +426,5 @@ const generateAccessToken = async () => {
     )
   }
 }
-
-
-
-
-
 
 export default PaypalService

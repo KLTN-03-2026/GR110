@@ -32,6 +32,7 @@ import { emitBoardUpdated } from '~/realtime/realtimeEmitters/boardRealtime.emit
 import { emitCardMoved } from '~/realtime/realtimeEmitters/cardRealtime.emitter'
 import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
 import { invokeOpenAIModel } from '~/providers/OpenAIProvider'
+import Joi from 'joi'
 
 const DEFAULT_BOARD_LABELS = [
   { title: '', color: 'green' },
@@ -41,6 +42,90 @@ const DEFAULT_BOARD_LABELS = [
   { title: '', color: 'purple' },
   { title: '', color: 'blue' }
 ]
+
+const SENSITIVE_TOPIC_RULES = [
+  {
+    category: 'sexual content',
+    patterns: [
+      /\bsex\b/i,
+      /\bporn\b/i,
+      /\bnude\b/i,
+      /khi[êe]u d[âa]m/i,
+      /t[ìi]nh d[ụu]c/i,
+      /18\+/i
+    ]
+  },
+  {
+    category: 'child sexual content',
+    patterns: [/child porn/i, /ấu dâm/i]
+  },
+  {
+    category: 'extreme violence or gore',
+    patterns: [
+      /\bmurder\b/i,
+      /\bkill\b/i,
+      /\btorture\b/i,
+      /\bgore\b/i,
+      /gi[ếe]t ng[ườu]i/i,
+      /tra t[ấa]n/i
+    ]
+  },
+  {
+    category: 'self-harm or suicide',
+    patterns: [
+      /\bsuicide\b/i,
+      /self[- ]?harm/i,
+      /t[ựu]\s*t[ửu]/i,
+      /t[ựu]\s*h[ạa]i/i
+    ]
+  },
+  {
+    category: 'illegal drugs',
+    patterns: [
+      /\bcocaine\b/i,
+      /\bheroin\b/i,
+      /\bmeth\b/i,
+      /ma t[uýy]/i,
+      /\bdrug trafficking\b/i
+    ]
+  },
+  {
+    category: 'hate or extremist content',
+    patterns: [
+      /\bnazi\b/i,
+      /\bisis\b/i,
+      /kh[ủu]ng b[ốo]/i,
+      /hate speech/i,
+      /di[ệe]t ch[ủu]ng/i
+    ]
+  },
+  {
+    category: 'fraud, scam, or cyber abuse',
+    patterns: [
+      /\bscam\b/i,
+      /\bphishing\b/i,
+      /\bfraud\b/i,
+      /\bhack(?:ing)?\b/i,
+      /l[ừu]a đ[ảa]o/i,
+      /đ[áa]nh c[ắa]p/i
+    ]
+  }
+]
+
+const AI_CARD_SCHEMA = Joi.object({
+  title: Joi.string().trim().min(1).max(500).required(),
+  description: Joi.string().trim().min(1).max(2000).required()
+}).unknown(false)
+
+const AI_COLUMN_SCHEMA = Joi.object({
+  title: Joi.string().trim().min(1).max(200).required(),
+  cards: Joi.array().items(AI_CARD_SCHEMA).min(5).max(7).required()
+}).unknown(false)
+
+const AI_BOARD_SCHEMA = Joi.object({
+  boardTitle: Joi.string().trim().min(1).max(200).required(),
+  columns: Joi.array().items(AI_COLUMN_SCHEMA).min(6).max(7).required()
+}).unknown(false)
 
 const generateBoardAdminRole = ({ boardId }) => {
   return {
@@ -267,10 +352,15 @@ ${aiPrompt || ''}
 
     let aiStructure = null
     if (isGenerateWithAI) {
+      assertNoSensitiveTopic({
+        text: [data.title, data.description, aiPrompt]
+          .filter(Boolean)
+          .join('\n'),
+        source: 'request'
+      })
+
       aiStructure = await buildBoardStructureFromAI(mergePrompt)
     }
-
-    console.log('aiStructure::::', aiStructure)
 
     const createBoardData = {
       ...restData,
@@ -565,6 +655,54 @@ ${aiPrompt || ''}
             'Next column order must contain the moved card.'
           )
 
+        const prevColumnCards = await CardRepo.findMany({
+          filter: {
+            boardId,
+            columnId: prevColumnId,
+            status: 'active'
+          },
+          options: { session, projection: { _id: 1 } }
+        })
+
+        const nextColumnCards = await CardRepo.findMany({
+          filter: {
+            boardId,
+            columnId: nextColumnId,
+            status: 'active'
+          },
+          options: { session, projection: { _id: 1 } }
+        })
+
+        const expectedPrevCardIds = prevColumnCards
+          .map((card) => card._id.toString())
+          .filter((id) => id !== currentCardId)
+        const expectedNextCardIds = [
+          ...nextColumnCards.map((card) => card._id.toString()),
+          currentCardId
+        ]
+
+        const hasSameCardSet = (leftIds = [], rightIds = []) => {
+          if (leftIds.length !== rightIds.length) return false
+
+          const leftSet = new Set(leftIds)
+          const rightSet = new Set(rightIds)
+
+          return (
+            leftIds.every((id) => rightSet.has(id)) &&
+            rightIds.every((id) => leftSet.has(id))
+          )
+        }
+
+        if (!hasSameCardSet(prevCardOrderIds, expectedPrevCardIds))
+          throw new ConflictErrorResponse(
+            'The previous column changed while you were moving this card. Please refresh and try again.'
+          )
+
+        if (!hasSameCardSet(nextCardOrderIds, expectedNextCardIds))
+          throw new ConflictErrorResponse(
+            'The destination column changed while you were moving this card. Please refresh and try again.'
+          )
+
         const orderedCardIds = [
           ...new Set([...prevCardOrderIds, ...nextCardOrderIds])
         ]
@@ -616,22 +754,45 @@ ${aiPrompt || ''}
         const updatePrevColumn = await ColumnRepo.updateById({
           _id: prevColumnId,
           data: { cardOrderIds: prevCardOrderIds, updatedAt: new Date() },
+          filter: {
+            boardId,
+            status: 'active',
+            updatedAt: prevColumn.updatedAt ?? null
+          },
           session
         })
 
         const updateNextColumn = await ColumnRepo.updateById({
           _id: nextColumnId,
           data: { cardOrderIds: nextCardOrderIds, updatedAt: new Date() },
+          filter: {
+            boardId,
+            status: 'active',
+            updatedAt: nextColumn.updatedAt ?? null
+          },
           session
         })
 
+        if (!updatePrevColumn || !updateNextColumn)
+          throw new ConflictErrorResponse(
+            'Board state changed while processing your move. Please refresh and retry.'
+          )
+
         const updatedCard = await CardRepo.updateOne({
-          filter: { _id: new ObjectId(currentCardId), boardId },
+          filter: {
+            _id: new ObjectId(currentCardId),
+            boardId,
+            status: 'active',
+            columnId: prevColumnId
+          },
           data: { $set: { columnId: nextColumnId } },
           session
         })
 
-        if (!updatedCard) throw new NotFoundErrorResponse('Card not found.')
+        if (!updatedCard)
+          throw new ConflictErrorResponse(
+            'Card move conflicted with another update. Please refresh and try again.'
+          )
 
         return { updatedCard, updatePrevColumn, updateNextColumn }
       })
@@ -1452,15 +1613,139 @@ ${aiPrompt || ''}
   }
 }
 
+const findSensitiveTopicMatch = (text = '') => {
+  const safeText = String(text || '')
+  if (!safeText.trim()) return null
+
+  for (const rule of SENSITIVE_TOPIC_RULES) {
+    for (const pattern of rule.patterns) {
+      if (pattern.test(safeText)) {
+        return {
+          category: rule.category,
+          keyword: pattern.source
+        }
+      }
+    }
+  }
+
+  return null
+}
+
+const assertNoSensitiveTopic = ({ text = '', source = 'content' }) => {
+  const match = findSensitiveTopicMatch(text)
+  if (!match) return
+
+  throw new ForbiddenErrorResponse(
+    `Blocked sensitive ${source}: ${match.category}. Please use a neutral and safe topic.`
+  )
+}
+
+const parseAIJSON = (rawResponse = '') => {
+  const raw = String(rawResponse || '').trim()
+  if (!raw) throw new BadRequestErrorResponse('AI returned empty response.')
+
+  const cleaned = raw
+    .replace(/^```json/i, '')
+    .replace(/^```/i, '')
+    .replace(/```$/i, '')
+    .trim()
+
+  try {
+    return JSON.parse(cleaned)
+  } catch {
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      throw new BadRequestErrorResponse('AI returned invalid JSON format.')
+    }
+
+    try {
+      return JSON.parse(jsonMatch[0])
+    } catch {
+      throw new BadRequestErrorResponse('AI returned invalid JSON format.')
+    }
+  }
+}
+
+const ensureNoDuplicateCardTitles = (columns = []) => {
+  const seen = new Set()
+
+  for (const column of columns) {
+    for (const card of column.cards || []) {
+      const normalizedTitle = String(card.title || '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim()
+
+      if (!normalizedTitle) continue
+      if (seen.has(normalizedTitle)) {
+        throw new BadRequestErrorResponse(
+          'AI output contains duplicated task titles across columns.'
+        )
+      }
+
+      seen.add(normalizedTitle)
+    }
+  }
+}
+
+const validateAndSanitizeAIOutput = async (rawResponse) => {
+  const parsed = parseAIJSON(rawResponse)
+
+  if (
+    parsed?.boardTitle === 'Rejected unsafe request' &&
+    Array.isArray(parsed?.columns) &&
+    parsed.columns.length === 0
+  ) {
+    throw new ForbiddenErrorResponse(
+      'Unsafe topic is not allowed for AI board generation.'
+    )
+  }
+
+  let validated
+  try {
+    validated = await AI_BOARD_SCHEMA.validateAsync(parsed, {
+      abortEarly: false,
+      stripUnknown: true
+    })
+  } catch (error) {
+    const details = error?.details?.map((d) => d.message)?.join(', ')
+    throw new BadRequestErrorResponse(
+      `AI output violates strict schema.${details ? ` ${details}` : ''}`
+    )
+  }
+
+  ensureNoDuplicateCardTitles(validated.columns)
+
+  const outputText = [
+    validated.boardTitle,
+    ...validated.columns.map((column) => column.title),
+    ...validated.columns.flatMap((column) =>
+      column.cards.flatMap((card) => [card.title, card.description])
+    )
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  assertNoSensitiveTopic({ text: outputText, source: 'AI output' })
+
+  return validated
+}
+
 const buildBoardStructureFromAI = async (prompt) => {
   if (!prompt?.trim()) {
     throw new BadRequestErrorResponse('Project description is required.')
   }
 
+  assertNoSensitiveTopic({ text: prompt, source: 'prompt' })
+
   const boardPrompt = `
 You are a senior project manager.
 
 Based on the PROJECT INFORMATION below, design a practical kanban board structure for real work.
+
+STRICT SAFETY POLICY:
+- Refuse and avoid sexual content, child sexual content, violence, self-harm, illegal drugs, hate/extremism, fraud/scam/hacking.
+- If the user request is unsafe, return this exact JSON: {"boardTitle":"Rejected unsafe request","columns":[]}
 
 STRICT RULES:
 - boardTitle: concise, max 200 chars, same language as input
@@ -1470,6 +1755,11 @@ STRICT RULES:
 - Card description: clear explanation, max 2000 chars
 - Do NOT repeat generic tasks across columns
 - Return ONLY valid JSON. No explanation text.
+
+LANGUAGE RULE (STRICT):
+- If "Extra instruction from user" exists, output boardTitle/columns/cards in exactly the same language as that text.
+- Do not translate to English.
+- If "Extra instruction from user" is empty, use the same language as "Project title" and "Project description".
 
 Output JSON format:
 {
@@ -1502,12 +1792,9 @@ ${prompt}
     )
   }
 
-  try {
-    const jsonMatch = rawResponse.match(/\{[\s\S]*\}/)
-    return JSON.parse(jsonMatch[0]) // { boardTitle, columns }
-  } catch {
-    throw new BadRequestErrorResponse('AI returned invalid format.')
-  }
+  const validatedOutput = await validateAndSanitizeAIOutput(rawResponse)
+
+  return validatedOutput
 }
 
 const sameStringSet = (left = [], right = []) => {

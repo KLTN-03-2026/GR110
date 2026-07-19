@@ -67,7 +67,7 @@ export default function Footer() {
           }}
         >
           <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: 13 }}>
-            © Copyright 2025 Atlassian
+            © Copyright 2026 Taskio.
           </Typography>
 
           <Stack direction="row" spacing={3}>
